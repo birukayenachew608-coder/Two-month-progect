@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JobLink Ethiopia - Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- Header Navigation -->
+  <header class="header">
+    <div class="container header-inner flex-between">
+      <a href="index.html" class="logo-link">
+        <div class="logo-box">JL</div>
+        <span class="logo-text">JobLink <span class="text-primary">Ethiopia</span></span>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav class="nav-menu">
+        <a href="index.html" class="nav-btn">Home</a>
+        <a href="seeker.html" class="nav-btn">Job Seeker</a>
+        <a href="employer.html" class="nav-btn">Employer</a>
+        <a href="admin.html" class="nav-btn active">Admin</a>
+      </nav>
+
+      <!-- Auth Actions -->
+      <div class="auth-actions">
+        <button class="btn btn-icon-small btn-outline" data-action="toggle-theme" title="Toggle Dark Mode" style="border:none; background: transparent;">
+          <svg style="width: 1.25rem; height: 1.25rem; stroke: var(--slate-600);" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+        <span class="user-company-name">System Admin</span>
+        <a href="index.html" class="logout-link">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container page-content">
+    
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">System Admin Operations</h1>
+        <p class="page-description">Manage platform verification, employer approvals, and reported postings.</p>
+      </div>
+      <div class="auth-actions">
+        <div class="search-input-group max-w-20rem">
+          <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input type="text" class="search-input form-input bg-white" placeholder="Search companies, jobs...">
+        </div>
+        <a href="admin-security.html" class="btn btn-primary flex-between gap-2">
+          <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          Super Admin Settings
+        </a>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <p class="stat-title">Registered Employers</p>
+        <div class="stat-body">
+          <h3 class="stat-value" id="stat-pending">2</h3>
+          <span class="badge badge-slate">Auto-Approved</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <p class="stat-title">Reported Jobs</p>
+        <div class="stat-body">
+          <h3 class="stat-value" id="stat-reported">2</h3>
+          <span class="badge badge-red">High Priority</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <p class="stat-title">Active Job Listings</p>
+        <div class="stat-body">
+          <h3 class="stat-value">1,248</h3>
+          <span class="badge badge-green">+12% this week</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <p class="stat-title">Verified Employers</p>
+        <div class="stat-body">
+          <h3 class="stat-value">892</h3>
+          <span class="badge badge-green">+5 new today</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-target="pending-employers" data-action="switch-tab">Registered Employers</div>
+      <div class="tab" data-target="reported-jobs" data-action="switch-tab">Reported Jobs</div>
+      <div class="tab" data-target="job-seekers" data-action="switch-tab">Registered Job Seekers</div>
+    </div>
+
+    <div class="admin-sections">
+      
+      <!-- Section 1: Pending Employers (Now Tab 1) -->
+      <div id="pending-employers" class="tab-content active space-y-8">
+        <div class="section-header-row flex-wrap gap-4">
+          <div class="flex items-center gap-2">
+            <h2 class="section-title icon-title mb-0">
+              <svg class="icon-md text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+              Registered Employers
+            </h2>
+          </div>
+          <div class="admin-search-wrapper">
+            <svg class="admin-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <input type="text" class="admin-search-input" placeholder="Search employers...">
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Company Info</th>
+                <th>Contact Email</th>
+                <th>Registration Date</th>
+                <th>Verification Status</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="employer-table-body">
+              <tr id="emp-1">
+                <td>
+                  <div class="flex items-center gap-3">
+                    <div class="card-icon-bg card-icon-slate card-icon-sm">HR</div>
+                    <div>
+                      <p class="font-semibold text-slate-900">Habesha Retail Group</p>
+                      <p class="text-xs text-slate-500">Retail & Commerce</p>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <p class="font-medium text-slate-900">hr@habesharetail.com</p>
+                  <p class="text-xs text-slate-500">+251 91 123 4567</p>
+                </td>
+                <td>Today<br><span class="text-xs text-slate-400">09:00 AM</span></td>
+                <td><span class="badge badge-green">TIN & License Uploaded</span></td>
+                <td class="text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <button class="btn btn-outline-danger text-xs py-2" data-action="reject-employer" data-target-id="emp-1">Reject</button>
+                    <button class="btn btn-outline-danger text-xs py-2" data-action="remove-employer" data-target-id="emp-1">Remove</button>
+                  </div>
+                </td>
+              </tr>
+              <tr id="emp-2">
+                <td>
+                  <div class="flex items-center gap-3">
+                    <div class="card-icon-bg card-icon-red card-icon-sm">FM</div>
+                    <div>
+                      <p class="font-semibold text-slate-900 flex items-center gap-2">
+                        FastMoney Scams LLC
+                        <span class="badge badge-red badge-sm text-xs">Flagged IP</span>
+                      </p>
+                      <p class="text-xs text-slate-500">Unverified Address</p>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <p class="font-medium text-slate-900">boss@fastmoney.com</p>
+                  <p class="text-xs text-slate-500">+251 90 000 0000</p>
+                </td>
+                <td>Yesterday<br><span class="text-xs text-slate-400">08:15 PM</span></td>
+                <td><span class="badge badge-yellow">Missing Trade License</span></td>
+                <td class="text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <button class="btn btn-danger text-xs py-2" data-action="reject-ban-employer" data-target-id="emp-2">Reject & Ban</button>
+                    <button class="btn btn-outline-danger text-xs py-2" data-action="remove-employer" data-target-id="emp-2">Remove</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 2: Flagged Jobs -->
+      <div id="reported-jobs" class="tab-content space-y-8">
+        <div class="section-header-row">
+          <h2 class="section-title icon-title">
+            <svg class="icon-md text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>
+            Reported & Flagged Job Listings
+          </h2>
+        </div>
+
+        <div class="main-column">
+          <!-- Flagged Job Card -->
+          <div class="card card-border-red" id="job-1">
+            <div class="flagged-job-layout">
+              <div class="flagged-job-content">
+                <div class="flagged-job-header">
+                  <h3 class="flagged-job-title">Work From Home - Earn $1000/Day!</h3>
+                  <span class="badge badge-red badge-sm">Spam / Scam Detection</span>
+                </div>
+                <p class="flagged-job-meta">Posted by <span class="fw-medium text-slate-800">Unknown Employer ID #4092</span> • 2 hours ago</p>
+                <div class="applicant-message">
+                  "No experience required. Send a registration deposit of 500 ETB to Telebirr and start receiving daily assignments..."
+                </div>
+                <div class="flagged-job-warning">
+                  <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                  Flagged by 18 Users
+                </div>
+              </div>
+              <div class="flagged-job-actions min-w-150">
+                <button class="btn btn-danger btn-block py-2" data-action="delete-post" data-target-id="job-1">Delete Post</button>
+                <button class="btn btn-outline btn-block py-2" data-action="dismiss-flag" data-target-id="job-1">Dismiss Flag</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Registered Job Seekers -->
+      <div id="job-seekers" class="tab-content space-y-8">
+        <div class="section-header-row flex-wrap gap-4">
+          <div class="flex items-center gap-2">
+            <h2 class="section-title icon-title mb-0">
+              <svg class="icon-md text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+              Registered Job Seekers
+            </h2>
+          </div>
+          <div class="admin-search-wrapper">
+            <svg class="admin-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <input type="text" class="admin-search-input" placeholder="Search job seekers...">
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Job Seeker</th>
+                <th>Contact Info</th>
+                <th>Registered Date</th>
+                <th>Status</th>
+                <th class="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="job-seekers-tbody">
+              <tr id="seeker-1">
+                <td>
+                  <div class="flex items-center gap-3">
+                    <div class="card-icon-bg card-icon-sm auth-icon-color">AK</div>
+                    <div>
+                      <p class="font-semibold text-slate-900">Abebe Kebede</p>
+                      <p class="text-xs text-slate-500">Junior Web Developer</p>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <p class="font-medium text-slate-900">abebe@example.com</p>
+                  <p class="text-xs text-slate-500">+251 91 123 4567</p>
+                </td>
+                <td>Oct 12, 2026</td>
+                <td><span class="badge badge-green">Active</span></td>
+                <td class="text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <button class="btn btn-danger text-xs py-2" data-action="ban-seeker" data-target-id="seeker-1">Remove & Ban</button>
+                  </div>
+                </td>
+              </tr>
+              <tr id="seeker-2">
+                <td>
+                  <div class="flex items-center gap-3">
+                    <div class="card-icon-bg card-icon-sm auth-icon-color">BM</div>
+                    <div>
+                      <p class="font-semibold text-slate-900">Betelhem Mekonnen</p>
+                      <p class="text-xs text-slate-500">Marketing Specialist</p>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <p class="font-medium text-slate-900">beti@example.com</p>
+                  <p class="text-xs text-slate-500">+251 92 987 6543</p>
+                </td>
+                <td>Oct 10, 2026</td>
+                <td><span class="badge badge-green">Active</span></td>
+                <td class="text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <button class="btn btn-danger text-xs py-2" data-action="ban-seeker" data-target-id="seeker-2">Remove & Ban</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

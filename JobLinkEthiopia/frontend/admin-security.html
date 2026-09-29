@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Security - JobLink Ethiopia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-inner flex-between">
+      <a href="index.html" class="logo-link">
+        <div class="logo-box">JL</div>
+        <span class="logo-text">JobLink <span class="text-primary">Ethiopia</span></span>
+      </a>
+      
+      <!-- Desktop Nav -->
+      <nav class="nav-menu">
+        <a href="index.html" class="nav-btn">Home</a>
+        <a href="#" data-action="open-login" data-redirect="seeker.html" class="nav-btn">Job Seeker</a>
+        <a href="#" data-action="open-login" data-redirect="employer.html" class="nav-btn">Employer</a>
+        <a href="admin.html" class="nav-btn active">Admin</a>
+      </nav>
+      
+      <!-- Auth Actions -->
+      <div class="auth-actions">
+        <span class="badge badge-super-admin">Super Admin</span>
+        <a href="index.html" class="logout-link">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container page-content">
+    
+    <div class="page-header">
+      <div class="header-content">
+        <div class="breadcrumb">
+          <a href="admin.html" class="back-link">&larr; Back to Dashboard</a>
+        </div>
+        <h1 class="page-title icon-title">
+          <svg class="icon-lg text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          Super Admin Settings
+        </h1>
+        <p class="page-description">Manage role-based access and IP whitelisting for the entire system.</p>
+      </div>
+    </div>
+
+    <div class="security-grid">
+      
+      <!-- Left Column -->
+      <div class="security-column">
+        
+        <!-- IP Whitelisting -->
+        <div class="card">
+          <div class="card-header-row">
+            <div class="card-title-group">
+              <div class="card-icon-bg card-icon-sm icon-amber">
+                <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+              </div>
+              <h2 class="card-title">IP Whitelisting</h2>
+            </div>
+            <span class="badge badge-yellow">Strict Mode</span>
+          </div>
+          <p class="card-description">Restrict admin access to specific IP addresses. If enabled, access from unknown IPs will be blocked automatically.</p>
+          
+          <form id="form-ip" class="inline-form">
+            <div class="form-input-wrapper">
+              <input type="text" class="form-input font-mono" placeholder="e.g. 192.168.1.100" required>
+            </div>
+            <button type="submit" class="btn btn-outline shrink-0">Add IP</button>
+          </form>
+
+          <div class="table-wrapper">
+            <table class="table security-table">
+              <thead>
+                <tr>
+                  <th>IP Address</th>
+                  <th>Label / User</th>
+                  <th class="text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="ip-list">
+                <tr id="ip-row-1">
+                  <td class="font-mono fw-medium">197.156.103.44</td>
+                  <td class="table-cell-muted">Addis Office (Main)</td>
+                  <td class="text-right">
+                    <button class="btn-clear text-red-500" data-action="remove-ip" data-target="ip-row-1">Remove</button>
+                  </td>
+                </tr>
+                <tr id="ip-row-2">
+                  <td class="font-mono fw-medium">10.0.1.0/24</td>
+                  <td class="table-cell-muted">Internal VPN</td>
+                  <td class="text-right">
+                    <button class="btn-clear text-red-500" data-action="remove-ip" data-target="ip-row-2">Remove</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: RBAC -->
+      <div class="card card-flush">
+        <div class="card-header">
+          <div class="card-title-group">
+            <div class="card-icon-bg card-icon-sm icon-green">
+              <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            </div>
+            <div>
+              <h2 class="card-title">Role Management</h2>
+              <p class="card-description-sm">Assign granular permissions to accounts.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card-body p-0">
+          <div class="table-container border-none">
+            <table class="table security-table">
+              <thead>
+                <tr>
+                  <th>Admin User</th>
+                  <th>Current Role</th>
+                  <th class="text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div class="user-name">Dawit T.</div>
+                    <div class="user-email">dawit@joblink.et</div>
+                  </td>
+                  <td>
+                    <select class="form-select select-sm">
+                      <option selected>Super Admin</option>
+                      <option>Moderator</option>
+                      <option>Auditor</option>
+                    </select>
+                  </td>
+                  <td class="text-right">
+                    <button class="btn btn-outline btn-sm" data-action="save-role">Save</button>
+                    <button class="btn-clear text-red-500 ml-2 text-sm" data-action="remove-role">Remove</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="user-name">Sara B.</div>
+                    <div class="user-email">sara@joblink.et</div>
+                  </td>
+                  <td>
+                    <select class="form-select select-sm">
+                      <option>Super Admin</option>
+                      <option selected>Moderator</option>
+                      <option>Auditor</option>
+                    </select>
+                  </td>
+                  <td class="text-right">
+                    <button class="btn btn-outline btn-sm" data-action="save-role">Save</button>
+                    <button class="btn-clear text-red-500 ml-2 text-sm" data-action="remove-role">Remove</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="user-name">External Auditor</div>
+                    <div class="user-email">audit@firm.com</div>
+                  </td>
+                  <td>
+                    <select class="form-select select-sm">
+                      <option>Super Admin</option>
+                      <option>Moderator</option>
+                      <option selected>Auditor</option>
+                    </select>
+                  </td>
+                  <td class="text-right">
+                    <button class="btn btn-outline btn-sm" data-action="save-role">Save</button>
+                    <button class="btn-clear text-red-500 ml-2 text-sm" data-action="remove-role">Remove</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div class="card-footer">
+          <button class="btn btn-primary w-full btn-sm">Invite New Admin</button>
+        </div>
+      </div>
+      
+    </div>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

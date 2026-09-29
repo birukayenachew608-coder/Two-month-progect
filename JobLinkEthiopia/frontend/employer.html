@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JobLink Ethiopia - Employer Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- Header Navigation -->
+  <header class="header">
+    <div class="container header-inner flex-between">
+      <a href="index.html" class="logo-link">
+        <div class="logo-box">JL</div>
+        <span class="logo-text">JobLink <span class="text-primary">Ethiopia</span></span>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav class="nav-menu">
+        <a href="index.html" class="nav-btn">Home</a>
+        <a href="seeker.html" class="nav-btn">Job Seeker</a>
+        <a href="employer.html" class="nav-btn active">Employer</a>
+        <a href="admin-login.html" class="nav-btn">Admin</a>
+      </nav>
+
+      <!-- Auth Actions -->
+      <div class="auth-actions">
+        <button class="btn btn-icon-small btn-outline" data-action="toggle-theme" title="Toggle Dark Mode" style="border:none; background: transparent;">
+          <svg style="width: 1.25rem; height: 1.25rem; stroke: var(--slate-600);" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+        <span class="user-company-name">TechSolutions PLC</span>
+        <a href="index.html" class="logout-link">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container page-content flex-col gap-6">
+    
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">Employer Dashboard</h1>
+        <p class="page-description">Manage your job postings and review applicants.</p>
+      </div>
+      <button class="btn btn-primary" data-action="switch-tab" data-target="post-job-tab">Post a New Job</button>
+    </div>
+
+    <!-- Employer Tabs -->
+    <div class="tabs" style="margin-bottom: 0;">
+      <div class="tab active" data-target="overview-tab" data-action="switch-tab">Overview & Pipeline</div>
+      <div class="tab" data-target="post-job-tab" data-action="switch-tab">Post a New Job</div>
+    </div>
+
+    <!-- Overview Tab Content -->
+    <div id="overview-tab" class="tab-content active flex-col gap-6">
+    <!-- Job Analytics Widget -->
+    <div class="stats-grid">
+       <div class="stat-card">
+         <h4 class="stat-title">Total Job Views</h4>
+         <p class="stat-value text-primary" id="stat-job-views">--</p>
+       </div>
+       <div class="stat-card">
+         <h4 class="stat-title">Total Applicants</h4>
+         <p class="stat-value" id="stat-total-applicants">--</p>
+       </div>
+       <div class="stat-card">
+         <h4 class="stat-title">Conversion Rate</h4>
+         <p class="stat-value text-green-700" id="stat-conversion-rate">--</p>
+       </div>
+       <div class="stat-card">
+         <h4 class="stat-title">Active Postings</h4>
+         <p class="stat-value" id="stat-active-postings">--</p>
+       </div>
+    </div>
+
+    <div class="flex-between mb-4 mt-4">
+      <h2 class="page-title text-xl">Applicant Pipeline</h2>
+      <div class="admin-search-wrapper" style="max-width: 18rem; margin: 0;">
+        <svg class="admin-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <input type="text" class="admin-search-input" placeholder="Search by job type...">
+      </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="kanban-board">
+       <!-- Pending Review -->
+       <div class="kanban-col">
+         <div class="kanban-header">
+           <h3 class="font-bold text-slate-800">Pending Review <span class="badge badge-slate ml-2">2</span></h3>
+         </div>
+         <div class="kanban-cards" data-column="pending">
+            
+            <!-- Candidate Card 1 -->
+            <div class="kanban-card" draggable="true">
+               <div class="flex items-start gap-3 mb-3">
+                 <div class="card-icon-bg card-icon-circle card-icon-slate card-icon-sm">AK</div>
+                 <div>
+                   <h4 class="font-bold text-slate-900 text-sm">Abebe Kebede</h4>
+                   <p class="text-xs text-slate-500">Applied for: Junior Web Developer</p>
+                 </div>
+               </div>
+               
+               <div class="prescreening-box">
+                 <p class="font-semibold text-xs text-slate-700 mb-1">Pre-screening Answer:</p>
+                 <p class="text-xs text-slate-600 italic">"I have 2 years of experience with React and Node.js building dashboard applications..."</p>
+               </div>
+               
+               <div class="flex gap-2 mt-4">
+                 <button class="btn btn-outline btn-sm flex-grow text-xs">Download CV</button>
+                 <button class="btn btn-primary btn-sm flex-grow text-xs">Schedule</button>
+               </div>
+            </div>
+
+            <!-- Candidate Card 2 -->
+            <div class="kanban-card" draggable="true">
+               <div class="flex items-start gap-3 mb-3">
+                 <div class="card-icon-bg card-icon-circle card-icon-slate card-icon-sm">SE</div>
+                 <div>
+                   <h4 class="font-bold text-slate-900 text-sm">Sara Endale</h4>
+                   <p class="text-xs text-slate-500">Applied for: Junior Web Developer</p>
+                 </div>
+               </div>
+               
+               <div class="prescreening-box">
+                 <p class="font-semibold text-xs text-slate-700 mb-1">Pre-screening Answer:</p>
+                 <p class="text-xs text-slate-600 italic">"I recently graduated and built 3 full-stack projects using MERN..."</p>
+               </div>
+               
+               <div class="flex gap-2 mt-4">
+                 <button class="btn btn-outline btn-sm flex-grow text-xs">Download CV</button>
+                 <button class="btn btn-primary btn-sm flex-grow text-xs">Schedule</button>
+               </div>
+            </div>
+
+         </div>
+       </div>
+
+
+
+       <!-- Hired -->
+       <div class="kanban-col">
+         <div class="kanban-header">
+           <h3 class="font-bold text-green-700">Hired <span class="badge badge-green ml-2">1</span></h3>
+         </div>
+         <div class="kanban-cards" data-column="hired">
+            <!-- Candidate Card -->
+            <div class="kanban-card opacity-90" draggable="true" style="border-left: 3px solid var(--green-500);">
+               <div class="flex items-start gap-3 mb-3">
+                 <div class="card-icon-bg card-icon-circle icon-green card-icon-sm">EH</div>
+                 <div>
+                   <h4 class="font-bold text-slate-900 text-sm">Elias Hailu</h4>
+                   <p class="text-xs text-slate-500">Hired: Sept 15, 2026</p>
+                 </div>
+               </div>
+               
+               <div class="flex gap-2 mt-2">
+                 <button class="btn btn-outline btn-sm flex-grow text-xs">View Profile</button>
+               </div>
+            </div>
+         </div>
+       </div>
+
+    </div> <!-- Close Kanban Board -->
+    </div> <!-- Close Overview Tab Content -->
+
+    <!-- Post Job Tab Content -->
+    <div id="post-job-tab" class="tab-content" style="padding: 2rem 0;">
+      <div class="card" style="max-width: 42rem; margin: 0 auto; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm); padding: 2rem; border-radius: 0.75rem;">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-start mb-2">
+          <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight" style="font-family: ui-serif, Georgia, serif;">Post a Job</h2>
+        </div>
+        <p class="text-sm text-slate-500 mb-6" style="color: #64748b;">Reach thousands of Ethiopian job seekers. Your post is reviewed before it goes live.</p>
+        
+
+        <form id="post-job-form" class="flex-col" style="display: flex; gap: 1.25rem;">
+          
+          <!-- Row 1 -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group mb-0">
+              <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Company name <span class="text-red-500">*</span></label>
+              <input type="text" id="job-company" class="form-input text-sm" required>
+            </div>
+            <div class="form-group mb-0">
+              <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Your email <span class="text-red-500">*</span></label>
+              <input type="email" class="form-input text-sm" placeholder="we contact you here" required>
+            </div>
+          </div>
+          
+          <!-- Row 2 -->
+          <div class="form-group mb-0">
+            <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Job title <span class="text-red-500">*</span></label>
+            <input type="text" id="job-title" class="form-input text-sm" required>
+          </div>
+
+          <!-- Row 3 -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group mb-0">
+              <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Location</label>
+              <input type="text" id="job-location" class="form-input text-sm" placeholder="e.g. Addis Ababa">
+            </div>
+            <div class="form-group mb-0">
+              <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Deadline</label>
+              <input type="date" id="job-deadline" class="form-input text-sm" required>
+            </div>
+          </div>
+
+          <!-- Row 4 -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group mb-0">
+              <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Salary (optional)</label>
+              <input type="text" id="job-salary" class="form-input text-sm" placeholder="e.g. 25,000 ETB">
+            </div>
+            <div class="form-group mb-0">
+              <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Apply email (optional)</label>
+              <input type="email" id="job-apply-email" class="form-input text-sm" placeholder="where CVs go">
+            </div>
+          </div>
+
+          <!-- Row 5 -->
+          <div class="form-group mb-0">
+            <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Apply link (optional)</label>
+            <input type="url" id="job-apply-link" class="form-input text-sm" placeholder="https://...">
+            <p class="text-xs text-slate-400 mt-1" style="font-size: 0.75rem;">If you leave apply email and link empty, we'll use your contact email.</p>
+          </div>
+
+          <!-- Row 6 -->
+          <div class="form-group mb-0">
+            <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Job description <span class="text-red-500">*</span></label>
+            <textarea class="form-input text-sm" rows="4" placeholder="Responsibilities, requirements, how to apply..." required></textarea>
+          </div>
+
+
+
+          <!-- Submit -->
+          <button type="submit" class="btn btn-block" style="background-color: #0f766e; color: white; padding: 0.75rem; font-weight: 700; font-size: 1rem; margin-top: 0.5rem;">Submit job</button>
+        </form>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Auth Modal -->
+  <div id="login-modal" class="modal-overlay hidden">
+    <div class="modal-content card">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-slate-900" id="auth-title">
+          Sign In
+        </h2>
+        <button class="btn-clear text-slate-500" data-action="close-login">
+          <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Social Logins -->
+      <div class="flex flex-col gap-3 mb-6">
+        <button class="btn btn-outline w-full flex items-center justify-center gap-2" style="padding: 0.625rem">
+          <svg class="icon-md text-red-500" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+            <path
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              fill="#34A853" />
+            <path
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              fill="#FBBC05" />
+            <path
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              fill="#EA4335" />
+          </svg>
+          <span class="font-medium text-sm">Continue with Google</span>
+        </button>
+        <button class="btn btn-outline w-full flex items-center justify-center gap-2"
+          style="padding: 0.625rem; border-color: #229ed9; color: #229ed9">
+          <svg class="icon-md" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.5 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.892-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+          </svg>
+          <span class="font-medium text-sm">Continue with Telegram</span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-3 mb-6">
+        <div class="flex-grow border-t border-slate-200"></div>
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Or email</span>
+        <div class="flex-grow border-t border-slate-200"></div>
+      </div>
+
+      <form id="login-form">
+        <div class="form-group" id="name-group" style="display: none">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-input" id="auth-name" placeholder="Abebe Kebede" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-input" id="auth-email" placeholder="name@example.com" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="auth-password" placeholder="••••••••" required />
+        </div>
+        <button type="submit" class="btn btn-primary w-full mt-2" id="auth-submit">
+          Sign In
+        </button>
+      </form>
+      <p class="text-sm text-center text-slate-600 mt-4 flex justify-center gap-1">
+        <span id="auth-toggle-text">Don't have an account?</span>
+        <button class="text-primary font-medium btn-clear" data-action="toggle-auth">
+          Register here
+        </button>
+      </p>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

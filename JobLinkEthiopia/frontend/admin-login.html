@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - JobLink Ethiopia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Specific styles for centered auth pages */
+    .auth-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--slate-50);
+    }
+    .auth-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 480px;
+      background: white;
+      border-radius: 1rem;
+      box-shadow: var(--shadow-lg);
+      padding: 2rem;
+      border: 1px solid var(--slate-200);
+    }
+  </style>
+</head>
+<body class="auth-page">
+  
+  <header class="header">
+    <div class="container header-inner flex-between">
+      <a href="index.html" class="logo-link">
+        <div class="logo-box">JL</div>
+        <span class="logo-text">JobLink <span class="text-primary">Ethiopia</span></span>
+      </a>
+      <a href="index.html" class="logout-link">Back to Home</a>
+    </div>
+  </header>
+
+  <main class="auth-container">
+    <div class="auth-card" id="step-1">
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-bold text-slate-900">Admin Secure Login</h1>
+        <p class="text-slate-500 text-sm mt-2">Enter your credentials to access the admin portal.</p>
+      </div>
+
+      <form id="admin-login-form">
+        <div class="form-group">
+          <label class="form-label">Admin Email</label>
+          <input type="email" class="form-input" placeholder="admin@joblink.et" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block mt-4">Continue</button>
+      </form>
+    </div>
+
+    <!-- Step 2: 2FA -->
+    <div class="auth-card hidden" id="step-2">
+      <div class="auth-header-row mb-6">
+        <div class="card-icon-bg card-icon-sm auth-icon-color">
+          <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+        </div>
+        <div>
+          <h2 class="auth-title">Two-Factor Authentication</h2>
+          <p class="auth-subtitle">Security Requirement</p>
+        </div>
+      </div>
+      
+      <p class="auth-instructions mb-6">Please enter the verification code from your authenticator app to continue.</p>
+      <form id="admin-2fa-form">
+        <label class="form-label center-block">Enter 6-digit Verification Code</label>
+        <div class="verification-code-group">
+          <input type="text" class="form-input verification-input" placeholder="000000" maxlength="6" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block mt-4">Verify & Login</button>
+      </form>
+    </div>
+  </main>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
+
+  <script src="js/main.js"></script>
+  <script>
+    // Local script to handle step transition
+    document.addEventListener('DOMContentLoaded', () => {
+      const loginForm = document.getElementById('admin-login-form');
+      const twoFaForm = document.getElementById('admin-2fa-form');
+      const step1 = document.getElementById('step-1');
+      const step2 = document.getElementById('step-2');
+
+      if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          
+          const email = document.getElementById('admin-email').value;
+          const password = document.getElementById('admin-password').value;
+          
+          try {
+            const response = await fetch('/api/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              if (data.user.role === 'admin' || data.user.role === 'super_admin') {
+                // Save token
+                localStorage.setItem('token', data.token);
+                // Hide step 1, show step 2 (2FA)
+                step1.classList.add('hidden');
+                step2.classList.remove('hidden');
+              } else {
+                showToast('Access denied: You are not an admin', 'error');
+              }
+            } else {
+              showToast(data.message || 'Authentication failed', 'error');
+            }
+          } catch (error) {
+            showToast('Network error, please try again later', 'error');
+          }
+        });
+      }
+
+      if (twoFaForm) {
+        twoFaForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          showToast('Verification successful!', 'success');
+          setTimeout(() => {
+            window.location.href = 'admin.html';
+          }, 1000);
+        });
+      }
+    });
+  </script>
+</body>
+</html>

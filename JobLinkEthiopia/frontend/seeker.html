@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JobLink Ethiopia - Seeker Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- Header Navigation -->
+  <header class="header">
+    <div class="container header-inner flex-between">
+      <a href="index.html" class="logo-link">
+        <div class="logo-box">JL</div>
+        <span class="logo-text">JobLink <span class="text-primary">Ethiopia</span></span>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav class="nav-menu">
+        <a href="index.html" class="nav-btn">Home</a>
+        <a href="seeker.html" class="nav-btn active">Job Seeker</a>
+        <a href="employer.html" class="nav-btn">Employer</a>
+        <a href="admin-login.html" class="nav-btn">Admin</a>
+      </nav>
+
+      <!-- Auth Actions -->
+      <div class="auth-actions">
+        <button class="btn btn-icon-small btn-outline" data-action="toggle-theme" title="Toggle Dark Mode" style="border:none; background: transparent;">
+          <svg style="width: 1.25rem; height: 1.25rem; stroke: var(--slate-600);" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+        <span class="user-company-name">Welcome, Abebe!</span>
+        <a href="index.html" class="logout-link">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container page-content">
+    
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">Seeker Dashboard</h1>
+        <p class="page-description">Manage your applications, CV, and job alerts.</p>
+      </div>
+      <div class="auth-actions">
+        <a href="index.html" class="btn btn-outline-primary">Search Jobs</a>
+        <button class="btn btn-outline" data-target="profile" data-action="switch-tab">My Profile</button>
+      </div>
+    </div>
+
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" data-target="applications" data-action="switch-tab">My Applications</div>
+      <div class="tab" data-target="saved-jobs" data-action="switch-tab">Saved Jobs</div>
+      <div class="tab" data-target="cv" data-action="switch-tab">CV / Resume Builder</div>
+      <div class="tab" data-target="alerts" data-action="switch-tab">Job Alerts</div>
+    </div>
+
+    <!-- Tab 1: Applications -->
+    <div id="applications" class="tab-content active space-y-6">
+
+      <div class="card card-flush">
+        <div class="card-header">
+          <h2 class="card-title">My Applications (2)</h2>
+          <span class="badge badge-primary-light">Updated Today</span>
+        </div>
+        <div class="table-container border-none">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Job Title</th>
+                <th>Company & Location</th>
+                <th>Applied On</th>
+                <th>Status</th>
+                <th class="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="font-medium text-slate-900">Junior Web Developer</td>
+                <td>TechSolutions PLC<br><span class="text-xs text-slate-400">Addis Ababa</span></td>
+                <td>Sept 10, 2026</td>
+                <td><span class="badge badge-yellow">Pending</span></td>
+                <td class="text-right">
+                  <button data-action="view-job" class="btn-text-link">View Job</button>
+                  <button data-action="withdraw-app" class="btn-text-link text-red-500 ml-2" style="font-size: 0.8rem;">Withdraw</button>
+                </td>
+              </tr>
+              <tr>
+                <td class="font-medium text-slate-900">Sales Representative</td>
+                <td>Ethio Traders<br><span class="text-xs text-slate-400">Dire Dawa</span></td>
+                <td>Sept 05, 2026</td>
+                <td><span class="badge badge-blue">Reviewed</span></td>
+                <td class="text-right"><button data-action="view-job" class="btn-text-link">View Job</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div> <!-- Close card-flush -->
+
+      <!-- Similar Jobs Recommendations -->
+      <div class="card bg-slate-50 border-none mt-6">
+        <h3 class="font-bold text-slate-800 mb-4">Recommended Jobs based on your applications</h3>
+        <div class="dashboard-grid">
+          <!-- Recommended Job 1 -->
+          <div class="card p-4 border border-slate-200 shadow-none">
+            <h4 class="font-bold text-slate-900 text-sm">Senior Web Developer</h4>
+            <p class="text-xs text-slate-500 mb-3">Safaricom Ethiopia • Addis Ababa</p>
+            <button class="btn btn-primary btn-sm btn-block text-xs">View & Apply</button>
+          </div>
+          <!-- Recommended Job 2 -->
+          <div class="card p-4 border border-slate-200 shadow-none">
+            <h4 class="font-bold text-slate-900 text-sm">React Specialist</h4>
+            <p class="text-xs text-slate-500 mb-3">Gebeya Inc • Remote</p>
+            <button class="btn btn-primary btn-sm btn-block text-xs">View & Apply</button>
+          </div>
+        </div>
+      </div>
+
+    </div> <!-- Close Tab 1: Applications -->
+
+
+    <!-- Tab: Saved Jobs -->
+    <div id="saved-jobs" class="tab-content space-y-6">
+      <div class="dashboard-grid">
+        <!-- Saved Job Card -->
+        <div class="card">
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <h3 class="font-bold text-slate-900">Frontend React Developer</h3>
+              <p class="text-sm text-slate-500">Awash Bank • Addis Ababa</p>
+            </div>
+            <button class="text-red-500 hover:text-red-700" title="Remove from saved" data-action="unsave-job">
+              <svg style="width: 1.5rem; height: 1.5rem;" class="fill-current" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+            </button>
+          </div>
+          <div class="flex gap-2 mb-4">
+            <span class="badge badge-slate text-xs" style="font-size: 0.7rem;">Full-time</span>
+            <span class="badge badge-slate text-xs" style="font-size: 0.7rem;">Remote Options</span>
+          </div>
+          <button class="btn btn-primary btn-block btn-sm">Apply Now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: CV Builder -->
+    <div id="cv" class="tab-content">
+      <div class="card card-mb-8">
+        <h2 class="card-title-lg mb-2">Upload Existing Resume (ፋይል ጫን)</h2>
+        <p class="card-description mb-4">Supported formats: PDF, DOCX, DOC (Max size: 5MB)</p>
+        
+        <div class="job-grid">
+          <div class="upload-box" id="cv-upload-box">
+            <input type="file" id="cv-file" class="hidden">
+            <svg class="icon-xl text-primary mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            <p class="upload-text">Click to upload or drag & drop</p>
+          </div>
+          
+          <div class="file-info-box">
+            <div>
+              <span class="preview-label">Active Resume</span>
+              <div class="file-preview">
+                <p class="preview-filename">Abebe_Kebede_Resume.pdf</p>
+                <p class="preview-meta">1.4 MB • Updated 3 days ago</p>
+              </div>
+            </div>
+            <div class="preview-actions">
+              <button class="btn btn-outline flex-grow text-xs" data-action="download-cv">Download</button>
+              <button class="btn btn-outline-danger flex-grow text-xs" data-action="delete-cv">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Alerts -->
+    <div id="alerts" class="tab-content">
+      <div class="dashboard-grid">
+        <!-- New Alert Form -->
+        <div class="card">
+          <h2 class="card-title-lg mb-4">Configure Alert</h2>
+          <form id="alert-form">
+            <div class="form-group">
+              <label class="form-label">Job Sector</label>
+              <select class="form-input" id="alert-sector">
+                <option value="Software & Tech">Software & Tech</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Finance">Finance</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Location</label>
+              <select class="form-input" id="alert-location">
+                <option value="Addis Ababa">Addis Ababa</option>
+                <option value="Remote">Remote</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notification via</label>
+              <div class="filter-options">
+                <label class="filter-label"><input type="checkbox" id="alert-email" checked class="checkbox-primary"><span class="filter-text">Email Notification</span></label>
+                <label class="filter-label"><input type="checkbox" id="alert-telegram" checked class="checkbox-primary"><span class="filter-text">Telegram Bot Alert</span></label>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block mt-4">Save Alert Preferences</button>
+          </form>
+        </div>
+        
+        <!-- Active Alerts List -->
+        <div class="card">
+          <h2 class="text-xl font-bold text-slate-900 mb-4">Active Alerts (1)</h2>
+          <div class="alert-card">
+            <div class="flex justify-between items-start mb-2">
+                <h4 class="font-bold text-slate-900 text-sm">Software & Tech Jobs</h4>
+                <span class="badge badge-blue">Daily</span>
+            </div>
+            <p class="text-xs text-slate-500 mb-3">Addis Ababa • Full-time & Internship</p>
+            <div class="alert-card-footer">
+                <span class="font-medium text-slate-700">Email & Telegram</span>
+                <button data-action="delete-alert" class="btn-clear text-red-600">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Profile -->
+    <div id="profile" class="tab-content space-y-8">
+      <div class="card">
+        <h2 class="text-xl font-bold text-slate-900 mb-6">Personal Profile</h2>
+        <form id="profile-form">
+          <!-- Profile Photo Upload -->
+          <div class="mb-8 flex items-center gap-6 pb-6" style="border-bottom: 1px solid var(--slate-200);">
+            <div id="profile-pic-preview" style="width: 5rem; height: 5rem; border-radius: 50%; background: var(--slate-100); display: flex; align-items: center; justify-content: center; border: 2px solid var(--slate-200); overflow: hidden; background-size: cover; background-position: center;">
+              <svg id="profile-pic-icon" style="width: 2.5rem; height: 2.5rem; color: var(--slate-400);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-sm text-slate-800 mb-2">Profile Photo</h3>
+              <div class="flex gap-3 items-center">
+                <label class="btn btn-primary text-xs py-2 cursor-pointer m-0">
+                  Upload Photo
+                  <input type="file" id="profile-upload" accept="image/*" style="display: none;">
+                </label>
+                <button type="button" id="remove-photo" class="btn btn-outline-danger text-xs py-2 m-0">Remove</button>
+              </div>
+              <p class="text-xs text-slate-500 mt-2">JPG, GIF or PNG. Max size of 2MB.</p>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="dashboard-column">
+              <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" id="profile-name" class="form-input" value="Abebe Kebede">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" id="profile-email" class="form-input" value="abebe@example.com" disabled>
+                <p class="text-xs text-slate-500 mt-1">Email cannot be changed.</p>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone Number</label>
+                <input type="tel" id="profile-phone" class="form-input" value="+251 91 123 4567">
+              </div>
+            </div>
+            
+            <div class="dashboard-column">
+              <div class="form-group">
+                <label class="form-label">Professional Title</label>
+                <input type="text" id="profile-title" class="form-input" value="Junior Web Developer">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Location</label>
+                <select id="profile-location" class="form-input">
+                  <option value="addis" selected>Addis Ababa</option>
+                  <option value="hawassa">Hawassa</option>
+                  <option value="dire">Dire Dawa</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Bio (Short Summary)</label>
+                <textarea id="profile-bio" class="form-input" rows="3">Passionate frontend developer with experience in React and Node.js.</textarea>
+              </div>
+            </div>
+          </div>
+          <div class="divider mt-4"></div>
+          <div class="flex justify-end gap-3">
+            <button type="button" class="btn btn-outline">Cancel</button>
+            <button type="submit" class="btn btn-primary" data-action="save-profile">Save Profile</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
