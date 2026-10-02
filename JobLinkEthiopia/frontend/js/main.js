@@ -1,3 +1,42 @@
+// --- Fetch Interceptor for Auto-Refresh ---
+const originalFetch = window.fetch;
+window.fetch = async function () {
+    let response = await originalFetch.apply(this, arguments);
+
+    // If unauthorized or forbidden (token expired) and we are an admin
+    if (response.status === 401 || response.status === 403) {
+        const token = localStorage.getItem('token');
+        const userStr = localStorage.getItem('user');
+        
+        if (token === 'secure_cookie_auth' && userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user.role === 'admin' || user.role === 'super_admin') {
+                    // Try to refresh
+                    const refreshResponse = await originalFetch('/api/admin/refresh', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include'
+                    });
+                    
+                    if (refreshResponse.ok) {
+                        // Retry original request
+                        response = await originalFetch.apply(this, arguments);
+                    } else {
+                        // Refresh failed, log out
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        window.location.href = 'admin-login.html';
+                    }
+                }
+            } catch (e) {
+                console.error('Error during refresh:', e);
+            }
+        }
+    }
+    return response;
+};
+
 document.addEventListener('DOMContentLoaded', () => {
 
   // Theme Initialization
@@ -88,6 +127,28 @@ document.addEventListener('DOMContentLoaded', () => {
         <a href="${dashboardUrl}" class="btn btn-primary" style="margin-left: 10px;">My Dashboard</a>
         <a href="#" data-action="logout" class="logout-link" style="margin-left: 15px;">Logout</a>
       `;
+
+      // Check if user is banned and show notification on dashboard
+      fetch('/api/auth/me', {
+          headers: { 'Authorization': 'Bearer ' + token }
+      }).then(res => res.json()).then(data => {
+          if (data && data.account_status === 'banned') {
+              const banner = document.createElement('div');
+              banner.className = 'container text-center text-sm font-semibold';
+              banner.style.backgroundColor = '#fef2f2';
+              banner.style.color = '#ef4444';
+              banner.style.padding = '10px';
+              banner.style.marginTop = '20px';
+              banner.style.borderRadius = '5px';
+              banner.style.border = '1px solid #f87171';
+              banner.innerHTML = '⚠️ Your account has been restricted by an administrator. Please contact support.';
+              
+              const main = document.querySelector('main');
+              if (main) {
+                  main.prepend(banner);
+              }
+          }
+      }).catch(err => console.error(err));
     }
   }
 
@@ -251,39 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         case 'reject-applicant':
           showToast('Applicant rejected', 'info');
           break;
-        case 'reject-employer':
-          if (targetId) document.getElementById(targetId).remove();
-          showToast('Rejected', 'error');
-          break;
-        case 'remove-employer':
-          if (targetId) document.getElementById(targetId).remove();
-          showToast('Removed', 'success');
-          break;
-        case 'reject-ban-employer':
-          if (targetId) document.getElementById(targetId).remove();
-          showToast('Rejected & Banned', 'error');
-          break;
-        case 'delete-post':
-          if (targetId) document.getElementById(targetId).remove();
-          showToast('Post deleted', 'error');
-          break;
-        case 'dismiss-flag':
-          if (targetId) document.getElementById(targetId).remove();
-          showToast('Flag dismissed', 'info');
-          break;
-        case 'remove-seeker':
-          if (targetId) {
-            document.getElementById(targetId).remove();
-            // TODO: In a real app, call fetch('/api/admin/seekers/'+targetId, { method: 'DELETE' })
-          }
-          showToast('Job Seeker Removed Successfully', 'success');
-          break;
-        case 'ban-seeker':
-          if (targetId) {
-            document.getElementById(targetId).remove();
-          }
-          showToast('Job Seeker Banned Successfully', 'error');
-          break;
+        // Removed conflicting admin action dummy stubs
         case 'save-profile':
           e.preventDefault();
 
@@ -382,14 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
         case 'copy-key':
           showToast('Key copied to clipboard!', 'info');
           break;
-        case 'remove-ip':
-          const rowId = btn.getAttribute('data-target');
-          if (rowId) document.getElementById(rowId).remove();
-          showToast('IP address removed from whitelist', 'success');
-          break;
-        case 'save-role':
-          showToast('Role permissions updated successfully', 'success');
-          break;
+        // Removed dummy cases for remove-ip and save-role
         case 'apply-job':
           const curToken = localStorage.getItem('token');
           const usrStr = localStorage.getItem('user');
@@ -434,29 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const formIp = document.getElementById('form-ip');
-  if (formIp) {
-    formIp.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const input = formIp.querySelector('input').value;
-      const list = document.getElementById('ip-list');
-      if (list && input) {
-        const newId = 'ip-' + Date.now();
-        const tr = document.createElement('tr');
-        tr.id = newId;
-        tr.innerHTML = `
-          <td class="py-2 px-3 font-mono text-sm font-medium">${input}</td>
-          <td class="py-2 px-3 text-sm text-slate-600">Custom Entry</td>
-          <td class="py-2 px-3 text-right">
-            <button class="btn-clear text-red-500" data-action="remove-ip" data-target="${newId}">Remove</button>
-          </td>
-        `;
-        list.appendChild(tr);
-        formIp.reset();
-        showToast('IP added to whitelist', 'success');
-      }
-    });
-  }
+  // Removed duplicate form-ip logic which conflicts with admin-security.js
 
 
   function updateAuthModalUI() {
@@ -803,6 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
                        
                        <div class="flex gap-2 mt-4">
                          <button class="btn btn-outline btn-sm flex-grow text-xs" onclick="window.open('${app.resume_file_url || '#'}', '_blank')">Download CV</button>
+                         <button class="btn btn-outline btn-sm flex-grow text-xs" onclick="viewProfile(${app.seeker_id})">View Profile</button>
                          <button class="btn btn-primary btn-sm flex-grow text-xs" style="background-color: var(--green-500); border-color: var(--green-500);" onclick="hireApplication(${app.id}, this)">Hire</button>
                          <button class="btn btn-primary btn-sm flex-grow text-xs" style="background-color: var(--danger); border-color: var(--danger);" onclick="rejectApplication(${app.id}, this)">Reject</button>
                        </div>
@@ -821,7 +822,10 @@ document.addEventListener('DOMContentLoaded', () => {
                            <p class="text-xs text-slate-500">Hired: ${hiredDate}</p>
                          </div>
                        </div>
-                       <button class="btn btn-outline btn-block btn-sm text-xs mt-2" onclick="viewProfile(${app.seeker_id})">View Profile</button>
+                       <div class="flex gap-2 mt-2">
+                         <button class="btn btn-outline flex-grow btn-sm text-xs" onclick="viewProfile(${app.seeker_id})">View Profile</button>
+                         <button class="btn btn-primary flex-grow btn-sm text-xs" style="background-color: var(--danger); border-color: var(--danger);" onclick="if(confirm('Are you sure you want to remove this?')) { rejectApplication(${app.id}, this); }">Remove</button>
+                       </div>
                     </div>
                  `;
             if (hiredColumn) hiredColumn.insertAdjacentHTML('beforeend', cardHtml);
@@ -1374,21 +1378,100 @@ window.setupKanbanDragAndDrop = function() {
 // View Candidate Profile
 window.viewProfile = function(seekerId) {
   showToast('Fetching profile...', 'info');
-  // Since we don't have a profile page right now, just show info in alert
-  fetch(`/api/admin/seekers`) // Using admin route if available, or create a mock. But wait, admin seekers might require admin token.
-    .then(res => res.json())
-    .then(seekers => {
-      if (Array.isArray(seekers)) {
-        const seeker = seekers.find(s => s.id === seekerId);
-        if (seeker) {
-          alert(`CANDIDATE PROFILE:\n\nName: ${seeker.name}\nEmail: ${seeker.email}`);
-        } else {
-          alert('Candidate profile details not available.');
+  fetch(`/api/seeker/profile/${seekerId}`) 
+    .then(res => {
+      if (!res.ok) throw new Error('Profile not found');
+      return res.json();
+    })
+    .then(seeker => {
+      if (seeker) {
+        let profileModal = document.getElementById('profile-modal');
+        if (!profileModal) {
+          profileModal = document.createElement('div');
+          profileModal.id = 'profile-modal';
+          profileModal.className = 'modal-overlay hidden';
+          document.body.appendChild(profileModal);
         }
+        
+        // Generate initials
+        let initials = 'U';
+        if (seeker.name && seeker.name.length >= 2) {
+           initials = seeker.name.substring(0, 2).toUpperCase();
+        }
+        
+        let avatarHtml = `<div class="card-icon-bg card-icon-circle bg-primary-900 text-primary-200 mb-4 flex items-center justify-center font-bold" style="width: 72px; height: 72px; font-size: 1.75rem; background: var(--primary-900); color: var(--primary-200); border-radius: 50%;">${initials}</div>`;
+        if (seeker.profile_photo_url) {
+           avatarHtml = `<img src="${seeker.profile_photo_url}" alt="${seeker.name}" class="mb-4 shadow-md" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-500);" />`;
+        }
+        
+        const cvHtml = seeker.resume_file_url 
+           ? `<a href="${seeker.resume_file_url}" target="_blank" class="btn btn-primary w-full mt-2" style="padding: 0.75rem; font-weight: 600;">Download CV</a>`
+           : `<p class="text-xs text-slate-400 mt-2 italic text-center">No CV uploaded</p>`;
+           
+        profileModal.innerHTML = `
+          <div class="modal-content card" style="max-width: 450px; background: #0f172a; color: #f8fafc; border: 1px solid #334155; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+            <div class="flex justify-between items-center mb-6 pb-4" style="border-bottom: 1px solid #1e293b;">
+              <h2 class="text-xl font-bold flex items-center gap-2 text-white">
+                 <svg class="icon-md text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                 Candidate Profile
+              </h2>
+              <button class="btn-clear text-slate-400 hover:text-white transition-colors" onclick="const m=document.getElementById('profile-modal'); m.classList.remove('active'); setTimeout(()=>m.classList.add('hidden'), 300);">
+                <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            
+            <div class="flex flex-col items-center mb-6">
+               ${avatarHtml}
+               <h3 class="text-2xl font-bold text-white mb-1">${seeker.name || 'Unknown'}</h3>
+               <p class="text-primary-400 font-medium">${seeker.professional_title || 'Candidate'}</p>
+            </div>
+            
+            <div class="flex flex-col gap-4">
+               <div class="p-4 rounded-lg" style="background-color: #1e293b !important; border: 1px solid #334155 !important;">
+                  <p class="text-xs uppercase tracking-wider font-semibold mb-3" style="color: #94a3b8 !important;">Contact Info</p>
+                  <div class="flex items-center gap-3 mb-3">
+                     <div class="p-2 rounded-full" style="background-color: #334155 !important;">
+                       <svg class="icon-sm" style="color: #cbd5e1 !important;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                     </div>
+                     <span class="text-sm font-medium" style="color: #e2e8f0 !important;">${seeker.email || 'N/A'}</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-3">
+                     <div class="p-2 rounded-full" style="background-color: #334155 !important;">
+                       <svg class="icon-sm" style="color: #cbd5e1 !important;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                     </div>
+                     <span class="text-sm font-medium" style="color: #e2e8f0 !important;">${seeker.phone || 'Not provided'}</span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                     <div class="p-2 rounded-full" style="background-color: #334155 !important;">
+                       <svg class="icon-sm" style="color: #cbd5e1 !important;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                     </div>
+                     <span class="text-sm font-medium" style="color: #e2e8f0 !important;">${seeker.location || 'Not provided'}</span>
+                  </div>
+               </div>
+               
+               <div class="p-4 rounded-lg" style="background-color: #1e293b !important; border: 1px solid #334155 !important;">
+                  <p class="text-xs uppercase tracking-wider font-semibold mb-2" style="color: #94a3b8 !important;">About</p>
+                  <p class="text-sm leading-relaxed" style="color: #cbd5e1 !important;">${seeker.bio || 'No bio provided.'}</p>
+               </div>
+               
+               <div class="mt-2">
+                  ${cvHtml}
+               </div>
+            </div>
+          </div>
+        `;
+        
+        profileModal.classList.remove('hidden');
+        requestAnimationFrame(() => {
+          profileModal.classList.add('active');
+        });
+
       } else {
-        alert('Could not fetch candidate details. Ensure admin/seekers is accessible.');
+        showToast('Candidate profile details not available.', 'error');
       }
-    }).catch(err => alert('Network error while fetching profile.'));
+    }).catch(err => showToast('Network error while fetching profile.', 'error'));
 };
 
 // Toast Notification System
@@ -1451,3 +1534,33 @@ function switchTab(tabId) {
   const activeBtn = document.querySelector(`.tab[data-target="${tabId}"]`);
   if (activeBtn) activeBtn.classList.add('active');
 }
+
+// Handle dynamic report job clicks
+document.addEventListener('click', async (e) => {
+    const reportBtn = e.target.closest('[data-action="report-job"]');
+    if (reportBtn) {
+        e.preventDefault();
+        const jobId = reportBtn.getAttribute('data-job-id');
+        if (!jobId) return;
+        
+        if (!confirm('Are you sure you want to report this job as inappropriate?')) return;
+        
+        try {
+            const res = await fetch(`/api/jobs/${jobId}/report`, {
+                method: 'POST'
+            });
+            if (res.ok) {
+                showToast('Job reported successfully. Admin will review it.', 'success');
+                reportBtn.innerHTML = '<span style="font-size: 10px; padding: 2px;">Reported</span>';
+                reportBtn.disabled = true;
+                reportBtn.style.color = '#ef4444';
+                reportBtn.style.borderColor = 'transparent';
+            } else {
+                showToast('Failed to report job.', 'error');
+            }
+        } catch (error) {
+            console.error('Error reporting job:', error);
+            showToast('Network error', 'error');
+        }
+    }
+});

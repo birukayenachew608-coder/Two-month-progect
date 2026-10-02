@@ -84,20 +84,7 @@
                 </tr>
               </thead>
               <tbody id="ip-list">
-                <tr id="ip-row-1">
-                  <td class="font-mono fw-medium">197.156.103.44</td>
-                  <td class="table-cell-muted">Addis Office (Main)</td>
-                  <td class="text-right">
-                    <button class="btn-clear text-red-500" data-action="remove-ip" data-target="ip-row-1">Remove</button>
-                  </td>
-                </tr>
-                <tr id="ip-row-2">
-                  <td class="font-mono fw-medium">10.0.1.0/24</td>
-                  <td class="table-cell-muted">Internal VPN</td>
-                  <td class="text-right">
-                    <button class="btn-clear text-red-500" data-action="remove-ip" data-target="ip-row-2">Remove</button>
-                  </td>
-                </tr>
+                <!-- Dynamically populated by admin-security.js -->
               </tbody>
             </table>
           </div>
@@ -130,57 +117,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>
-                    <div class="user-name">Dawit T.</div>
-                    <div class="user-email">dawit@joblink.et</div>
-                  </td>
-                  <td>
-                    <select class="form-select select-sm">
-                      <option selected>Super Admin</option>
-                      <option>Moderator</option>
-                      <option>Auditor</option>
-                    </select>
-                  </td>
-                  <td class="text-right">
-                    <button class="btn btn-outline btn-sm" data-action="save-role">Save</button>
-                    <button class="btn-clear text-red-500 ml-2 text-sm" data-action="remove-role">Remove</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="user-name">Sara B.</div>
-                    <div class="user-email">sara@joblink.et</div>
-                  </td>
-                  <td>
-                    <select class="form-select select-sm">
-                      <option>Super Admin</option>
-                      <option selected>Moderator</option>
-                      <option>Auditor</option>
-                    </select>
-                  </td>
-                  <td class="text-right">
-                    <button class="btn btn-outline btn-sm" data-action="save-role">Save</button>
-                    <button class="btn-clear text-red-500 ml-2 text-sm" data-action="remove-role">Remove</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="user-name">External Auditor</div>
-                    <div class="user-email">audit@firm.com</div>
-                  </td>
-                  <td>
-                    <select class="form-select select-sm">
-                      <option>Super Admin</option>
-                      <option>Moderator</option>
-                      <option selected>Auditor</option>
-                    </select>
-                  </td>
-                  <td class="text-right">
-                    <button class="btn btn-outline btn-sm" data-action="save-role">Save</button>
-                    <button class="btn-clear text-red-500 ml-2 text-sm" data-action="remove-role">Remove</button>
-                  </td>
-                </tr>
+                <!-- Dynamically populated by admin-security.js -->
               </tbody>
             </table>
           </div>
@@ -195,5 +132,6 @@
   </main>
 
   <script src="js/main.js"></script>
+  <script src="js/admin-security.js"></script>
 </body>
 </html>

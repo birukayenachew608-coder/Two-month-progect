@@ -56,17 +56,17 @@
       <form id="admin-login-form">
         <div class="form-group">
           <label class="form-label">Admin Email</label>
-          <input type="email" class="form-input" placeholder="admin@joblink.et" required>
+          <input type="email" id="admin-email" class="form-input" placeholder="admin@joblink.et" required>
         </div>
         <div class="form-group">
           <label class="form-label">Password</label>
-          <input type="password" class="form-input" placeholder="••••••••" required>
+          <input type="password" id="admin-password" class="form-input" placeholder="••••••••" required>
         </div>
         <button type="submit" class="btn btn-primary btn-block mt-4">Continue</button>
       </form>
     </div>
 
-    <!-- Step 2: 2FA -->
+    <!-- Step 2: 2FA Verify -->
     <div class="auth-card hidden" id="step-2">
       <div class="auth-header-row mb-6">
         <div class="card-icon-bg card-icon-sm auth-icon-color">
@@ -87,6 +87,33 @@
         <button type="submit" class="btn btn-primary btn-block mt-4">Verify & Login</button>
       </form>
     </div>
+
+    <!-- Step 3: 2FA Setup -->
+    <div class="auth-card hidden" id="step-3">
+      <div class="auth-header-row mb-6">
+        <div class="card-icon-bg card-icon-sm auth-icon-color">
+          <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        </div>
+        <div>
+          <h2 class="auth-title">Set Up 2FA</h2>
+          <p class="auth-subtitle">Required for first-time login</p>
+        </div>
+      </div>
+      
+      <p class="auth-instructions mb-4 text-center">Scan this QR code with your authenticator app (e.g. Google Authenticator).</p>
+      <div class="flex justify-center mb-4">
+        <img id="qr-code-img" src="" alt="2FA QR Code" class="border border-slate-200 rounded p-2">
+      </div>
+      <p class="text-sm text-center text-slate-500 mb-6">Or enter this secret manually: <br><strong id="manual-secret" class="text-slate-800 font-mono tracking-widest mt-1 inline-block"></strong></p>
+      
+      <form id="admin-2fa-setup-form">
+        <label class="form-label center-block">Enter 6-digit Verification Code to Confirm</label>
+        <div class="verification-code-group">
+          <input type="text" class="form-input verification-input" placeholder="000000" maxlength="6" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block mt-4">Confirm Setup & Login</button>
+      </form>
+    </div>
   </main>
 
   <!-- Toast Notification Container -->
@@ -98,8 +125,13 @@
     document.addEventListener('DOMContentLoaded', () => {
       const loginForm = document.getElementById('admin-login-form');
       const twoFaForm = document.getElementById('admin-2fa-form');
+      const twoFaSetupForm = document.getElementById('admin-2fa-setup-form');
+      
       const step1 = document.getElementById('step-1');
       const step2 = document.getElementById('step-2');
+      const step3 = document.getElementById('step-3');
+
+      let tempAuthToken = '';
 
       if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
@@ -109,7 +141,7 @@
           const password = document.getElementById('admin-password').value;
           
           try {
-            const response = await fetch('/api/auth/login', {
+            const response = await fetch('/api/admin/login', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ email, password })
@@ -118,17 +150,34 @@
             const data = await response.json();
 
             if (response.ok) {
-              if (data.user.role === 'admin' || data.user.role === 'super_admin') {
-                // Save token
-                localStorage.setItem('token', data.token);
-                // Hide step 1, show step 2 (2FA)
+              if (data.requires2FASetup) {
+                tempAuthToken = data.tempAuthToken;
+                step1.classList.add('hidden');
+                step3.classList.remove('hidden');
+                
+                // Fetch QR code
+                const setupRes = await fetch('/api/admin/2fa/setup', {
+                  headers: { 'Authorization': `Bearer ${tempAuthToken}` }
+                });
+                if (setupRes.ok) {
+                  const setupData = await setupRes.json();
+                  document.getElementById('qr-code-img').src = setupData.qrCodeUrl;
+                  document.getElementById('manual-secret').textContent = setupData.secret;
+                } else {
+                  showToast('Error generating QR code', 'error');
+                }
+              } else if (data.requires2FA) {
+                tempAuthToken = data.tempAuthToken;
                 step1.classList.add('hidden');
                 step2.classList.remove('hidden');
               } else {
-                showToast('Access denied: You are not an admin', 'error');
+                // Fallback if no 2FA (should not happen based on new logic)
+                localStorage.setItem('token', 'secure_cookie_auth');
+                localStorage.setItem('user', JSON.stringify(data.user));
+                window.location.href = 'admin.html';
               }
             } else {
-              showToast(data.message || 'Authentication failed', 'error');
+              showToast(data.message || 'Authentication failed. Please check your credentials.', 'error');
             }
           } catch (error) {
             showToast('Network error, please try again later', 'error');
@@ -136,13 +185,46 @@
         });
       }
 
+      // Handler for both Verify and Setup confirmation
+      const verify2fa = async (code) => {
+        try {
+          const response = await fetch('/api/admin/2fa/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ tempAuthToken, code })
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            localStorage.setItem('token', 'secure_cookie_auth');
+            localStorage.setItem('user', JSON.stringify(data.user));
+            showToast('Verification successful!', 'success');
+            setTimeout(() => {
+              window.location.href = 'admin.html';
+            }, 1000);
+          } else {
+            showToast(data.message || 'Invalid verification code.', 'error');
+          }
+        } catch (error) {
+          showToast('Network error, please try again later', 'error');
+        }
+      };
+
       if (twoFaForm) {
-        twoFaForm.addEventListener('submit', (e) => {
+        twoFaForm.addEventListener('submit', async (e) => {
           e.preventDefault();
-          showToast('Verification successful!', 'success');
-          setTimeout(() => {
-            window.location.href = 'admin.html';
-          }, 1000);
+          const code = twoFaForm.querySelector('.verification-input').value;
+          await verify2fa(code);
+        });
+      }
+
+      if (twoFaSetupForm) {
+        twoFaSetupForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const code = twoFaSetupForm.querySelector('.verification-input').value;
+          await verify2fa(code);
         });
       }
     });

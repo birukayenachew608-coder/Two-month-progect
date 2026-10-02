@@ -61,29 +61,29 @@
       <div class="stat-card">
         <p class="stat-title">Registered Employers</p>
         <div class="stat-body">
-          <h3 class="stat-value" id="stat-pending">2</h3>
+          <h3 class="stat-value" id="stat-pending">...</h3>
           <span class="badge badge-slate">Auto-Approved</span>
         </div>
       </div>
       <div class="stat-card">
         <p class="stat-title">Reported Jobs</p>
         <div class="stat-body">
-          <h3 class="stat-value" id="stat-reported">2</h3>
+          <h3 class="stat-value" id="stat-reported">...</h3>
           <span class="badge badge-red">High Priority</span>
         </div>
       </div>
       <div class="stat-card">
         <p class="stat-title">Active Job Listings</p>
         <div class="stat-body">
-          <h3 class="stat-value">1,248</h3>
-          <span class="badge badge-green">+12% this week</span>
+          <h3 class="stat-value">...</h3>
+          <span class="badge badge-green">Loading...</span>
         </div>
       </div>
       <div class="stat-card">
         <p class="stat-title">Verified Employers</p>
         <div class="stat-body">
-          <h3 class="stat-value">892</h3>
-          <span class="badge badge-green">+5 new today</span>
+          <h3 class="stat-value">...</h3>
+          <span class="badge badge-green">Loading...</span>
         </div>
       </div>
     </div>
@@ -123,55 +123,7 @@
               </tr>
             </thead>
             <tbody id="employer-table-body">
-              <tr id="emp-1">
-                <td>
-                  <div class="flex items-center gap-3">
-                    <div class="card-icon-bg card-icon-slate card-icon-sm">HR</div>
-                    <div>
-                      <p class="font-semibold text-slate-900">Habesha Retail Group</p>
-                      <p class="text-xs text-slate-500">Retail & Commerce</p>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <p class="font-medium text-slate-900">hr@habesharetail.com</p>
-                  <p class="text-xs text-slate-500">+251 91 123 4567</p>
-                </td>
-                <td>Today<br><span class="text-xs text-slate-400">09:00 AM</span></td>
-                <td><span class="badge badge-green">TIN & License Uploaded</span></td>
-                <td class="text-right">
-                  <div class="flex items-center justify-end gap-2">
-                    <button class="btn btn-outline-danger text-xs py-2" data-action="reject-employer" data-target-id="emp-1">Reject</button>
-                    <button class="btn btn-outline-danger text-xs py-2" data-action="remove-employer" data-target-id="emp-1">Remove</button>
-                  </div>
-                </td>
-              </tr>
-              <tr id="emp-2">
-                <td>
-                  <div class="flex items-center gap-3">
-                    <div class="card-icon-bg card-icon-red card-icon-sm">FM</div>
-                    <div>
-                      <p class="font-semibold text-slate-900 flex items-center gap-2">
-                        FastMoney Scams LLC
-                        <span class="badge badge-red badge-sm text-xs">Flagged IP</span>
-                      </p>
-                      <p class="text-xs text-slate-500">Unverified Address</p>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <p class="font-medium text-slate-900">boss@fastmoney.com</p>
-                  <p class="text-xs text-slate-500">+251 90 000 0000</p>
-                </td>
-                <td>Yesterday<br><span class="text-xs text-slate-400">08:15 PM</span></td>
-                <td><span class="badge badge-yellow">Missing Trade License</span></td>
-                <td class="text-right">
-                  <div class="flex items-center justify-end gap-2">
-                    <button class="btn btn-danger text-xs py-2" data-action="reject-ban-employer" data-target-id="emp-2">Reject & Ban</button>
-                    <button class="btn btn-outline-danger text-xs py-2" data-action="remove-employer" data-target-id="emp-2">Remove</button>
-                  </div>
-                </td>
-              </tr>
+              <!-- Dynamically populated by admin.js -->
             </tbody>
           </table>
         </div>
@@ -187,29 +139,7 @@
         </div>
 
         <div class="main-column">
-          <!-- Flagged Job Card -->
-          <div class="card card-border-red" id="job-1">
-            <div class="flagged-job-layout">
-              <div class="flagged-job-content">
-                <div class="flagged-job-header">
-                  <h3 class="flagged-job-title">Work From Home - Earn $1000/Day!</h3>
-                  <span class="badge badge-red badge-sm">Spam / Scam Detection</span>
-                </div>
-                <p class="flagged-job-meta">Posted by <span class="fw-medium text-slate-800">Unknown Employer ID #4092</span> • 2 hours ago</p>
-                <div class="applicant-message">
-                  "No experience required. Send a registration deposit of 500 ETB to Telebirr and start receiving daily assignments..."
-                </div>
-                <div class="flagged-job-warning">
-                  <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                  Flagged by 18 Users
-                </div>
-              </div>
-              <div class="flagged-job-actions min-w-150">
-                <button class="btn btn-danger btn-block py-2" data-action="delete-post" data-target-id="job-1">Delete Post</button>
-                <button class="btn btn-outline btn-block py-2" data-action="dismiss-flag" data-target-id="job-1">Dismiss Flag</button>
-              </div>
-            </div>
-          </div>
+          <!-- Dynamically populated by admin.js -->
         </div>
       </div>
 
@@ -240,50 +170,7 @@
               </tr>
             </thead>
             <tbody id="job-seekers-tbody">
-              <tr id="seeker-1">
-                <td>
-                  <div class="flex items-center gap-3">
-                    <div class="card-icon-bg card-icon-sm auth-icon-color">AK</div>
-                    <div>
-                      <p class="font-semibold text-slate-900">Abebe Kebede</p>
-                      <p class="text-xs text-slate-500">Junior Web Developer</p>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <p class="font-medium text-slate-900">abebe@example.com</p>
-                  <p class="text-xs text-slate-500">+251 91 123 4567</p>
-                </td>
-                <td>Oct 12, 2026</td>
-                <td><span class="badge badge-green">Active</span></td>
-                <td class="text-right">
-                  <div class="flex items-center justify-end gap-2">
-                    <button class="btn btn-danger text-xs py-2" data-action="ban-seeker" data-target-id="seeker-1">Remove & Ban</button>
-                  </div>
-                </td>
-              </tr>
-              <tr id="seeker-2">
-                <td>
-                  <div class="flex items-center gap-3">
-                    <div class="card-icon-bg card-icon-sm auth-icon-color">BM</div>
-                    <div>
-                      <p class="font-semibold text-slate-900">Betelhem Mekonnen</p>
-                      <p class="text-xs text-slate-500">Marketing Specialist</p>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <p class="font-medium text-slate-900">beti@example.com</p>
-                  <p class="text-xs text-slate-500">+251 92 987 6543</p>
-                </td>
-                <td>Oct 10, 2026</td>
-                <td><span class="badge badge-green">Active</span></td>
-                <td class="text-right">
-                  <div class="flex items-center justify-end gap-2">
-                    <button class="btn btn-danger text-xs py-2" data-action="ban-seeker" data-target-id="seeker-2">Remove & Ban</button>
-                  </div>
-                </td>
-              </tr>
+              <!-- Dynamically populated by admin.js -->
             </tbody>
           </table>
         </div>
@@ -294,5 +181,6 @@
   </main>
 
   <script src="js/main.js"></script>
+  <script src="js/admin.js"></script>
 </body>
 </html>
