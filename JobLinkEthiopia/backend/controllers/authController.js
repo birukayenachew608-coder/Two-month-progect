@@ -110,7 +110,8 @@ exports.login = async (req, res) => {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                account_status: user.account_status
             }
         });
     } catch (error) {
@@ -150,11 +151,139 @@ exports.switchRole = async (req, res) => {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                role: role
+                role: role,
+                account_status: user.account_status
             }
         });
     } catch (error) {
         console.error('Switch Role Error:', error);
         res.status(500).json({ message: `Internal server error: ${error.message}` });
+    }
+};
+
+exports.getMe = async (req, res) => {
+    try {
+        const { id, role } = req.user;
+        let tableName = 'job_seekers';
+        if (role === 'employer') tableName = 'employers';
+        if (role === 'admin' || role === 'super_admin') tableName = 'admins';
+
+        const [users] = await pool.query(`SELECT id, name, email, account_status FROM ${tableName} WHERE id = ?`, [id]);
+        if (users.length === 0) return res.status(404).json({ message: 'User not found' });
+        
+        const user = users[0];
+        user.role = role;
+        res.status(200).json(user);
+    } catch (error) {
+        console.error('Get Me Error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+// --- GitHub OAuth ---
+exports.githubAuth = (req, res) => {
+    const clientId = process.env.GITHUB_CLIENT_ID || 'mock_github_client_id';
+    const redirectUri = `http://localhost:${process.env.PORT || 3000}/api/auth/github/callback`;
+    const url = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user:email`;
+    res.redirect(url);
+};
+
+exports.githubCallback = async (req, res) => {
+    const { code } = req.query;
+    if (!code) return res.status(400).send('No code provided');
+    
+    try {
+        let name = 'GitHub User';
+        let email = `github_${code}@mock.com`;
+        let githubId = `gh_${code}`;
+        
+        let [users] = await pool.query('SELECT * FROM job_seekers WHERE github_id = ?', [githubId]);
+        let user;
+        
+        if (users.length === 0) {
+            [users] = await pool.query('SELECT * FROM job_seekers WHERE email = ?', [email]);
+            if (users.length > 0) {
+                user = users[0];
+                await pool.query('UPDATE job_seekers SET github_id = ? WHERE id = ?', [githubId, user.id]);
+            } else {
+                const [result] = await pool.query(
+                    'INSERT INTO job_seekers (name, email, github_id) VALUES (?, ?, ?)',
+                    [name, email, githubId]
+                );
+                const [newUsers] = await pool.query('SELECT * FROM job_seekers WHERE id = ?', [result.insertId]);
+                user = newUsers[0];
+            }
+        } else {
+            user = users[0];
+        }
+        user.role = 'job_seeker';
+        
+        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production', { expiresIn: '1d' });
+        
+        res.send(`<html><body><script>
+            localStorage.setItem('token', '${token}');
+            localStorage.setItem('user', JSON.stringify(${JSON.stringify({ id: user.id, name: user.name, email: user.email, role: user.role, account_status: user.account_status || 'active' })}));
+            window.location.href = '/seeker.html';
+        </script></body></html>`);
+    } catch (error) {
+        console.error('GitHub OAuth Error:', error);
+        res.status(500).send('Authentication failed');
+    }
+};
+
+// --- LinkedIn OAuth ---
+exports.linkedinAuth = (req, res) => {
+    const role = req.query.role || 'job_seeker';
+    const clientId = process.env.LINKEDIN_CLIENT_ID || 'mock_linkedin_client_id';
+    const redirectUri = `http://localhost:${process.env.PORT || 3000}/api/auth/linkedin/callback`;
+    const url = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=r_liteprofile%20r_emailaddress&state=${role}`;
+    res.redirect(url);
+};
+
+exports.linkedinCallback = async (req, res) => {
+    const { code, state } = req.query;
+    if (!code) return res.status(400).send('No code provided');
+    
+    const role = state === 'employer' ? 'employer' : 'job_seeker';
+    const table = role === 'employer' ? 'employers' : 'job_seekers';
+    
+    try {
+        let name = 'LinkedIn User';
+        let email = `linkedin_${code}@mock.com`;
+        let linkedinId = `li_${code}`;
+        
+        let [users] = await pool.query(`SELECT * FROM ${table} WHERE linkedin_id = ?`, [linkedinId]);
+        let user;
+        
+        if (users.length === 0) {
+            [users] = await pool.query(`SELECT * FROM ${table} WHERE email = ?`, [email]);
+            if (users.length > 0) {
+                user = users[0];
+                await pool.query(`UPDATE ${table} SET linkedin_id = ? WHERE id = ?`, [linkedinId, user.id]);
+            } else {
+                const [result] = await pool.query(
+                    `INSERT INTO ${table} (name, email, linkedin_id) VALUES (?, ?, ?)`,
+                    [name, email, linkedinId]
+                );
+                const [newUsers] = await pool.query(`SELECT * FROM ${table} WHERE id = ?`, [result.insertId]);
+                user = newUsers[0];
+            }
+        } else {
+            user = users[0];
+        }
+        user.role = role;
+        
+        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production', { expiresIn: '1d' });
+        
+        const redirectPage = role === 'employer' ? '/employer.html' : '/seeker.html';
+        
+        res.send(`<html><body><script>
+            localStorage.setItem('token', '${token}');
+            localStorage.setItem('user', JSON.stringify(${JSON.stringify({ id: user.id, name: user.name, email: user.email, role: user.role, account_status: user.account_status || 'active' })}));
+            window.location.href = '${redirectPage}';
+        </script></body></html>`);
+    } catch (error) {
+        console.error('LinkedIn OAuth Error:', error);
+        res.status(500).send('Authentication failed');
     }
 };

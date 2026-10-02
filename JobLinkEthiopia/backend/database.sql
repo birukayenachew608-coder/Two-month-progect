@@ -5,7 +5,9 @@ CREATE TABLE IF NOT EXISTS job_seekers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
+    password VARCHAR(255) DEFAULT NULL,
+    github_id VARCHAR(255) UNIQUE DEFAULT NULL,
+    linkedin_id VARCHAR(255) UNIQUE DEFAULT NULL,
     phone_number VARCHAR(50) DEFAULT NULL,
     location VARCHAR(255) DEFAULT NULL,
     profile_photo_url VARCHAR(255) DEFAULT NULL,
@@ -39,11 +41,21 @@ CREATE TABLE IF NOT EXISTS admins (
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'super_admin') DEFAULT 'admin',
+    role ENUM('admin', 'super_admin', 'moderator', 'auditor') DEFAULT 'admin',
+    refresh_token VARCHAR(512) DEFAULT NULL,
+    two_factor_secret VARCHAR(255) DEFAULT NULL,
+    is_2fa_enabled BOOLEAN DEFAULT false,
     
     account_status ENUM('active', 'banned', 'pending_verification') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS whitelisted_ips (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ip_address VARCHAR(45) NOT NULL UNIQUE,
+    label VARCHAR(255) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS jobs (
@@ -57,6 +69,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     job_type ENUM('Full-time', 'Part-time', 'Contract', 'Internship') DEFAULT 'Full-time',
     location VARCHAR(255) NOT NULL,
     deadline DATE NOT NULL,
+    views INT DEFAULT 0,
     
     -- Optional fields from Employer Dashboard
     salary VARCHAR(255) DEFAULT NULL,

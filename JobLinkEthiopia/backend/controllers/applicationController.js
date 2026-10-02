@@ -86,7 +86,8 @@ exports.updateApplicationStatus = async (req, res) => {
     }
 
     try {
-        const [result] = await pool.query('UPDATE applications SET status = ? WHERE id = ?', [status, id]);
+        // Lowercase the status to match the database ENUM ('pending', 'reviewed', 'rejected', 'hired', 'withdrawn')
+        const [result] = await pool.query('UPDATE applications SET status = LOWER(?) WHERE id = ?', [status, id]);
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Application not found' });
         }

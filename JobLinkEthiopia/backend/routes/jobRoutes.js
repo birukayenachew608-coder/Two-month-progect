@@ -6,6 +6,7 @@ router.post('/', jobController.createJob);
 router.get('/', jobController.getJobs);
 router.get('/employer/:employerId/analytics', jobController.getEmployerAnalytics);
 router.get('/:id', jobController.getJobById);
+router.post('/:id/report', jobController.reportJob);
 
 // Saved Jobs
 router.post('/saved', jobController.saveJob);

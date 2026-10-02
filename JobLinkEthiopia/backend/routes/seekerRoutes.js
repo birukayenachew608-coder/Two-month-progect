@@ -37,4 +37,7 @@ router.post('/alerts', seekerController.createAlert);
 router.get('/alerts/:seekerId', seekerController.getAlerts);
 router.delete('/alerts/:id', seekerController.deleteAlert);
 
+// Profile
+router.get('/profile/:seekerId', seekerController.getProfile);
+
 module.exports = router;
