@@ -4,8 +4,16 @@ exports.authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     let token = authHeader && authHeader.split(' ')[1];
     
-    if ((!token || token === 'secure_cookie_auth') && req.cookies && req.cookies.token) {
-        token = req.cookies.token;
+    if (req.cookies) {
+        if (token === 'employer_secure_cookie') {
+            token = req.cookies.employer_accessToken;
+        } else if (token === 'seeker_secure_cookie') {
+            token = req.cookies.seeker_accessToken;
+        } else if (token === 'secure_cookie_auth') {
+            token = req.cookies.token;
+        } else if (!token) {
+            token = req.cookies.token || req.cookies.employer_accessToken || req.cookies.seeker_accessToken;
+        }
     }
 
     if (!token) {
@@ -18,6 +26,58 @@ exports.authenticateToken = (req, res, next) => {
         next();
     } catch (error) {
         res.status(403).json({ message: 'Invalid or expired token.' });
+    }
+};
+
+exports.verifySeeker = (req, res, next) => {
+    let authHeader = req.headers['authorization'];
+    let token = authHeader && authHeader.split(' ')[1];
+
+    if (req.cookies) {
+        if (token === 'seeker_secure_cookie' || !token) {
+            token = req.cookies.seeker_accessToken || token;
+        }
+    }
+
+    if (!token || token === 'seeker_secure_cookie' || token === 'employer_secure_cookie') {
+        return res.status(401).json({ message: 'Access denied. No valid Job Seeker token provided.' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production');
+        if (decoded.role !== 'job_seeker') {
+            return res.status(403).json({ message: 'Forbidden: Job Seeker access required.' });
+        }
+        req.user = decoded;
+        next();
+    } catch (error) {
+        return res.status(403).json({ message: 'Invalid or expired token.' });
+    }
+};
+
+exports.verifyEmployer = (req, res, next) => {
+    let authHeader = req.headers['authorization'];
+    let token = authHeader && authHeader.split(' ')[1];
+
+    if (req.cookies) {
+        if (token === 'employer_secure_cookie' || !token) {
+            token = req.cookies.employer_accessToken || token;
+        }
+    }
+
+    if (!token || token === 'seeker_secure_cookie' || token === 'employer_secure_cookie') {
+        return res.status(401).json({ message: 'Access denied. No valid Employer token provided.' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production');
+        if (decoded.role !== 'employer') {
+            return res.status(403).json({ message: 'Forbidden: Employer access required.' });
+        }
+        req.user = decoded;
+        next();
+    } catch (error) {
+        return res.status(403).json({ message: 'Invalid or expired token.' });
     }
 };
 

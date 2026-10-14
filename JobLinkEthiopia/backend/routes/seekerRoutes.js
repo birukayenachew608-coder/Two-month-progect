@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const seekerController = require('../controllers/seekerController');
+const { verifySeeker } = require('../middleware/authMiddleware');
 const multer = require('multer');
 const path = require('path');
 
@@ -33,11 +34,21 @@ router.post('/cv', upload.single('cvFile'), seekerController.uploadCV);
 router.get('/cv/:seekerId', seekerController.getCV);
 
 // Alerts
-router.post('/alerts', seekerController.createAlert);
-router.get('/alerts/:seekerId', seekerController.getAlerts);
-router.delete('/alerts/:id', seekerController.deleteAlert);
+const alertController = require('../controllers/alertController');
+router.post('/alerts', verifySeeker, alertController.createAlert);
+router.get('/alerts', verifySeeker, alertController.getAlerts);
+router.get('/alerts/:seekerId', verifySeeker, alertController.getAlerts);
+router.delete('/alerts/:id', verifySeeker, alertController.deleteAlert);
 
 // Profile
 router.get('/profile/:seekerId', seekerController.getProfile);
+router.get('/profile/:id', seekerController.getProfile);
+router.get('/:id', seekerController.getProfile);
+router.get('/:seekerId', seekerController.getProfile);
+const userController = require('../controllers/userController');
+const { handleImageUpload } = require('./userRoutes');
+router.put('/profile', verifySeeker, userController.updateProfile);
+router.put('/profile/:seekerId', verifySeeker, userController.updateProfile);
+router.post('/profile-photo', verifySeeker, handleImageUpload, userController.uploadProfilePhoto);
 
 module.exports = router;

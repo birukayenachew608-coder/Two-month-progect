@@ -5,6 +5,19 @@ const crypto = require('crypto');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 
+// Ensure 'profile_photo' column exists in admins table
+pool.query(`
+    SELECT COLUMN_NAME 
+    FROM INFORMATION_SCHEMA.COLUMNS 
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'admins' AND COLUMN_NAME = 'profile_photo'
+`).then(([rows]) => {
+    if (rows.length === 0) {
+        return pool.query("ALTER TABLE admins ADD COLUMN profile_photo VARCHAR(500) DEFAULT NULL");
+    }
+}).catch(err => {
+    console.error('Error verifying profile_photo column in admins table:', err.message);
+});
+
 exports.login = async (req, res) => {
     const { email, password } = req.body;
     
@@ -120,25 +133,27 @@ exports.verify2FA = async (req, res) => {
             email: admin.email
         };
 
-        const token = jwt.sign(payload, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '5m' });
+        const token = jwt.sign(payload, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '30m' });
         const refreshToken = crypto.randomBytes(64).toString('hex');
         
         await pool.query('UPDATE admins SET refresh_token = ? WHERE id = ?', [refreshToken, admin.id]);
 
-        // Set httpOnly secure cookie for access token (5m)
+        // Set httpOnly secure cookie for access token (30m)
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 5 * 60 * 1000 // 5 minutes
+            path: '/',
+            maxAge: 30 * 60 * 1000 // 30 minutes
         });
 
-        // Set httpOnly secure cookie for refresh token (7d)
+        // Set httpOnly secure cookie for refresh token (12h)
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+            path: '/',
+            maxAge: 12 * 60 * 60 * 1000 // 12 hours
         });
 
         res.status(200).json({
@@ -178,16 +193,25 @@ exports.refresh = async (req, res) => {
             role: admin.role
         };
         
-        const token = jwt.sign(payload, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '5m' });
+        const token = jwt.sign(payload, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '30m' });
         
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 5 * 60 * 1000 // 5 minutes
+            path: '/',
+            maxAge: 30 * 60 * 1000 // 30 minutes
         });
         
-        res.status(200).json({ message: 'Token refreshed successfully' });
+        res.status(200).json({ 
+            message: 'Token refreshed successfully',
+            user: {
+                id: admin.id,
+                email: admin.email,
+                name: admin.name,
+                role: admin.role
+            }
+        });
     } catch (error) {
         console.error('Refresh error:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -230,7 +254,10 @@ exports.getDashboardStats = async (req, res) => {
 exports.getEmployers = async (req, res) => {
     try {
         const { search } = req.query;
-        let query = 'SELECT id, name, company_name, email, phone_number as phone, location, account_status, created_at FROM employers';
+        let query = `SELECT id, name, company_name, email, phone_number as phone, location, 
+            COALESCE(NULLIF(profile_photo_url, ''), NULLIF(profile_photo, ''), NULL) AS profile_photo,
+            COALESCE(NULLIF(profile_photo_url, ''), NULLIF(profile_photo, ''), NULL) AS profile_photo_url,
+            account_status, created_at FROM employers`;
         const queryParams = [];
 
         if (search) {
@@ -281,7 +308,10 @@ exports.deleteEmployer = async (req, res) => {
 exports.getJobSeekers = async (req, res) => {
     try {
         const { search } = req.query;
-        let query = 'SELECT id, name, email, phone_number as phone, location, profile_photo_url, professional_title, bio, resume_file_url, account_status, created_at FROM job_seekers';
+        let query = `SELECT id, name, email, phone_number as phone, location, 
+            COALESCE(NULLIF(profile_photo_url, ''), NULLIF(profile_photo, ''), NULL) AS profile_photo,
+            COALESCE(NULLIF(profile_photo_url, ''), NULLIF(profile_photo, ''), NULL) AS profile_photo_url,
+            professional_title, bio, resume_file_url, account_status, created_at FROM job_seekers`;
         const queryParams = [];
 
         if (search) {
@@ -376,6 +406,172 @@ exports.deleteJob = async (req, res) => {
         res.status(200).json({ message: 'Job deleted successfully' });
     } catch (error) {
         console.error('Error deleting job:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+exports.verify = (req, res) => {
+    // If the middleware authenticateToken passed, req.user exists
+    if (!req.user || !['admin', 'super_admin'].includes(req.user.role)) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+    res.status(200).json({ user: req.user });
+};
+
+exports.logout = (req, res) => {
+    // Clear cookies with the exact same options used when they were created
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/'
+    });
+    res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/'
+    });
+    res.status(200).json({ message: 'Logged out successfully' });
+};
+
+exports.getAdminProfile = async (req, res) => {
+    try {
+        if (!req.user || !['admin', 'super_admin'].includes(req.user.role)) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+        const [rows] = await pool.query(
+            'SELECT id, name, email, role, account_status, is_2fa_enabled, profile_photo, created_at FROM admins WHERE id = ?',
+            [req.user.id]
+        );
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Admin not found' });
+        }
+        res.status(200).json(rows[0]);
+    } catch (error) {
+        console.error('Error fetching admin profile:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+exports.updateAdminProfile = async (req, res) => {
+    try {
+        if (!req.user || !['admin', 'super_admin'].includes(req.user.role)) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+        const { name, email, role, profile_photo } = req.body;
+        if (!name || !email) {
+            return res.status(400).json({ message: 'Name and email are required' });
+        }
+
+        // Validate and determine role
+        let targetRole = req.user.role;
+        if (role) {
+            if (!['admin', 'super_admin'].includes(role)) {
+                return res.status(400).json({ message: 'Invalid role specified' });
+            }
+            targetRole = role;
+        }
+
+        if (profile_photo !== undefined) {
+            await pool.query(
+                'UPDATE admins SET name = ?, email = ?, role = ?, profile_photo = ? WHERE id = ?',
+                [name.trim(), email.trim(), targetRole, profile_photo, req.user.id]
+            );
+        } else {
+            await pool.query(
+                'UPDATE admins SET name = ?, email = ?, role = ? WHERE id = ?',
+                [name.trim(), email.trim(), targetRole, req.user.id]
+            );
+        }
+
+        res.status(200).json({ 
+            message: 'Profile updated successfully', 
+            user: { 
+                id: req.user.id, 
+                name: name.trim(), 
+                email: email.trim(), 
+                role: targetRole,
+                profile_photo: profile_photo !== undefined ? profile_photo : undefined
+            } 
+        });
+    } catch (error) {
+        console.error('Error updating admin profile:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+exports.uploadProfilePhoto = async (req, res) => {
+    try {
+        if (!req.user || !['admin', 'super_admin'].includes(req.user.role)) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+        if (!req.file) {
+            return res.status(400).json({ message: 'No image file uploaded or invalid file format.' });
+        }
+        const fileUrl = `/uploads/${req.file.filename}`;
+        await pool.query('UPDATE admins SET profile_photo = ? WHERE id = ?', [fileUrl, req.user.id]);
+
+        res.status(200).json({
+            message: 'Profile photo uploaded successfully',
+            profile_photo: fileUrl,
+            profile_photo_url: fileUrl,
+            fileUrl,
+            user: {
+                id: req.user.id,
+                role: req.user.role,
+                profile_photo: fileUrl
+            }
+        });
+    } catch (error) {
+        console.error('Error uploading admin profile photo:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+exports.removeProfilePhoto = async (req, res) => {
+    try {
+        if (!req.user || !['admin', 'super_admin'].includes(req.user.role)) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+        await pool.query('UPDATE admins SET profile_photo = NULL WHERE id = ?', [req.user.id]);
+        res.status(200).json({
+            message: 'Profile photo removed successfully',
+            profile_photo: null
+        });
+    } catch (error) {
+        console.error('Error removing admin profile photo:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+exports.changeAdminPassword = async (req, res) => {
+    try {
+        if (!req.user || !['admin', 'super_admin'].includes(req.user.role)) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+        const { currentPassword, newPassword } = req.body;
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ message: 'Current password and new password are required' });
+        }
+        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!strongPasswordRegex.test(newPassword)) {
+            return res.status(400).json({ 
+                message: 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.' 
+            });
+        }
+        const [rows] = await pool.query('SELECT password FROM admins WHERE id = ?', [req.user.id]);
+        if (rows.length === 0) return res.status(404).json({ message: 'Admin not found' });
+        
+        const isMatch = await bcrypt.compare(currentPassword, rows[0].password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Incorrect current password' });
+        }
+        const hashed = await bcrypt.hash(newPassword, 10);
+        await pool.query('UPDATE admins SET password = ? WHERE id = ?', [hashed, req.user.id]);
+        res.status(200).json({ message: 'Password changed successfully' });
+    } catch (error) {
+        console.error('Error changing admin password:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };

@@ -57,7 +57,7 @@ exports.getAdmins = async (req, res) => {
 exports.updateAdminRole = async (req, res) => {
     const { id } = req.params;
     const { role } = req.body;
-    const validRoles = ['admin', 'super_admin', 'moderator', 'auditor'];
+    const validRoles = ['admin', 'super_admin'];
     if (!validRoles.includes(role)) {
         return res.status(400).json({ message: 'Invalid role' });
     }
@@ -68,8 +68,13 @@ exports.updateAdminRole = async (req, res) => {
     }
 
     try {
+        const [admins] = await pool.query('SELECT email FROM admins WHERE id = ?', [id]);
+        if (admins.length === 0) return res.status(404).json({ message: 'Admin not found' });
+        if (admins[0].email === 'birukayenachew608@gmail.com' && role !== 'super_admin') {
+            return res.status(403).json({ message: 'Cannot demote the root super admin account.' });
+        }
+
         const [result] = await pool.query('UPDATE admins SET role = ? WHERE id = ?', [role, id]);
-        if (result.affectedRows === 0) return res.status(404).json({ message: 'Admin not found' });
         res.status(200).json({ message: 'Admin role updated' });
     } catch (error) {
         console.error('Error updating admin role:', error);
@@ -79,7 +84,7 @@ exports.updateAdminRole = async (req, res) => {
 
 exports.inviteAdmin = async (req, res) => {
     const { name, email, role } = req.body;
-    const validRoles = ['admin', 'super_admin', 'moderator', 'auditor'];
+    const validRoles = ['admin', 'super_admin'];
     const newRole = validRoles.includes(role) ? role : 'admin';
     
     try {
@@ -116,6 +121,11 @@ exports.removeAdmin = async (req, res) => {
         return res.status(403).json({ message: 'Cannot remove yourself.' });
     }
     try {
+        const [admins] = await pool.query('SELECT email FROM admins WHERE id = ?', [id]);
+        if (admins.length > 0 && admins[0].email === 'birukayenachew608@gmail.com') {
+            return res.status(403).json({ message: 'Cannot remove the root super admin account.' });
+        }
+
         const [result] = await pool.query('DELETE FROM admins WHERE id = ?', [id]);
         if (result.affectedRows === 0) return res.status(404).json({ message: 'Admin not found' });
         res.status(200).json({ message: 'Admin removed successfully' });

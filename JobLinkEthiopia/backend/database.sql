@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS job_seekers (
     password VARCHAR(255) DEFAULT NULL,
     github_id VARCHAR(255) UNIQUE DEFAULT NULL,
     linkedin_id VARCHAR(255) UNIQUE DEFAULT NULL,
+    google_id VARCHAR(255) UNIQUE DEFAULT NULL,
     phone_number VARCHAR(50) DEFAULT NULL,
     location VARCHAR(255) DEFAULT NULL,
     profile_photo_url VARCHAR(255) DEFAULT NULL,
@@ -27,10 +28,29 @@ CREATE TABLE IF NOT EXISTS employers (
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     company_name VARCHAR(255) DEFAULT NULL,
+    linkedin_id VARCHAR(255) UNIQUE DEFAULT NULL,
+    google_id VARCHAR(255) UNIQUE DEFAULT NULL,
     phone_number VARCHAR(50) DEFAULT NULL,
     location VARCHAR(255) DEFAULT NULL,
+    headquarters_location VARCHAR(255) DEFAULT NULL,
+    contact_person VARCHAR(255) DEFAULT NULL,
+    about_company TEXT DEFAULT NULL,
+    bio TEXT DEFAULT NULL,
     profile_photo_url VARCHAR(255) DEFAULT NULL,
     
+    account_status ENUM('active', 'banned', 'pending_verification') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) DEFAULT NULL,
+    role ENUM('job_seeker', 'employer', 'admin') DEFAULT 'job_seeker',
+    google_id VARCHAR(255) UNIQUE DEFAULT NULL,
+    profile_photo VARCHAR(255) DEFAULT '/uploads/default-avatar.png',
     account_status ENUM('active', 'banned', 'pending_verification') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -66,7 +86,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
-    job_type ENUM('Full-time', 'Part-time', 'Contract', 'Internship') DEFAULT 'Full-time',
+    job_type VARCHAR(50) DEFAULT 'Full-time',
     location VARCHAR(255) NOT NULL,
     deadline DATE NOT NULL,
     views INT DEFAULT 0,
@@ -76,6 +96,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     apply_email VARCHAR(255) DEFAULT NULL,
     apply_link VARCHAR(255) DEFAULT NULL,
     
+    report_reason TEXT DEFAULT NULL,
     status ENUM('active', 'closed', 'flagged', 'pending_review') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -106,9 +127,12 @@ CREATE TABLE IF NOT EXISTS saved_jobs (
 CREATE TABLE IF NOT EXISTS job_alerts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     seeker_id INT NOT NULL,
-    keyword VARCHAR(255) NOT NULL,
-    location VARCHAR(255) DEFAULT NULL,
+    job_sector VARCHAR(255) NOT NULL DEFAULT 'Software & Tech',
+    keyword VARCHAR(255) DEFAULT NULL,
+    location VARCHAR(255) DEFAULT 'Addis Ababa',
     frequency ENUM('daily', 'weekly', 'instant') DEFAULT 'daily',
+    email_notification BOOLEAN DEFAULT TRUE,
+    telegram_notification BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (seeker_id) REFERENCES job_seekers(id) ON DELETE CASCADE
 );
