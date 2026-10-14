@@ -139,17 +139,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 let roleDisplayHtml = `<span class="badge badge-slate">${admin.role}</span>`;
                 
                 if (isSuperAdmin) {
+                    const isRoot = admin.email === 'birukayenachew608@gmail.com';
                     roleDisplayHtml = `
-                        <select class="form-select select-sm" id="role-select-${admin.id}">
-                            <option value="super_admin" ${admin.role === 'super_admin' ? 'selected' : ''}>Super Admin</option>
+                        <select class="form-select select-sm" id="role-select-${admin.id}" ${isRoot ? 'disabled' : ''}>
                             <option value="admin" ${admin.role === 'admin' ? 'selected' : ''}>Admin</option>
-                            <option value="moderator" ${admin.role === 'moderator' ? 'selected' : ''}>Moderator</option>
-                            <option value="auditor" ${admin.role === 'auditor' ? 'selected' : ''}>Auditor</option>
+                            <option value="super_admin" ${admin.role === 'super_admin' ? 'selected' : ''}>Super Admin</option>
                         </select>
                     `;
                     controlsHtml = `
                         <button class="btn btn-outline btn-sm" onclick="saveRole(${admin.id})">Save</button>
-                        ${user.id !== admin.id ? `<button class="btn-clear text-red-500 ml-2 text-sm" onclick="removeAdmin(${admin.id})">Remove</button>` : ''}
+                        ${user.id !== admin.id && !isRoot ? `<button class="btn-clear text-red-500 ml-2 text-sm" onclick="removeAdmin(${admin.id})">Remove</button>` : ''}
                     `;
                 }
 
@@ -222,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!email) return;
         const name = prompt('Enter name for the new admin:');
         if (!name) return;
-        const role = prompt('Enter role (super_admin, admin, moderator, auditor):', 'admin');
+        const role = prompt('Enter role (admin, super_admin):', 'admin');
         
         try {
             const res = await fetch(`${API_URL}/superadmin/admins/invite`, {

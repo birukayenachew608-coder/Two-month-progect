@@ -14,20 +14,22 @@
   <header class="header">
     <div class="container header-inner flex-between">
       <a href="index.html" class="logo-link">
-        <div class="logo-box">JL</div>
+        <img src="logo.png" alt="JobLink Ethiopia Logo" class="nav-logo" />
         <span class="logo-text">JobLink <span class="text-primary">Ethiopia</span></span>
       </a>
       
       <!-- Desktop Nav -->
       <nav class="nav-menu">
         <a href="index.html" class="nav-btn">Home</a>
-        <a href="#" data-action="open-login" data-redirect="seeker.html" class="nav-btn">Job Seeker</a>
-        <a href="#" data-action="open-login" data-redirect="employer.html" class="nav-btn">Employer</a>
-        <a href="admin.html" class="nav-btn active">Admin</a>
+        <a href="seeker.html" class="nav-btn">Job Seeker</a>
+        <a href="employer.html" class="nav-btn">Employer</a>
+        <a href="admin.html" class="nav-btn">Admin Dashboard</a>
+        <a href="admin-profile.html" class="nav-btn">Profile</a>
       </nav>
       
       <!-- Auth Actions -->
       <div class="auth-actions">
+        <a href="admin-profile.html" class="btn btn-outline btn-sm">Profile</a>
         <span class="badge badge-super-admin">Super Admin</span>
         <a href="index.html" class="logout-link">Logout</a>
       </div>
@@ -131,7 +133,7 @@
     </div>
   </main>
 
-  <script src="js/main.js"></script>
-  <script src="js/admin-security.js"></script>
+  <script src="js/main.js" defer></script>
+  <script src="js/admin-security.js" defer></script>
 </body>
 </html>

@@ -14,7 +14,7 @@
   <header class="header">
     <div class="container header-inner flex-between">
       <a href="index.html" class="logo-link">
-        <div class="logo-box">JL</div>
+        <img src="logo.png" alt="JobLink Ethiopia Logo" class="nav-logo" />
         <span class="logo-text">JobLink <span class="text-primary">Ethiopia</span></span>
       </a>
 
@@ -28,11 +28,14 @@
 
       <!-- Auth Actions -->
       <div class="auth-actions">
-        <button class="btn btn-icon-small btn-outline" data-action="toggle-theme" title="Toggle Dark Mode" style="border:none; background: transparent;">
-          <svg style="width: 1.25rem; height: 1.25rem; stroke: var(--slate-600);" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        <button class="btn btn-icon-small btn-outline btn-theme-toggle" data-action="toggle-theme" title="Toggle Dark Mode">
+          <svg class="icon-theme-toggle" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
         </button>
-        <span class="user-company-name">TechSolutions PLC</span>
-        <a href="index.html" class="logout-link">Logout</a>
+        <div class="nav-user-badge">
+          <img id="nav-user-avatar" class="nav-avatar-img" src="/uploads/default-avatar.png" alt="Profile" onerror="this.src='/uploads/default-avatar.png'" />
+          <span class="user-company-name">TechSolutions PLC</span>
+        </div>
+        <a href="index.html" class="logout-link" data-action="logout-employer">Logout</a>
       </div>
     </div>
   </header>
@@ -47,11 +50,41 @@
       <button class="btn btn-primary" data-action="switch-tab" data-target="post-job-tab">Post a New Job</button>
     </div>
 
-    <!-- Employer Tabs -->
-    <div class="tabs" style="margin-bottom: 0;">
-      <div class="tab active" data-target="overview-tab" data-action="switch-tab">Overview & Pipeline</div>
-      <div class="tab" data-target="post-job-tab" data-action="switch-tab">Post a New Job</div>
-    </div>
+    <!-- Dashboard layout with sidebar -->
+    <div class="dashboard-with-sidebar">
+      
+      <!-- Employer Profile Sidebar -->
+      <aside class="dashboard-sidebar card" id="employer-sidebar">
+        <div class="sidebar-avatar-wrapper">
+          <img id="sidebar-user-avatar" class="sidebar-avatar-img" src="/uploads/default-avatar.png" alt="Company Logo" onerror="this.src='/uploads/default-avatar.png'" />
+          <label class="avatar-upload-overlay" title="Upload company logo / photo">
+            <svg class="icon-xs" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <input type="file" id="sidebar-employer-upload" class="input-hidden-file user-avatar-input" accept="image/*" />
+          </label>
+        </div>
+        <h3 id="sidebar-user-name" class="font-bold text-slate-900 text-base mb-1">TechSolutions PLC</h3>
+        <span id="sidebar-user-role" class="badge badge-primary-light text-xs mb-2">Employer</span>
+        <p id="sidebar-user-email" class="text-xs text-slate-500 mb-4">employer@techsolutions.et</p>
+
+        <div class="flex flex-col gap-2 w-full">
+          <label class="btn btn-primary btn-sm text-xs cursor-pointer flex items-center justify-center gap-2 m-0">
+            <svg class="icon-xs" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            Change Photo
+            <input type="file" class="input-hidden-file user-avatar-input" accept="image/*" />
+          </label>
+          <button type="button" class="btn btn-outline-danger btn-sm text-xs btn-remove-avatar">Remove Photo</button>
+        </div>
+      </aside>
+
+      <!-- Main Dashboard Content Column -->
+      <div class="dashboard-main-content">
+        <!-- Employer Tabs -->
+        <div class="tabs tabs-no-margin">
+          <div class="tab active" data-target="overview-tab" data-action="switch-tab">Overview & Pipeline</div>
+          <div class="tab" data-target="post-job-tab" data-action="switch-tab">Post a New Job</div>
+          <div class="tab" data-target="manage-jobs-tab" data-action="switch-tab">Manage Jobs</div>
+          <div class="tab" data-target="employer-profile-tab" data-action="switch-tab">Company Profile</div>
+        </div>
 
     <!-- Overview Tab Content -->
     <div id="overview-tab" class="tab-content active flex-col gap-6">
@@ -77,7 +110,7 @@
 
     <div class="flex-between mb-4 mt-4">
       <h2 class="page-title text-xl">Applicant Pipeline</h2>
-      <div class="admin-search-wrapper" style="max-width: 18rem; margin: 0;">
+      <div class="admin-search-wrapper admin-search-wrapper-compact">
         <svg class="admin-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         <input type="text" class="admin-search-input" placeholder="Search by job type...">
       </div>
@@ -146,7 +179,7 @@
          </div>
          <div class="kanban-cards" data-column="hired">
             <!-- Candidate Card -->
-            <div class="kanban-card opacity-90" draggable="true" style="border-left: 3px solid var(--green-500);">
+            <div class="kanban-card opacity-90 kanban-card-green" draggable="true">
                <div class="flex items-start gap-3 mb-3">
                  <div class="card-icon-bg card-icon-circle icon-green card-icon-sm">EH</div>
                  <div>
@@ -166,79 +199,263 @@
     </div> <!-- Close Overview Tab Content -->
 
     <!-- Post Job Tab Content -->
-    <div id="post-job-tab" class="tab-content" style="padding: 2rem 0;">
-      <div class="card" style="max-width: 42rem; margin: 0 auto; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm); padding: 2rem; border-radius: 0.75rem;">
+    <div id="post-job-tab" class="tab-content post-job-tab-wrap">
+      <div class="card post-job-card">
         
         <!-- Header -->
         <div class="flex justify-between items-start mb-2">
-          <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight" style="font-family: ui-serif, Georgia, serif;">Post a Job</h2>
+          <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight post-job-heading">Post a Job</h2>
         </div>
-        <p class="text-sm text-slate-500 mb-6" style="color: #64748b;">Reach thousands of Ethiopian job seekers. Your post is reviewed before it goes live.</p>
+        <p class="text-sm text-slate-muted mb-6">Reach thousands of Ethiopian job seekers. Your post is reviewed before it goes live.</p>
         
 
-        <form id="post-job-form" class="flex-col" style="display: flex; gap: 1.25rem;">
+        <form id="post-job-form" class="post-job-form">
           
           <!-- Row 1 -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-grid-2col">
             <div class="form-group mb-0">
-              <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Company name <span class="text-red-500">*</span></label>
+              <label class="form-label text-slate-700 font-semibold form-label-sm">Company name <span class="text-red-500">*</span></label>
               <input type="text" id="job-company" class="form-input text-sm" required>
             </div>
             <div class="form-group mb-0">
-              <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Your email <span class="text-red-500">*</span></label>
-              <input type="email" class="form-input text-sm" placeholder="we contact you here" required>
+              <label class="form-label text-slate-700 font-semibold form-label-sm">Your email <span class="text-red-500">*</span></label>
+              <input type="email" id="job-contact-email" class="form-input text-sm" placeholder="we contact you here" required>
             </div>
           </div>
           
           <!-- Row 2 -->
           <div class="form-group mb-0">
-            <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Job title <span class="text-red-500">*</span></label>
+            <label class="form-label text-slate-700 font-semibold form-label-sm">Job title <span class="text-red-500">*</span></label>
             <input type="text" id="job-title" class="form-input text-sm" required>
           </div>
 
           <!-- Row 3 -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-grid-2col">
             <div class="form-group mb-0">
-              <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Location</label>
+              <label class="form-label text-slate-700 font-semibold form-label-sm">Location</label>
               <input type="text" id="job-location" class="form-input text-sm" placeholder="e.g. Addis Ababa">
             </div>
             <div class="form-group mb-0">
-              <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Deadline</label>
+              <label class="form-label text-slate-700 font-semibold form-label-sm">Deadline</label>
               <input type="date" id="job-deadline" class="form-input text-sm" required>
             </div>
           </div>
 
           <!-- Row 4 -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-grid-2col">
             <div class="form-group mb-0">
-              <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Salary (optional)</label>
+              <label class="form-label text-slate-700 font-semibold form-label-sm">Salary (optional)</label>
               <input type="text" id="job-salary" class="form-input text-sm" placeholder="e.g. 25,000 ETB">
             </div>
             <div class="form-group mb-0">
-              <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Apply email (optional)</label>
-              <input type="email" id="job-apply-email" class="form-input text-sm" placeholder="where CVs go">
+              <label class="form-label text-slate-700 font-semibold form-label-sm">Job Type <span class="text-red-500">*</span></label>
+              <select id="job-type" class="form-input text-sm" required>
+                <option value="Full-time" selected>Full-time</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Contract">Contract</option>
+                <option value="Internship">Internship</option>
+                <option value="Freelance">Freelance</option>
+              </select>
             </div>
           </div>
 
           <!-- Row 5 -->
-          <div class="form-group mb-0">
-            <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Apply link (optional)</label>
-            <input type="url" id="job-apply-link" class="form-input text-sm" placeholder="https://...">
-            <p class="text-xs text-slate-400 mt-1" style="font-size: 0.75rem;">If you leave apply email and link empty, we'll use your contact email.</p>
+          <div class="form-grid-2col">
+            <div class="form-group mb-0">
+              <label class="form-label text-slate-700 font-semibold form-label-sm">Apply email (optional)</label>
+              <input type="email" id="job-apply-email" class="form-input text-sm" placeholder="where CVs go">
+            </div>
+            <div class="form-group mb-0">
+              <label class="form-label text-slate-700 font-semibold form-label-sm">Apply link (optional)</label>
+              <input type="url" id="job-apply-link" class="form-input text-sm" placeholder="https://...">
+            </div>
           </div>
+          <p class="text-xs text-slate-400 mt-1 text-xs-help">If you leave apply email and link empty, we'll use your contact email.</p>
 
           <!-- Row 6 -->
           <div class="form-group mb-0">
-            <label class="form-label text-slate-700 font-semibold" style="font-size: 0.8rem;">Job description <span class="text-red-500">*</span></label>
+            <label class="form-label text-slate-700 font-semibold form-label-sm">Job description <span class="text-red-500">*</span></label>
             <textarea class="form-input text-sm" rows="4" placeholder="Responsibilities, requirements, how to apply..." required></textarea>
           </div>
 
 
 
           <!-- Submit -->
-          <button type="submit" class="btn btn-block" style="background-color: #0f766e; color: white; padding: 0.75rem; font-weight: 700; font-size: 1rem; margin-top: 0.5rem;">Submit job</button>
+          <button type="submit" class="btn btn-block btn-post-submit">Submit job</button>
         </form>
       </div>
+    </div>
+
+    <!-- Manage Jobs Tab Content -->
+    <div id="manage-jobs-tab" class="tab-content post-job-tab-wrap">
+      <div class="card post-job-card">
+        
+        <div class="flex justify-between items-start mb-6">
+          <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight post-job-heading">Manage Your Postings</h2>
+        </div>
+        
+        <div class="manage-jobs-container" id="manage-jobs-container">
+          <!-- Jobs will be populated here by JS -->
+          <p class="text-slate-500">Loading your jobs...</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Company Profile Tab Content -->
+    <div id="employer-profile-tab" class="tab-content post-job-tab-wrap hidden">
+      <div class="card post-job-card">
+        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight post-job-heading mb-6">Company Profile</h2>
+        <form id="employer-profile-form">
+          <!-- Profile Photo / Logo Upload -->
+          <div class="mb-8 flex items-center gap-6 pb-6 seeker-avatar-row">
+            <div id="employer-profile-pic-preview" class="profile-avatar-preview">
+              <img id="employer-tab-avatar" src="/uploads/default-avatar.png" alt="Company Logo" onerror="this.src='/uploads/default-avatar.png'" />
+            </div>
+            <div>
+              <h3 class="font-semibold text-sm text-slate-800 mb-2">Company Logo / Profile Photo</h3>
+              <div class="flex gap-3 items-center">
+                <label class="btn btn-primary text-xs py-2 cursor-pointer m-0">
+                  Upload Photo
+                  <input type="file" id="employer-profile-upload" accept="image/*" class="input-hidden-file user-avatar-input">
+                </label>
+                <button type="button" id="employer-remove-photo" class="btn btn-outline-danger text-xs py-2 m-0 btn-remove-avatar">Remove</button>
+              </div>
+              <p class="text-xs text-slate-500 mt-2">JPG, GIF or PNG. Max size of 5MB.</p>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="dashboard-column">
+              <div class="form-group">
+                <label class="form-label">Company Name</label>
+                <input type="text" id="employer-profile-company" class="form-input" placeholder="e.g. Google Test Company">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Contact Person Name</label>
+                <input type="text" id="employer-profile-name" class="form-input" placeholder="e.g. Hanna Alemu">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" id="employer-profile-email" class="form-input" placeholder="name@example.com" disabled>
+                <p class="text-xs text-slate-500 mt-1">Email cannot be changed.</p>
+              </div>
+            </div>
+            
+            <div class="dashboard-column">
+              <div class="form-group">
+                <label class="form-label">Phone Number</label>
+                <input type="tel" id="employer-profile-phone" class="form-input" placeholder="e.g. +251 91 234 5678">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Headquarters Location</label>
+                <input type="text" id="employer-profile-location" class="form-input" placeholder="e.g. Bole, Addis Ababa">
+              </div>
+              <div class="form-group">
+                <label class="form-label">About Company</label>
+                <textarea id="employer-profile-bio" class="form-input" rows="3" placeholder="Describe your company..."></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="divider mt-4"></div>
+          <div class="flex justify-end gap-3">
+            <button type="button" class="btn btn-outline" id="employer-profile-cancel">Cancel</button>
+            <button type="submit" class="btn btn-primary" data-action="save-employer-profile">Save Profile</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+      </div> <!-- Close .dashboard-main-content -->
+    </div> <!-- Close .dashboard-with-sidebar -->
+
+    <!-- Edit Job Modal -->
+    <div id="edit-job-modal" class="modal-overlay hidden">
+      <form id="edit-job-form" class="modal-content">
+        
+        <!-- Header (Fixed top) -->
+        <div class="modal-header flex justify-between items-center">
+          <div>
+            <h2 class="text-xl font-bold m-0">Edit Job</h2>
+            <p class="text-sm mt-1 mb-0">Update your job posting details.</p>
+          </div>
+          <button type="button" id="close-edit-modal-btn" class="modal-close-icon" data-action="close-edit-modal" aria-label="Close modal">
+            <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        
+        <!-- Body (Scrollable container) -->
+        <div id="edit-job-modal-body" class="modal-body">
+          <input type="hidden" id="edit-job-id" name="id">
+          
+          <div class="form-grid-2col">
+            <div class="form-group mb-0">
+              <label class="form-label font-semibold text-sm mb-1 block">Company name <span class="text-red-500">*</span></label>
+              <input type="text" id="edit-job-company" name="company_name" class="form-input text-sm" required>
+            </div>
+            <div class="form-group mb-0">
+              <label class="form-label font-semibold text-sm mb-1 block">Your email <span class="text-red-500">*</span></label>
+              <input type="email" id="edit-job-contact-email" name="contact_email" class="form-input text-sm" required>
+            </div>
+          </div>
+          
+          <div class="form-group mb-0">
+            <label class="form-label font-semibold text-sm mb-1 block">Job title <span class="text-red-500">*</span></label>
+            <input type="text" id="edit-job-title" name="title" class="form-input text-sm" required>
+          </div>
+
+          <div class="form-grid-2col">
+            <div class="form-group mb-0">
+              <label class="form-label font-semibold text-sm mb-1 block">Location</label>
+              <input type="text" id="edit-job-location" name="location" class="form-input text-sm" placeholder="e.g. Addis Ababa">
+            </div>
+            <div class="form-group mb-0">
+              <label class="form-label font-semibold text-sm mb-1 block">Deadline <span class="text-red-500">*</span></label>
+              <input type="date" id="edit-job-deadline" name="deadline" class="form-input text-sm" required>
+            </div>
+          </div>
+
+          <div class="form-grid-2col">
+            <div class="form-group mb-0">
+              <label class="form-label font-semibold text-sm mb-1 block">Salary (optional)</label>
+              <input type="text" id="edit-job-salary" name="salary" class="form-input text-sm" placeholder="e.g. 25,000 ETB">
+            </div>
+            <div class="form-group mb-0">
+              <label class="form-label font-semibold text-sm mb-1 block">Job Type <span class="text-red-500">*</span></label>
+              <select id="edit-job-type" name="job_type" class="form-input text-sm" required>
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Contract">Contract</option>
+                <option value="Internship">Internship</option>
+                <option value="Freelance">Freelance</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid-2col">
+            <div class="form-group mb-0">
+              <label class="form-label font-semibold text-sm mb-1 block">Apply email (optional)</label>
+              <input type="email" id="edit-job-apply-email" name="apply_email" class="form-input text-sm" placeholder="where CVs go">
+            </div>
+            <div class="form-group mb-0">
+              <label class="form-label font-semibold text-sm mb-1 block">Apply link (optional)</label>
+              <input type="url" id="edit-job-apply-link" name="apply_link" class="form-input text-sm" placeholder="https://...">
+            </div>
+          </div>
+
+          <div class="form-group mb-0">
+            <label class="form-label font-semibold text-sm mb-1 block">Job description <span class="text-red-500">*</span></label>
+            <textarea id="edit-job-description" name="description" class="form-input text-sm modal-textarea-desc" rows="5" required></textarea>
+          </div>
+        </div>
+        
+        <!-- Sticky Footer (Fixed bottom) -->
+        <div class="modal-footer">
+           <button type="button" id="cancel-edit-job-btn" class="btn btn-outline modal-cancel-btn" data-action="close-edit-modal">Cancel</button>
+           <button type="submit" id="update-job-btn" class="btn btn-primary modal-submit-btn">Update Job</button>
+        </div>
+
+      </form>
     </div>
 
   </main>
@@ -246,7 +463,7 @@
   <!-- Auth Modal -->
   <div id="login-modal" class="modal-overlay hidden">
     <div class="modal-content card">
-      <div class="flex justify-between items-center mb-6">
+      <div class="flex justify-between items-center auth-modal-header">
         <h2 class="text-xl font-bold text-slate-900" id="auth-title">
           Sign In
         </h2>
@@ -258,8 +475,8 @@
       </div>
 
       <!-- Social Logins -->
-      <div class="flex flex-col gap-3 mb-6">
-        <button class="btn btn-outline w-full flex items-center justify-center gap-2" style="padding: 0.625rem">
+      <div class="flex flex-col auth-social-list">
+        <a href="/auth/google?state=employer" id="btn-google-auth-employer" data-action="google-auth" data-role="employer" class="btn btn-outline w-full flex items-center justify-center gap-2 auth-social-btn">
           <svg class="icon-md text-red-500" viewBox="0 0 24 24" fill="currentColor">
             <path
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -274,9 +491,8 @@
               fill="#EA4335" />
           </svg>
           <span class="font-medium text-sm">Continue with Google</span>
-        </button>
-        <button type="button" onclick="window.location.href='/api/auth/linkedin?role=employer'" class="btn btn-outline w-full flex items-center justify-center gap-2"
-          style="padding: 0.625rem; border-color: #0077b5; color: #0077b5">
+        </a>
+        <button type="button" data-action="linkedin-auth" data-role="employer" class="btn btn-outline w-full flex items-center justify-center gap-2 btn-linkedin">
           <svg class="icon-md" viewBox="0 0 24 24" fill="currentColor">
             <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
           </svg>
@@ -284,30 +500,30 @@
         </button>
       </div>
 
-      <div class="flex items-center gap-3 mb-6">
+      <div class="flex items-center auth-divider-wrap">
         <div class="flex-grow border-t border-slate-200"></div>
         <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Or email</span>
         <div class="flex-grow border-t border-slate-200"></div>
       </div>
 
       <form id="login-form">
-        <div class="form-group" id="name-group" style="display: none">
+        <div class="form-group hidden auth-form-group" id="name-group">
           <label class="form-label">Full Name</label>
-          <input type="text" class="form-input" id="auth-name" placeholder="Abebe Kebede" />
+          <input type="text" class="form-input auth-input" id="auth-name" placeholder="Abebe Kebede" />
         </div>
-        <div class="form-group">
+        <div class="form-group auth-form-group">
           <label class="form-label">Email Address</label>
-          <input type="email" class="form-input" id="auth-email" placeholder="name@example.com" required />
+          <input type="email" class="form-input auth-input" id="auth-email" placeholder="name@example.com" required />
         </div>
-        <div class="form-group">
+        <div class="form-group auth-form-group">
           <label class="form-label">Password</label>
-          <input type="password" class="form-input" id="auth-password" placeholder="••••••••" required />
+          <input type="password" class="form-input auth-input" id="auth-password" placeholder="••••••••" required />
         </div>
-        <button type="submit" class="btn btn-primary w-full mt-2" id="auth-submit">
+        <button type="submit" class="btn btn-primary w-full auth-submit-btn" id="auth-submit">
           Sign In
         </button>
       </form>
-      <p class="text-sm text-center text-slate-600 mt-4 flex justify-center gap-1">
+      <p class="text-sm text-center text-slate-600 flex justify-center gap-1 auth-footer-text">
         <span id="auth-toggle-text">Don't have an account?</span>
         <button class="text-primary font-medium btn-clear" data-action="toggle-auth">
           Register here
@@ -316,6 +532,6 @@
     </div>
   </div>
 
-  <script src="js/main.js"></script>
+  <script src="js/main.js" defer></script>
 </body>
 </html>

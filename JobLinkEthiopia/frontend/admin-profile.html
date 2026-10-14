@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Profile - JobLink Ethiopia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .admin-profile-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .admin-profile-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .profile-summary-card {
+      background: var(--bg-card, #ffffff);
+      border: 1px solid var(--slate-200, #e2e8f0);
+      border-radius: 1rem;
+      padding: 2rem 1.75rem;
+      text-align: center;
+      position: sticky;
+      top: 6rem;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+    .avatar-upload-wrapper {
+      margin-bottom: 1.25rem;
+    }
+    .profile-avatar-container {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto;
+      border-radius: 50%;
+      background: var(--blue-100, #dbeafe);
+      color: var(--blue-700, #1d4ed8);
+      font-size: 2.25rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(14, 165, 233, 0.25);
+      border: 3px solid rgba(14, 165, 233, 0.4);
+      overflow: hidden;
+      flex-shrink: 0;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .profile-avatar-container:hover {
+      border-color: var(--primary, #0284c7);
+      box-shadow: 0 6px 18px rgba(14, 165, 233, 0.35);
+      transform: scale(1.02);
+    }
+    .profile-avatar-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 50%;
+    }
+    .avatar-camera-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 1.25rem;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      border-radius: 50%;
+    }
+    .profile-avatar-container:hover .avatar-camera-overlay {
+      opacity: 1;
+    }
+    .avatar-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.85rem;
+    }
+    .avatar-controls #upload-avatar-btn {
+      padding: 0.45rem 0.85rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border-radius: 0.375rem;
+      cursor: pointer;
+    }
+    .btn-remove-photo {
+      background: transparent;
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 0.45rem 0.85rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-remove-photo:hover {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.6);
+      color: #dc2626;
+    }
+    .avatar-help-text {
+      font-size: 0.725rem;
+      color: var(--slate-400, #94a3b8);
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    [data-theme="dark"] .profile-avatar-container {
+      background: rgba(30, 41, 59, 0.8);
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+    [data-theme="dark"] .btn-remove-photo {
+      color: #f87171;
+      border-color: rgba(248, 113, 113, 0.3);
+    }
+    [data-theme="dark"] .btn-remove-photo:hover {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border-color: rgba(248, 113, 113, 0.5);
+    }
+    .profile-summary-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--slate-900, #0f172a);
+      margin: 0 0 0.35rem 0;
+    }
+    .profile-summary-email {
+      font-size: 0.875rem;
+      color: var(--slate-500, #64748b);
+      margin: 0 0 1rem 0;
+      word-break: break-all;
+    }
+    .profile-meta-list {
+      border-top: 1px solid var(--slate-200, #e2e8f0);
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .profile-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8125rem;
+    }
+    .profile-meta-label {
+      color: var(--slate-400, #94a3b8);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-transform: uppercase;
+      font-size: 0.725rem;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+    .profile-meta-val {
+      font-weight: 600;
+      color: var(--slate-800, #1e293b);
+    }
+    [data-theme="dark"] .profile-summary-card {
+      background: var(--bg-card, #111827);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    [data-theme="dark"] .profile-meta-list {
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    [data-theme="dark"] .profile-meta-val {
+      color: var(--slate-200, #e2e8f0);
+    }
+    [data-theme="dark"] .profile-summary-title {
+      color: #ffffff;
+    }
+    .form-section-card {
+      background: var(--bg-card, #ffffff);
+      border: 1px solid var(--slate-200, #e2e8f0);
+      border-radius: 1rem;
+      padding: 1.75rem 2rem;
+      margin-bottom: 1.75rem;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+    [data-theme="dark"] .form-section-card {
+      background: var(--bg-card, #111827);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    .form-section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--slate-200, #e2e8f0);
+    }
+    [data-theme="dark"] .form-section-header {
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    .form-section-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--slate-900, #0f172a);
+      margin: 0;
+    }
+    [data-theme="dark"] .form-section-title {
+      color: #ffffff;
+    }
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    @media (max-width: 640px) {
+      .form-grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header Navigation -->
+  <header class="header">
+    <div class="container header-inner flex-between">
+      <a href="index.html" class="logo-link">
+        <img src="logo.png" alt="JobLink Ethiopia Logo" class="nav-logo" />
+        <span class="logo-text">JobLink <span class="text-primary">Ethiopia</span></span>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav class="nav-menu">
+        <a href="index.html" class="nav-btn">Home</a>
+        <a href="seeker.html" class="nav-btn">Job Seeker</a>
+        <a href="employer.html" class="nav-btn">Employer</a>
+        <a href="admin.html" class="nav-btn">Admin Dashboard</a>
+      </nav>
+
+      <!-- Auth Actions -->
+      <div class="auth-actions">
+        <button class="btn btn-icon-small btn-outline btn-theme-toggle" data-action="toggle-theme" title="Toggle Dark Mode">
+          <svg class="icon-theme-toggle" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+        <span class="badge badge-super-admin" id="header-admin-badge">Admin</span>
+        <a href="index.html" class="logout-link">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container page-content">
+    <div class="page-header mb-6">
+      <div class="header-content">
+        <div class="breadcrumb mb-2">
+          <a href="admin.html" class="back-link">&larr; Back to Admin Dashboard</a>
+        </div>
+        <h1 class="page-title icon-title">
+          <svg class="icon-lg text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          Admin Profile &amp; Settings
+        </h1>
+        <p class="page-description">Manage administrator credentials, verify system role, and configure security controls.</p>
+      </div>
+      <div class="auth-actions">
+        <a href="admin.html" class="btn btn-outline flex items-center gap-2">
+          <i class="fa-solid fa-gauge"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="admin-security.html" id="btn-security-settings" class="btn btn-primary flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Super Admin Settings</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="admin-profile-grid">
+      <!-- Left Column: Profile Overview Card -->
+      <div>
+        <div class="profile-summary-card">
+          <!-- Avatar Preview Container & Controllers -->
+          <div class="avatar-upload-wrapper">
+            <div class="profile-avatar-container" id="admin-avatar-preview" title="Upload admin photo">
+              <img id="admin-avatar-img" src="" alt="Admin Photo" style="display: none;" />
+              <span id="admin-avatar-initials">AD</span>
+              <div class="avatar-camera-overlay">
+                <i class="fa-solid fa-camera"></i>
+              </div>
+            </div>
+
+            <input type="file" id="admin-avatar-input" accept="image/*" style="display: none;" />
+
+            <div class="avatar-controls">
+              <button type="button" id="upload-avatar-btn" class="btn btn-primary btn-sm flex items-center justify-center gap-1">
+                <i class="fa-solid fa-cloud-arrow-up text-xs mr-1"></i>
+                <span>Upload Photo</span>
+              </button>
+              <button type="button" id="remove-avatar-btn" class="btn btn-remove-photo btn-sm flex items-center justify-center gap-1">
+                <i class="fa-solid fa-trash-can text-xs mr-1"></i>
+                <span>Remove</span>
+              </button>
+            </div>
+            <p class="avatar-help-text">JPG, GIF or PNG. Max size of 5MB.</p>
+          </div>
+          <h2 class="profile-summary-title" id="summary-name">Loading...</h2>
+          <p class="profile-summary-email" id="summary-email">admin@joblink.et</p>
+          <div id="summary-role-badge">
+            <span class="badge badge-super-admin">Admin</span>
+          </div>
+
+          <div class="profile-meta-list">
+            <div class="profile-meta-row">
+              <span class="profile-meta-label"><i class="fa-solid fa-user-shield text-slate-400"></i> Role Level</span>
+              <span class="profile-meta-val" id="summary-role-text">Administrator</span>
+            </div>
+            <div class="profile-meta-row">
+              <span class="profile-meta-label"><i class="fa-solid fa-lock text-slate-400"></i> 2FA Protection</span>
+              <span class="profile-meta-val text-green-500 font-semibold" id="summary-2fa"><i class="fa-solid fa-circle-check text-green-500 mr-1"></i> Active</span>
+            </div>
+            <div class="profile-meta-row">
+              <span class="profile-meta-label"><i class="fa-solid fa-calendar text-slate-400"></i> Registered</span>
+              <span class="profile-meta-val" id="summary-created">-</span>
+            </div>
+            <div class="profile-meta-row">
+              <span class="profile-meta-label"><i class="fa-solid fa-circle-dot text-slate-400"></i> Status</span>
+              <span class="profile-meta-val text-green-500">Active</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Account Forms -->
+      <div>
+        <!-- Profile Information Card -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div class="card-icon-bg card-icon-sm auth-icon-color">
+              <i class="fa-solid fa-id-card"></i>
+            </div>
+            <div>
+              <h2 class="form-section-title">Account Information</h2>
+              <p class="text-xs text-slate-400">Update your administrator name, email, and role authorization.</p>
+            </div>
+          </div>
+
+          <form id="admin-profile-form">
+            <div class="form-grid-2 mb-4">
+              <div class="form-group">
+                <label for="admin-name" class="form-label" style="font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-400); margin-bottom: 0.4rem; display: block;">Full Name</label>
+                <input type="text" id="admin-name" name="name" class="form-input bg-white w-full" placeholder="e.g. Biruk Ayenachew" required />
+              </div>
+
+              <div class="form-group">
+                <label for="admin-email" class="form-label" style="font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-400); margin-bottom: 0.4rem; display: block;">Email Address</label>
+                <input type="email" id="admin-email" name="email" class="form-input bg-white w-full" placeholder="e.g. admin@joblink.et" required />
+              </div>
+            </div>
+
+            <!-- Restricted Role Dropdown -->
+            <div class="form-group mb-6">
+              <label for="admin-role" class="form-label" style="font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-400); margin-bottom: 0.4rem; display: block;">Current Role</label>
+              <select id="admin-role" name="role" class="form-select w-full" style="padding: 0.65rem 0.875rem; border-radius: 0.5rem; border: 1px solid var(--slate-200); background-color: var(--bg-card); color: var(--slate-900);">
+                <option value="admin">Admin</option>
+                <option value="super_admin">Super Admin</option>
+              </select>
+              <p class="text-xs text-slate-400 mt-2">
+                <i class="fa-solid fa-circle-info mr-1"></i> System permissions are strictly governed by Admin and Super Admin roles.
+              </p>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-3" style="border-top: 1px solid var(--slate-100);">
+              <button type="submit" id="btn-save-profile" class="btn btn-primary px-6">
+                <i class="fa-solid fa-floppy-disk mr-2"></i> Save Profile
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Security & Password Card -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div class="card-icon-bg card-icon-sm card-icon-red">
+              <i class="fa-solid fa-key"></i>
+            </div>
+            <div>
+              <h2 class="form-section-title">Change Password</h2>
+              <p class="text-xs text-slate-400">Ensure your administrative account uses a strong, unique password.</p>
+            </div>
+          </div>
+
+          <form id="admin-password-form">
+            <div class="form-group mb-4">
+              <label for="current-password" class="form-label" style="font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-400); margin-bottom: 0.4rem; display: block;">Current Password</label>
+              <input type="password" id="current-password" name="currentPassword" class="form-input bg-white w-full" placeholder="Enter current password" required />
+            </div>
+
+            <div class="form-grid-2 mb-6">
+              <div class="form-group">
+                <label for="new-password" class="form-label" style="font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-400); margin-bottom: 0.4rem; display: block;">New Password</label>
+                <input type="password" id="new-password" name="newPassword" class="form-input bg-white w-full" placeholder="Strong password required" required minlength="8" />
+                <p class="text-xs text-slate-400 mt-1">At least 8 characters with uppercase, lowercase, number, and special character.</p>
+              </div>
+
+              <div class="form-group">
+                <label for="confirm-password" class="form-label" style="font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-400); margin-bottom: 0.4rem; display: block;">Confirm New Password</label>
+                <input type="password" id="confirm-password" name="confirmPassword" class="form-input bg-white w-full" placeholder="Re-enter new password" required minlength="8" />
+              </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-3" style="border-top: 1px solid var(--slate-100);">
+              <button type="submit" id="btn-update-password" class="btn btn-outline px-6">
+                <i class="fa-solid fa-shield-check mr-2"></i> Update Password
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- 2FA & Multi-Factor Status Card -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div class="card-icon-bg card-icon-sm icon-green">
+              <i class="fa-solid fa-mobile-screen-button"></i>
+            </div>
+            <div>
+              <h2 class="form-section-title">Two-Factor Authentication (2FA)</h2>
+              <p class="text-xs text-slate-400">TOTP Authenticator (Google Authenticator) protection status.</p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between p-4 rounded-lg" style="background: var(--slate-50); border: 1px solid var(--slate-200);">
+            <div class="flex items-center gap-3">
+              <div class="text-green-500" style="font-size: 1.5rem;">
+                <i class="fa-solid fa-shield-halved"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-sm text-slate-900" id="mfa-status-title">2FA Protection Enabled</h3>
+                <p class="text-xs text-slate-500">Your account requires a 6-digit TOTP code for each administrator sign-in.</p>
+              </div>
+            </div>
+            <span class="badge badge-green" id="mfa-badge">Enforced</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/main.js" defer></script>
+  <script src="js/admin-profile.js" defer></script>
+</body>
+</html>

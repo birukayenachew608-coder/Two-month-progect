@@ -7,88 +7,16 @@
   <title>Job Details - JobLink Ethiopia</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="css/styles.css">
-  <style>
-    .job-details-hero {
-      background: var(--bg-card, #ffffff);
-      border-radius: 1.5rem;
-      padding: 3rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-      border: 1px solid var(--slate-200);
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      width: 100%;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .job-details-hero::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 6px;
-      background: linear-gradient(90deg, var(--primary-500), var(--secondary-500));
-    }
-
-    .job-details-content {
-      background: var(--bg-card, #ffffff);
-      padding: 3rem;
-      border-radius: 1.5rem;
-      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-      border: 1px solid var(--slate-200);
-      margin-bottom: 4rem;
-      width: 100%;
-    }
-
-    .job-meta-badges {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      margin-bottom: 2.5rem;
-    }
-
-    .job-meta-badges .badge {
-      font-size: 0.875rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: 2rem;
-    }
-
-    .job-desc-text {
-      line-height: 1.85;
-      color: var(--slate-600);
-      font-size: 1.25rem;
-      white-space: pre-wrap;
-    }
-
-    .job-actions {
-      display: flex;
-      gap: 1rem;
-      width: 100%;
-      border-top: 1px solid var(--slate-200);
-      padding-top: 2rem;
-      margin-top: auto;
-    }
-
-    .info-card {
-      background: var(--slate-50);
-      padding: 1.5rem;
-      border-radius: 1rem;
-      border: 1px solid var(--slate-200);
-      flex: 1;
-    }
-  </style>
 </head>
 
 <body>
   <header class="header">
     <div class="container header-inner flex-between">
       <a href="index.html" class="logo-link">
-        <div class="logo-box">JL</div>
+        <img src="logo.png" alt="JobLink Ethiopia Logo" class="nav-logo" />
         <span class="logo-text">JobLink <span class="text-primary">Ethiopia</span></span>
       </a>
       <nav class="nav-menu">
@@ -97,9 +25,8 @@
         <a href="employer.html" class="nav-btn">Employer</a>
       </nav>
       <div class="auth-actions">
-        <button class="btn btn-icon-small btn-outline" data-action="toggle-theme" title="Toggle Dark Mode"
-          style="border:none; background: transparent;">
-          <svg style="width: 1.25rem; height: 1.25rem; stroke: var(--slate-600);" fill="none" viewBox="0 0 24 24">
+        <button class="btn btn-icon-small btn-outline btn-theme-toggle" data-action="toggle-theme" title="Toggle Dark Mode">
+          <svg class="icon-theme-toggle" fill="none" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
           </svg>
@@ -108,32 +35,33 @@
     </div>
   </header>
 
-  <main class="page-content" style="max-width: 1000px; margin: 0 auto; padding: 4rem 1.5rem; width: 100%;">
+  <main class="page-content job-details-page-content">
     <div id="loading" class="text-center py-12">
       <p class="text-slate-500 text-lg">Loading job details...</p>
     </div>
-    <div id="job-content" style="display: none; width: 100%;">
+    <div id="job-content" class="w-full hidden">
       <div class="job-details-hero">
-        <div class="flex flex-col gap-2 mb-2 text-slate-800" style="font-size: 0.95rem;">
+        <div class="flex flex-col gap-2 mb-2 text-slate-800 job-details-meta-list">
           <div>
-            <span class="text-slate-500 font-semibold mr-2">Project Name:</span>
-            <span id="j-title" class="font-medium">Job Title</span>
+            <span class="job-meta-label font-bold text-slate-500 mr-2">Work:</span>
+            <span id="j-title" class="job-meta-val font-normal">Job Title</span>
+            <span id="j-edited-badge" class="badge badge-edited hidden text-xs bg-slate-200 text-slate-600 rounded px-2 py-1 ml-2 font-medium">(Edited)</span>
           </div>
           <div>
-            <span class="text-slate-500 font-semibold mr-2">Company Name:</span>
-            <span id="j-company" class="font-medium">Company Name</span>
+            <span class="job-meta-label font-bold text-slate-500 mr-2">Company Name:</span>
+            <span id="j-company" class="job-meta-val font-normal">Company Name</span>
           </div>
           <div>
-            <span class="text-slate-500 font-semibold mr-2">job type:</span>
-            <span id="j-type" class="font-medium">Full-time</span>
+            <span class="job-meta-label font-bold text-slate-500 mr-2">Job Type:</span>
+            <span id="j-type" class="job-meta-val badge badge-green font-normal">Full-time</span>
           </div>
           <div>
-            <span class="text-slate-500 font-semibold mr-2">Location:</span>
-            <span id="j-location" class="font-medium">Location</span>
+            <span class="job-meta-label font-bold text-slate-500 mr-2">Location:</span>
+            <span id="j-location" class="job-meta-val font-normal">Location</span>
           </div>
           <div>
-            <span class="text-slate-500 font-semibold mr-2">Salary:</span>
-            <span id="j-salary" class="font-medium">Salary</span>
+            <span class="job-meta-label font-bold text-slate-500 mr-2">Salary:</span>
+            <span id="j-salary" class="job-meta-val font-normal">Salary</span>
           </div>
         </div>
 
@@ -141,6 +69,7 @@
           <button id="btn-apply"
             class="btn btn-primary px-6 py-2 shadow-md hover:-translate-y-1 transition-transform">Apply Now</button>
           <button id="btn-save" class="btn btn-outline px-6 py-2 hover:bg-slate-50">Save Job</button>
+          <a id="btn-company-profile" href="#" class="btn btn-outline px-6 py-2 hover:bg-slate-50">View Company Profile</a>
         </div>
       </div>
 
@@ -154,12 +83,12 @@
           <h3 class="text-2xl font-bold text-slate-900 mb-6">Additional Information</h3>
           <div class="flex gap-6 flex-wrap">
             <div class="info-card">
-              <span class="text-sm font-bold text-slate-400 uppercase tracking-wider block mb-2">Posted Date</span>
-              <span id="j-posted" class="text-slate-800 font-semibold text-xl"></span>
+              <span class="info-card-label font-bold text-slate-400 uppercase tracking-wider block mb-2">Posted Date</span>
+              <span id="j-posted" class="info-card-val text-slate-800 font-normal"></span>
             </div>
             <div class="info-card">
-              <span class="text-sm font-bold text-slate-400 uppercase tracking-wider block mb-2">Deadline</span>
-              <span id="j-deadline" class="text-slate-800 font-semibold text-xl"></span>
+              <span class="info-card-label font-bold text-slate-400 uppercase tracking-wider block mb-2">Deadline</span>
+              <span id="j-deadline" class="info-card-val text-slate-800 font-normal"></span>
             </div>
           </div>
         </div>
@@ -167,46 +96,52 @@
     </div>
   </main>
 
-  <script src="js/main.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const jobId = urlParams.get('id');
+  <!-- Company Profile Modal -->
+  <div id="company-profile-modal" class="modal hidden">
+    <div class="modal-content card" style="max-width: 32rem; padding: 2rem;">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-200">
+        <h3 class="text-xl font-bold text-slate-900" id="cp-modal-heading">Company Profile</h3>
+        <button type="button" class="btn-clear text-slate-500 hover:text-slate-700" id="btn-close-company-modal" title="Close">
+          <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 22px; height: 22px;">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="flex items-center gap-4 mb-6">
+        <div id="cp-modal-avatar" class="card-icon-bg card-icon-slate" style="width: 56px; height: 56px; font-size: 1.25rem; font-weight: 700; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center;">
+          CO
+        </div>
+        <div>
+          <h4 id="cp-modal-company-name" class="text-lg font-bold text-slate-900">Company Name</h4>
+          <p id="cp-modal-location" class="text-sm text-slate-500">Location</p>
+        </div>
+      </div>
+      <div class="space-y-3 p-4 rounded-xl bg-slate-50 border border-slate-200 mb-6 text-sm" id="cp-modal-details">
+        <p class="flex justify-between py-1 border-b border-slate-100">
+          <strong class="text-slate-600 font-bold">Employer:</strong>
+          <span id="cp-modal-emp-name" class="text-slate-800 font-normal">Verified Organization</span>
+        </p>
+        <p class="flex justify-between py-1 border-b border-slate-100">
+          <strong class="text-slate-600 font-bold">Headquarters:</strong>
+          <span id="cp-modal-emp-location" class="text-slate-800 font-normal">Addis Ababa, Ethiopia</span>
+        </p>
+        <p class="flex justify-between py-1 border-b border-slate-100">
+          <strong class="text-slate-600 font-bold">Contact Email:</strong>
+          <span id="cp-modal-emp-email" class="text-slate-800 font-normal">contact@example.com</span>
+        </p>
+        <p class="flex justify-between py-1">
+          <strong class="text-slate-600 font-bold">Platform Status:</strong>
+          <span class="badge badge-green font-normal">Verified Employer</span>
+        </p>
+      </div>
+      <div class="flex justify-end gap-3">
+        <button type="button" class="btn btn-outline px-6 py-2" id="btn-dismiss-company-modal">Close</button>
+      </div>
+    </div>
+  </div>
 
-      if (!jobId) {
-        document.getElementById('loading').innerHTML = '<p class="text-red-500">Invalid job ID.</p>';
-        return;
-      }
-
-      fetch(`/api/jobs/${jobId}`)
-        .then(res => {
-          if (!res.ok) throw new Error('Job not found');
-          return res.json();
-        })
-        .then(job => {
-          document.getElementById('loading').style.display = 'none';
-          document.getElementById('job-content').style.display = 'block';
-
-          document.getElementById('j-title').textContent = job.title;
-          document.getElementById('j-company').textContent = job.company_name;
-          document.getElementById('j-type').textContent = job.job_type || 'Full-time';
-          document.getElementById('j-location').textContent = job.location;
-          document.getElementById('j-salary').textContent = job.salary || 'Salary not specified';
-          document.getElementById('j-description').textContent = job.description;
-          document.getElementById('j-posted').textContent = new Date(job.created_at).toLocaleDateString();
-          document.getElementById('j-deadline').textContent = new Date(job.deadline).toLocaleDateString();
-
-          const btnApply = document.getElementById('btn-apply');
-          btnApply.onclick = () => window.applyForJob(job.id);
-
-          const btnSave = document.getElementById('btn-save');
-          btnSave.onclick = () => window.saveJob(job.id);
-        })
-        .catch(err => {
-          document.getElementById('loading').innerHTML = '<p class="text-red-500">Error loading job details. The job may have been removed.</p>';
-        });
-    });
-  </script>
+  <script src="js/main.js" defer></script>
+  <script src="js/job-details.js" defer></script>
 </body>
 
 </html>
