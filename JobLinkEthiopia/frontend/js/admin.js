@@ -104,14 +104,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkSuperAdminVisibility();
 
     function checkSuperAdminVisibility() {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-            const user = JSON.parse(userStr);
-            if (user.role !== 'super_admin') {
-                const superAdminLink = document.querySelector('a[href="admin-security.html"]');
-                if (superAdminLink) {
-                    superAdminLink.style.display = 'none';
+        let user = null;
+        try {
+            user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user'));
+        } catch (e) {}
+
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        let role = user ? user.role : null;
+        if (token) {
+            try {
+                const parts = token.split('.');
+                if (parts.length === 3) {
+                    const base64Url = parts[1];
+                    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+                    const decoded = JSON.parse(jsonPayload);
+                    if (decoded && decoded.role) role = decoded.role;
                 }
+            } catch (e) {}
+        }
+
+        const isSuperAdmin = (role === 'super_admin');
+        const securityLinks = document.querySelectorAll('a[href*="admin-security"], #btn-super-admin-settings, #btn-security-settings, .security-nav-link');
+        securityLinks.forEach(link => {
+            if (!isSuperAdmin) {
+                link.style.display = 'none';
+                link.classList.add('hidden');
+                link.setAttribute('aria-hidden', 'true');
+                link.setAttribute('disabled', 'true');
+                link.style.pointerEvents = 'none';
+            } else {
+                link.style.display = '';
+                link.classList.remove('hidden');
+                link.removeAttribute('aria-hidden');
+                link.removeAttribute('disabled');
+                link.style.pointerEvents = '';
+            }
+        });
+
+        const deniedMsg = sessionStorage.getItem('admin_access_denied');
+        if (deniedMsg) {
+            sessionStorage.removeItem('admin_access_denied');
+            if (typeof showToast === 'function') {
+                showToast(deniedMsg, 'error');
+            } else {
+                alert(deniedMsg);
             }
         }
     }

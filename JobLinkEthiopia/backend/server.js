@@ -12,6 +12,7 @@ const employerRoutes = require('./routes/employerRoutes');
 const userRoutes = require('./routes/userRoutes');
 const alertRoutes = require('./routes/alertRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
 app.set('trust proxy', 1 /* number of proxies between user and server */);
@@ -22,7 +23,11 @@ const fs = require('fs');
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({
+    verify: (req, res, buf) => {
+        req.rawBody = buf;
+    }
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
@@ -62,8 +67,8 @@ const setNoCacheHeaders = (req, res, next) => {
     next();
 };
 
-// Strictly protect admin-security.html with backend authorizeRole middleware
-app.get(['/admin-security.html', '/admin-security'], setNoCacheHeaders, authorizeRole('admin', 'super_admin'), (req, res) => {
+// Strictly protect admin-security.html with backend authorizeRole middleware: super_admin ONLY
+app.get(['/admin-security.html', '/admin-security'], setNoCacheHeaders, authorizeRole('super_admin'), (req, res) => {
     res.sendFile(path.join(protectedPagesPath, 'admin-security.html'));
 });
 
@@ -100,6 +105,7 @@ app.use('/api/alerts', alertRoutes);
 app.use('/api/employer', employerRoutes);
 app.use('/api/employers', employerRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Fallback to index.html for root route
 app.get('/', (req, res) => {

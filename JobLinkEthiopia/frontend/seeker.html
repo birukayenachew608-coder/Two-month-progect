@@ -220,12 +220,13 @@
           <h2 class="card-title-lg mb-4">Configure Alert</h2>
           <form id="alert-form">
             <div class="form-group">
-              <label class="form-label">Job Sector</label>
-              <select class="form-input" id="alert-sector">
-                <option value="Software & Tech">Software & Tech</option>
-                <option value="Marketing">Marketing</option>
-                <option value="Finance">Finance</option>
-              </select>
+              <label class="form-label" for="job-sector">Job Sector</label>
+              <input type="text" class="form-input" list="sector-options" id="job-sector" placeholder="Type or select a sector..." autocomplete="off">
+              <datalist id="sector-options">
+                <option value="Software & Tech"></option>
+                <option value="Marketing"></option>
+                <option value="Finance"></option>
+              </datalist>
             </div>
             <div class="form-group">
               <label class="form-label">Location</label>
@@ -235,7 +236,6 @@
               <label class="form-label">Notification via</label>
               <div class="filter-options">
                 <label class="filter-label"><input type="checkbox" id="alert-email" checked class="checkbox-primary"><span class="filter-text">Email Notification</span></label>
-                <label class="filter-label"><input type="checkbox" id="alert-telegram" checked class="checkbox-primary"><span class="filter-text">Telegram Bot Alert</span></label>
               </div>
             </div>
             <button type="submit" class="btn btn-primary btn-block mt-4">Save Alert Preferences</button>

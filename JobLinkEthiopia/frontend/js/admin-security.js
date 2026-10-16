@@ -1,24 +1,81 @@
+// Strict Super Admin Page Guard - Executes immediately
+(function enforceSuperAdminAccess() {
+    function decodeJwtPayload(tokenStr) {
+        if (!tokenStr || typeof tokenStr !== 'string') return null;
+        try {
+            const parts = tokenStr.split('.');
+            if (parts.length !== 3) return null;
+            const base64Url = parts[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    const token = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token') ||
+                  localStorage.getItem('accessToken') || localStorage.getItem('token');
+    const userStr = sessionStorage.getItem('user') || localStorage.getItem('user');
+    let user = null;
+    try { user = typeof userStr === 'string' ? JSON.parse(userStr) : userStr; } catch (e) {}
+
+    const payload = decodeJwtPayload(token);
+    const resolvedRole = (payload && payload.role) || (user && user.role);
+
+    if (!token && !user) {
+        window.location.replace('admin-login.html');
+        return;
+    }
+
+    if (resolvedRole !== 'super_admin') {
+        console.warn('[RBAC] Access Denied: Super Admin role required. Redirecting to /admin.html...');
+        sessionStorage.setItem('admin_access_denied', 'Forbidden: Super Admin access required');
+        window.location.replace('admin.html');
+        return;
+    }
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token') ||
+                  localStorage.getItem('accessToken') || localStorage.getItem('token');
     
     // Check Super Admin status
-    const userStr = localStorage.getItem('user');
-    if (!userStr) {
-        window.location.href = 'index.html';
+    const userStr = sessionStorage.getItem('user') || localStorage.getItem('user');
+    if (!userStr && !token) {
+        window.location.replace('admin-login.html');
         return;
     }
     
-    const user = JSON.parse(userStr);
-    const isSuperAdmin = user.role === 'super_admin';
+    let user = null;
+    try { user = JSON.parse(userStr); } catch (e) {}
+
+    // Decode token to verify role
+    let tokenRole = null;
+    if (token) {
+        try {
+            const base64Url = token.split('.')[1];
+            if (base64Url) {
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const decoded = JSON.parse(decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+                tokenRole = decoded.role;
+            }
+        } catch (e) {}
+    }
+
+    const resolvedRole = tokenRole || (user && user.role);
+    if (resolvedRole !== 'super_admin') {
+        console.warn('[RBAC] Forbidden: Super Admin access required. Redirecting to admin.html');
+        sessionStorage.setItem('admin_access_denied', 'Forbidden: Super Admin access required');
+        window.location.replace('admin.html');
+        return;
+    }
+
+    const isSuperAdmin = true;
 
     const ipList = document.getElementById('ip-list');
     const formIp = document.getElementById('form-ip');
-
-    // Hide Add IP form if not super_admin
-    if (!isSuperAdmin && formIp) {
-        formIp.style.display = 'none';
-    }
 
     async function loadIps() {
         try {

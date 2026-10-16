@@ -5,6 +5,7 @@ const { authenticateToken, verifyEmployer, verifySeeker } = require('../middlewa
 
 router.post('/', verifyEmployer, jobController.createJob);
 router.get('/', jobController.getJobs);
+router.get('/freemium-status', verifyEmployer, jobController.getFreemiumStatus);
 router.get('/employer/:employerId/analytics', verifyEmployer, jobController.getEmployerAnalytics);
 // Saved Jobs (must be declared before /:id)
 router.post('/saved', verifySeeker, jobController.saveJob);

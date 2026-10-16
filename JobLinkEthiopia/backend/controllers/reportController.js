@@ -92,7 +92,7 @@ exports.deleteReport = async (req, res) => {
         // Check if any reports remain for this job
         const [remaining] = await pool.query('SELECT COUNT(*) as count FROM reports WHERE job_id = ?', [jobId]);
         if (remaining[0] && remaining[0].count === 0) {
-            await pool.query('UPDATE jobs SET report_reason = NULL, status = "active" WHERE id = ?', [jobId])
+            await pool.query('UPDATE jobs SET report_reason = NULL, status = CASE WHEN payment_status = "pending" THEN "pending" ELSE "active" END WHERE id = ?', [jobId])
                 .catch(err => console.error('Error clearing job report status:', err));
         }
 

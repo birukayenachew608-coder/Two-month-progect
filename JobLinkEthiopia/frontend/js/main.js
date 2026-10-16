@@ -912,6 +912,41 @@ document.addEventListener('DOMContentLoaded', async () => {
           return;
         }
       }
+
+      // Strict Super Admin Page Guard for admin-security.html
+      const payload = parseJwtPayload(token);
+      const effectiveRole = (payload && payload.role) || (user && user.role) || currentRole;
+
+      if (currentPage === 'admin-security.html') {
+        if (effectiveRole !== 'super_admin') {
+          console.warn('[RBAC] Access denied: Super Admin required for admin-security.html. Redirecting to admin.html...');
+          sessionStorage.setItem('admin_access_denied', 'Forbidden: Super Admin access required');
+          window.location.replace('admin.html');
+          return;
+        }
+      }
+
+      // If user is on admin.html and was redirected due to access denied, display warning toast
+      if (currentPage === 'admin.html') {
+        const deniedMsg = sessionStorage.getItem('admin_access_denied');
+        if (deniedMsg) {
+          sessionStorage.removeItem('admin_access_denied');
+          if (typeof showToast === 'function') {
+            showToast(deniedMsg, 'error');
+          }
+        }
+      }
+
+      // Hide or disable all Security Navigation links if logged in user is just admin
+      if (effectiveRole !== 'super_admin') {
+        document.querySelectorAll('a[href*="admin-security"], #btn-super-admin-settings, #btn-security-settings, .security-nav-link').forEach(link => {
+          link.style.display = 'none';
+          link.classList.add('hidden');
+          link.setAttribute('aria-hidden', 'true');
+          link.setAttribute('disabled', 'true');
+          link.style.pointerEvents = 'none';
+        });
+      }
     }
   }
 
@@ -2578,8 +2613,202 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Post Job Logic (Employer Dashboard)
+  // Post Job Logic & Freemium Handler (Employer Dashboard)
   const postJobForm = document.getElementById('post-job-form');
+  window.currentFreeJobsRemaining = null;
+
+  async function loadFreemiumStatus() {
+    const freemiumBadge = document.getElementById('freemium-count-badge');
+    const submitBtn = document.getElementById('btn-post-job-submit') || document.querySelector('#post-job-form button[type="submit"]');
+    const freemiumDesc = document.getElementById('freemium-description');
+    const freemiumPill = document.getElementById('freemium-tier-pill');
+
+    const empAuth = getEmployerAuth();
+    if (!empAuth.user) return;
+
+    try {
+      const headers = {};
+      if (empAuth.token && !empAuth.token.includes('cookie')) {
+        headers['Authorization'] = `Bearer ${empAuth.token}`;
+      }
+
+      let res = await fetch('/api/employer/freemium-status', { headers, credentials: 'include' });
+      if (!res.ok) {
+        res = await fetch('/api/employer/stats', { headers, credentials: 'include' });
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        const freeJobsRemaining = typeof data.free_jobs_remaining === 'number'
+          ? data.free_jobs_remaining
+          : Math.max(0, 2 - (Number(data.free_jobs_posted) || 0));
+
+        window.currentFreeJobsRemaining = freeJobsRemaining;
+
+        if (freemiumBadge) {
+          freemiumBadge.textContent = `${freeJobsRemaining} of 2 free posts remaining`;
+          if (freeJobsRemaining === 0) {
+            freemiumBadge.className = 'badge badge-amber text-xs font-bold';
+          } else {
+            freemiumBadge.className = 'badge badge-primary text-xs font-bold';
+          }
+        }
+
+        if (freemiumDesc) {
+          if (freeJobsRemaining === 0) {
+            freemiumDesc.textContent = 'Free post allowance exhausted. This and subsequent posts require 300 ETB via Chapa.';
+          } else {
+            freemiumDesc.textContent = 'The first 2 job posts are free. Subsequent posts require a payment of 300 ETB via Chapa.';
+          }
+        }
+
+        if (freemiumPill) {
+          if (freeJobsRemaining === 0) {
+            freemiumPill.textContent = '300 ETB / Post';
+            freemiumPill.className = 'text-xs font-semibold px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 shadow-xs whitespace-nowrap';
+          } else {
+            freemiumPill.textContent = 'Free Tier';
+            freemiumPill.className = 'text-xs font-semibold px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shadow-xs whitespace-nowrap';
+          }
+        }
+
+        if (submitBtn) {
+          if (freeJobsRemaining === 0) {
+            submitBtn.textContent = 'Pay 300 ETB & Post Job';
+          } else {
+            submitBtn.textContent = 'Submit job';
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error fetching freemium status:', e);
+    }
+  }
+  window.loadFreemiumStatus = loadFreemiumStatus;
+
+  // Global helper to open Pre-Checkout Payment Method Modal with dynamic Job Title & Job ID
+  window.openPaymentMethodModal = function({ jobTitle = 'Job Listing', jobId = null, onProceed }) {
+    const paymentModal = document.getElementById('payment-method-modal');
+    if (!paymentModal) return;
+
+    const modalTitle = document.getElementById('modal-payment-job-title');
+    if (modalTitle) {
+      const cleanTitle = (jobTitle || '').toString().trim();
+      modalTitle.textContent = (cleanTitle && cleanTitle !== '[object Object]' && cleanTitle !== 'undefined')
+        ? cleanTitle
+        : 'New Job Listing';
+    }
+
+    if (jobId) {
+      paymentModal.setAttribute('data-pending-job-id', jobId);
+    }
+
+    let selectedChannel = 'telebirr';
+    const channelCards = paymentModal.querySelectorAll('.payment-channel-card');
+    const channelRadios = paymentModal.querySelectorAll('input[name="payment_channel"]');
+    const channelLabel = document.getElementById('selected-channel-label');
+
+    function updateSelectedChannel(val) {
+      selectedChannel = val;
+      channelCards.forEach(card => {
+        const isMatch = card.getAttribute('data-channel') === val;
+        if (isMatch) {
+          card.classList.add('active');
+          card.style.borderColor = '#0284c7';
+          card.style.background = 'rgba(2, 132, 199, 0.06)';
+          const radio = card.querySelector('input[type="radio"]');
+          if (radio) radio.checked = true;
+        } else {
+          card.classList.remove('active');
+          card.style.borderColor = '';
+          card.style.background = '';
+        }
+      });
+      if (channelLabel) {
+        channelLabel.textContent = val === 'cbe' ? 'CBE Birr / CBE' : 'Telebirr';
+      }
+    }
+
+    updateSelectedChannel('telebirr');
+
+    channelCards.forEach(card => {
+      card.onclick = () => {
+        const val = card.getAttribute('data-channel');
+        if (val) updateSelectedChannel(val);
+      };
+    });
+
+    channelRadios.forEach(radio => {
+      radio.onchange = () => {
+        if (radio.checked) updateSelectedChannel(radio.value);
+      };
+    });
+
+    const closeModal = () => {
+      paymentModal.classList.remove('active');
+      paymentModal.classList.add('hidden');
+      const confirmBtn = document.getElementById('confirm-payment-modal-btn');
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        const channelLabel = document.getElementById('selected-channel-label');
+        const labelText = channelLabel ? channelLabel.textContent : 'Telebirr';
+        confirmBtn.innerHTML = `<span>Proceed with <span id="selected-channel-label">${labelText}</span></span><svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>`;
+      }
+    };
+
+    const closeBtn = document.getElementById('close-payment-method-modal');
+    if (closeBtn) closeBtn.onclick = closeModal;
+
+    const cancelBtn = document.getElementById('cancel-payment-modal-btn');
+    if (cancelBtn) cancelBtn.onclick = closeModal;
+
+    const confirmBtn = document.getElementById('confirm-payment-modal-btn');
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.onclick = async () => {
+        let chosen = 'telebirr';
+        const checkedRadio = paymentModal.querySelector('input[name="payment_channel"]:checked');
+        if (checkedRadio) chosen = checkedRadio.value;
+        const targetJobId = jobId || paymentModal.getAttribute('data-pending-job-id');
+
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span>Redirecting to Chapa...</span>';
+
+        if (typeof onProceed === 'function') {
+          try {
+            await onProceed(chosen, targetJobId);
+          } catch (e) {
+            confirmBtn.disabled = false;
+            updateSelectedChannel(chosen);
+            showToast(e.message || 'Payment initialization failed', 'error');
+          }
+        }
+      };
+    }
+
+    paymentModal.classList.add('active');
+    paymentModal.classList.remove('hidden');
+  };
+
+  // Handle return from Chapa payment gateway
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment') === 'success') {
+      showToast('Payment submitted. Your job will activate after Chapa confirms it.', 'info');
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+      if (typeof window.loadManageJobs === 'function') window.loadManageJobs();
+      if (typeof window.loadEmployerStats === 'function') window.loadEmployerStats();
+      if (typeof window.switchTab === 'function') window.switchTab('manage-jobs-tab');
+    } else if (urlParams.get('payment') === 'pending') {
+      showToast('Payment received and is being verified. Your job will become active once confirmed.', 'info');
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  } catch (e) {
+    console.warn('Error reading payment return params:', e);
+  }
+
   if (postJobForm) {
     const jobDeadlineInput = document.getElementById('job-deadline');
     if (jobDeadlineInput) {
@@ -2610,19 +2839,44 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.warn('Could not prefill employer details:', e);
     }
 
-    postJobForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    // Load freemium status on post job form init
+    loadFreemiumStatus();
 
-      const title = document.getElementById('job-title')?.value;
-      const company_name = document.getElementById('job-company')?.value;
-      const location = document.getElementById('job-location')?.value;
-      const deadline = document.getElementById('job-deadline')?.value || '';
-      const description = postJobForm.querySelector('textarea')?.value || '';
-      const salary = document.getElementById('job-salary')?.value;
-      const job_type = document.getElementById('job-type')?.value || 'Full-time';
-      const apply_email = document.getElementById('job-apply-email')?.value;
-      const apply_link = document.getElementById('job-apply-link')?.value;
-      const contact_email = document.getElementById('job-contact-email')?.value;
+    // Smart field invalidation helper with red border & auto-focus
+    function markFieldInvalid(fieldEl, errorMsg) {
+      if (!fieldEl) {
+        showToast(errorMsg, 'error');
+        return;
+      }
+      postJobForm.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+      fieldEl.classList.add('input-error');
+      try {
+        fieldEl.focus();
+        fieldEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } catch (err) {}
+      showToast(errorMsg, 'error');
+
+      const clearError = () => {
+        fieldEl.classList.remove('input-error');
+        fieldEl.removeEventListener('input', clearError);
+        fieldEl.removeEventListener('change', clearError);
+      };
+      fieldEl.addEventListener('input', clearError);
+      fieldEl.addEventListener('change', clearError);
+    }
+
+    // Core submission runner with strict payment enforcement
+    async function executeJobSubmission() {
+      const compInput = document.getElementById('job-company');
+      const emailInput = document.getElementById('job-contact-email');
+      const titleInput = document.getElementById('job-title');
+      const locationInput = document.getElementById('job-location');
+      const deadlineInput = document.getElementById('job-deadline');
+      const descInput = postJobForm.querySelector('textarea');
+      const salaryInput = document.getElementById('job-salary');
+      const jobTypeInput = document.getElementById('job-type');
+      const applyEmailInput = document.getElementById('job-apply-email');
+      const applyLinkInput = document.getElementById('job-apply-link');
 
       const empAuth = getEmployerAuth();
       if (!empAuth.user) {
@@ -2630,8 +2884,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
       const user = empAuth.user;
+      const submitBtn = document.getElementById('btn-post-job-submit') || postJobForm.querySelector('button[type="submit"]');
+      const originalBtnText = submitBtn ? submitBtn.textContent : 'Submit job';
 
       try {
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Processing...';
+        }
+
         const token = empAuth.token || '';
         const headers = { 'Content-Type': 'application/json' };
         if (token && !token.includes('cookie')) {
@@ -2644,30 +2905,170 @@ document.addEventListener('DOMContentLoaded', async () => {
           credentials: 'include',
           body: JSON.stringify({
             employer_id: user.id,
-            title, company_name, location, deadline, description,
-            salary, apply_email, apply_link, contact_email,
-            job_type
+            title: titleInput ? titleInput.value.trim() : '',
+            company_name: compInput ? compInput.value.trim() : '',
+            location: locationInput ? locationInput.value.trim() : '',
+            deadline: deadlineInput ? deadlineInput.value.trim() : '',
+            description: descInput ? descInput.value.trim() : '',
+            salary: salaryInput ? salaryInput.value.trim() : '',
+            apply_email: applyEmailInput ? applyEmailInput.value.trim() : '',
+            apply_link: applyLinkInput ? applyLinkInput.value.trim() : '',
+            contact_email: emailInput ? emailInput.value.trim() : '',
+            job_type: (jobTypeInput && jobTypeInput.value) || 'Full-time'
           })
         });
 
         const data = await response.json().catch(() => ({}));
 
-        if (response.ok) {
-          showToast('Job posted successfully!', 'success');
-          postJobForm.reset();
-          if (typeof window.loadManageJobs === 'function') {
-            window.loadManageJobs();
+        if (!response.ok) {
+          // If backend provided a specific field with error, highlight it smartly
+          if (data.field) {
+            const fieldEl = document.getElementById(data.field) || (data.field === 'job-description' ? postJobForm.querySelector('textarea') : null);
+            if (fieldEl) {
+              markFieldInvalid(fieldEl, data.message || 'Please check this field');
+              return;
+            }
           }
-          if (typeof window.loadEmployerStats === 'function') {
-            window.loadEmployerStats();
-          }
-          switchTab('manage-jobs-tab');
-        } else {
           showToast(data.message || 'Failed to post job', 'error');
+          return;
         }
+
+        // STRICT PAYMENT ENFORCEMENT INTERCEPT:
+        // In POST /api/jobs, if free_jobs_posted >= 2, the job MUST be saved with status = 'pending' and payment_status = 'pending'.
+        // If backend returns requires_payment: true, STOP the normal success flow immediately.
+        if (data.requires_payment || data.payment_status === 'pending') {
+          const pendingJobId = data.job_id || data.jobId;
+          const currentTitle = (titleInput && titleInput.value.trim()) || 'Job Listing';
+
+          // Immediately open Payment Modal (Telebirr/CBE) and attach the job_id to it
+          if (typeof window.openPaymentMethodModal === 'function') {
+            window.openPaymentMethodModal({
+              jobTitle: currentTitle,
+              jobId: pendingJobId,
+              onProceed: async (selectedMethod, currentJobId) => {
+                const activeJobId = currentJobId || pendingJobId;
+                const initHeaders = { 'Content-Type': 'application/json' };
+                if (token && !token.includes('cookie')) {
+                  initHeaders['Authorization'] = `Bearer ${token}`;
+                }
+                const initRes = await fetch('/api/payments/initialize', {
+                  method: 'POST',
+                  headers: initHeaders,
+                  credentials: 'include',
+                  body: JSON.stringify({
+                    jobId: activeJobId,
+                    payment_method: selectedMethod || 'telebirr'
+                  })
+                });
+                const initData = await initRes.json();
+                if (!initRes.ok || !initData.checkout_url) {
+                  throw new Error(initData.error || initData.message || 'Failed to initialize payment gateway');
+                }
+                window.location.href = initData.checkout_url;
+              }
+            });
+          } else {
+            showToast('Payment required (300 ETB) to activate this job post.', 'info');
+          }
+
+          // STOP normal success flow: do NOT show success toast, do NOT reset form
+          return;
+        }
+
+        // Only reached if requires_payment is false (free post < 2)
+        showToast('Job posted successfully!', 'success');
+        postJobForm.reset();
+        loadFreemiumStatus();
+        if (typeof window.loadManageJobs === 'function') {
+          window.loadManageJobs();
+        }
+        if (typeof window.loadEmployerStats === 'function') {
+          window.loadEmployerStats();
+        }
+        switchTab('manage-jobs-tab');
       } catch (err) {
         showToast('Network error', 'error');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalBtnText;
+        }
       }
+    }
+
+    // Form submit listener with smart field-by-field validation and payment modal intercept
+    postJobForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Clear any previous invalidation highlights
+      postJobForm.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+
+      const compInput = document.getElementById('job-company');
+      const emailInput = document.getElementById('job-contact-email');
+      const titleInput = document.getElementById('job-title');
+      const locationInput = document.getElementById('job-location');
+      const deadlineInput = document.getElementById('job-deadline');
+      const descInput = postJobForm.querySelector('textarea');
+
+      const empAuth = getEmployerAuth();
+      if (!empAuth.user) {
+        showToast('You must be logged in as an employer to post a job', 'error');
+        return;
+      }
+
+      // 1. Company Name validation
+      if (compInput && !compInput.value.trim()) {
+        markFieldInvalid(compInput, 'Please enter your Company Name');
+        return;
+      }
+
+      // 2. Contact Email validation
+      if (emailInput && !emailInput.value.trim()) {
+        markFieldInvalid(emailInput, 'Please enter your Contact Email');
+        return;
+      }
+      if (emailInput && emailInput.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim())) {
+        markFieldInvalid(emailInput, 'Please enter a valid Contact Email address');
+        return;
+      }
+
+      // 3. Job Title validation
+      if (!titleInput || !titleInput.value.trim()) {
+        markFieldInvalid(titleInput, 'Please enter the Job Title');
+        return;
+      }
+
+      // 4. Job Location validation (The exact field that caused the user issue!)
+      if (!locationInput || !locationInput.value.trim()) {
+        markFieldInvalid(locationInput, 'Please enter the Job Location');
+        return;
+      }
+
+      // 5. Job Deadline validation
+      if (!deadlineInput || !deadlineInput.value.trim()) {
+        markFieldInvalid(deadlineInput, 'Please select an application Deadline');
+        return;
+      }
+      const inputDate = new Date(deadlineInput.value);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (isNaN(inputDate.getTime())) {
+        markFieldInvalid(deadlineInput, 'Please enter a valid Deadline date');
+        return;
+      }
+      if (inputDate < today) {
+        markFieldInvalid(deadlineInput, 'Deadline cannot be in the past');
+        return;
+      }
+
+      // 6. Job Description validation
+      if (!descInput || !descInput.value.trim()) {
+        markFieldInvalid(descInput, 'Please provide a Job Description');
+        return;
+      }
+
+      // Submit directly to executeJobSubmission which enforces the backend payment loop
+      executeJobSubmission();
     });
   }
 
@@ -2907,188 +3308,293 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Fetch applications on Employer Dashboard
-  const pendingColumn = document.querySelector('.kanban-cards[data-column="pending"]');
-  const hiredColumn = document.querySelector('.kanban-cards[data-column="hired"]');
-  
-  if (pendingColumn || hiredColumn) {
-    const loadEmployerApplications = async () => {
-      const empAuth = getEmployerAuth();
-      const user = empAuth.user || { id: 1 };
+  // Employer Dashboard Applicant Pipeline
+  const loadEmployerApplications = async () => {
+    const pendingColumn = document.querySelector('.kanban-cards[data-column="pending"]');
+    const hiredColumn = document.querySelector('.kanban-cards[data-column="hired"]');
+    
+    if (!pendingColumn && !hiredColumn) return;
 
+    const empAuth = typeof getEmployerAuth === 'function' ? getEmployerAuth() : {};
+    let employerId = empAuth?.user?.id || empAuth?.user?.employer_id;
+    if (!employerId && empAuth?.token) {
       try {
-        const headers = {};
-        if (empAuth.token && !empAuth.token.includes('cookie')) {
-          headers['Authorization'] = `Bearer ${empAuth.token}`;
+        const payload = JSON.parse(atob(empAuth.token.split('.')[1]));
+        if (payload && (payload.id || payload.employer_id)) {
+          employerId = payload.id || payload.employer_id;
         }
-        const response = await fetch('/api/applications/employer/' + user.id, { headers, credentials: 'include' });
-        if (!response.ok) {
-          if (typeof window.setupKanbanDragAndDrop === 'function') {
-            window.setupKanbanDragAndDrop();
-          }
-          return;
+      } catch (e) {}
+    }
+    if (!employerId) {
+      try {
+        const stored = JSON.parse(localStorage.getItem('employer_user') || localStorage.getItem('user') || 'null');
+        if (stored && (stored.id || stored.employer_id)) {
+          employerId = stored.id || stored.employer_id;
         }
-        const applications = await response.json();
+      } catch (e) {}
+    }
+    if (!employerId) employerId = 4; // Default active employer ID fallback
 
-        if (Array.isArray(applications) && applications.length > 0) {
-          if (pendingColumn) pendingColumn.innerHTML = ''; 
-          if (hiredColumn) hiredColumn.innerHTML = '';
-          
-          let pendingCount = 0;
-          let hiredCount = 0;
+    try {
+      const token = empAuth?.token || 
+                    localStorage.getItem('employer_token') || 
+                    localStorage.getItem('accessToken') || 
+                    sessionStorage.getItem('accessToken') || 
+                    sessionStorage.getItem('employer_token') || 
+                    localStorage.getItem('token');
 
-          applications.forEach(app => {
-            let initials = 'U';
-            if (app.seeker_name && app.seeker_name.length >= 2) {
-              initials = app.seeker_name.substring(0, 2).toUpperCase();
-            } else if (app.seeker_name && app.seeker_name.length === 1) {
-              initials = app.seeker_name.toUpperCase();
-            }
+      const headers = { 'Accept': 'application/json' };
+      if (token && !token.includes('cookie')) {
+        const cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
+        headers['Authorization'] = `Bearer ${cleanToken}`;
+      }
 
-            const rawPhoto = app.profile_photo || app.profile_photo_url;
-            const hasPhoto = rawPhoto && typeof rawPhoto === 'string' && rawPhoto.trim() !== '' && rawPhoto !== 'null' && rawPhoto !== 'undefined' && !rawPhoto.includes('default-avatar');
-            const photoUrl = hasPhoto ? normalizePhotoPath(rawPhoto) : null;
-
-            const pendingAvatarHtml = photoUrl
-              ? `<div class="card-icon-circle card-icon-sm" style="overflow: hidden; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                   <img src="${photoUrl}" alt="${app.seeker_name || 'Applicant'}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block;" onerror="this.parentElement.className='card-icon-bg card-icon-circle card-icon-slate card-icon-sm'; this.parentElement.textContent='${initials}';" />
-                 </div>`
-              : `<div class="card-icon-bg card-icon-circle card-icon-slate card-icon-sm">${initials}</div>`;
-
-            const hiredAvatarHtml = photoUrl
-              ? `<div class="card-icon-circle card-icon-sm" style="overflow: hidden; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                   <img src="${photoUrl}" alt="${app.seeker_name || 'Applicant'}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block;" onerror="this.parentElement.className='card-icon-bg card-icon-circle card-icon-green card-icon-sm'; this.parentElement.textContent='${initials}';" />
-                 </div>`
-              : `<div class="card-icon-bg card-icon-circle card-icon-green card-icon-sm">${initials}</div>`;
-
-            if (app.status === 'Pending' || app.status === 'pending') {
-              pendingCount++;
-              const cardHtml = `
-                      <div class="kanban-card" draggable="true" data-id="${app.id}">
-                         <div class="flex items-start gap-3 mb-3">
-                           ${pendingAvatarHtml}
-                           <div>
-                             <h4 class="font-bold text-slate-900 text-sm">${app.seeker_name}</h4>
-                             <p class="text-xs text-slate-500">Applied for: ${app.job_title}</p>
-                           </div>
-                         </div>
-                         
-                         <div class="flex gap-2 mt-4">
-                           <button class="btn btn-outline btn-sm flex-grow text-xs" onclick="window.open('${app.resume_file_url || '#'}', '_blank')">Download CV</button>
-                           <button class="btn btn-outline btn-sm flex-grow text-xs" onclick="viewProfile(${app.seeker_id})">View Profile</button>
-                           <button class="btn btn-primary btn-sm flex-grow text-xs" style="background-color: var(--green-500); border-color: var(--green-500);" onclick="hireApplication(${app.id}, this)">Hire</button>
-                           <button class="btn btn-primary btn-sm flex-grow text-xs" style="background-color: var(--danger); border-color: var(--danger);" onclick="rejectApplication(${app.id}, this)">Reject</button>
-                         </div>
-                      </div>
-                   `;
-              if (pendingColumn) pendingColumn.insertAdjacentHTML('beforeend', cardHtml);
-            } else if (app.status === 'Hired' || app.status === 'hired') {
-              hiredCount++;
-              const hiredDate = new Date(app.applied_at).toLocaleDateString();
-              const cardHtml = `
-                      <div class="kanban-card opacity-90" draggable="true" data-id="${app.id}" style="border-left: 3px solid var(--green-500);">
-                         <div class="flex items-start gap-3 mb-3">
-                           ${hiredAvatarHtml}
-                           <div>
-                             <h4 class="font-bold text-slate-900 text-sm">${app.seeker_name}</h4>
-                             <p class="text-xs text-slate-500">Hired: ${hiredDate}</p>
-                           </div>
-                         </div>
-                         <div class="flex gap-2 mt-2">
-                           <button class="btn btn-outline flex-grow btn-sm text-xs" onclick="viewProfile(${app.seeker_id})">View Profile</button>
-                           <button class="btn btn-primary flex-grow btn-sm text-xs" style="background-color: var(--danger); border-color: var(--danger);" onclick="if(confirm('Are you sure you want to remove this?')) { rejectApplication(${app.id}, this); }">Remove</button>
-                         </div>
-                      </div>
-                   `;
-              if (hiredColumn) hiredColumn.insertAdjacentHTML('beforeend', cardHtml);
-            }
-          });
-
-          // Update badge counts with safe optional chaining
-          const pendingBadge = document.querySelector('.kanban-cards[data-column="pending"]')?.closest('.kanban-col')?.querySelector('.badge');
-          if (pendingBadge) pendingBadge.textContent = pendingCount;
-          
-          const hiredBadge = document.querySelector('.kanban-cards[data-column="hired"]')?.closest('.kanban-col')?.querySelector('.badge');
-          if (hiredBadge) hiredBadge.textContent = hiredCount;
-        }
-
+      const response = await fetch('/api/applications/employer/' + employerId, { headers, credentials: 'include' });
+      if (!response.ok) {
         if (typeof window.setupKanbanDragAndDrop === 'function') {
           window.setupKanbanDragAndDrop();
         }
-
-      } catch (error) {
-        console.error('Error loading employer applications:', error);
+        return;
       }
+      const applications = await response.json();
+
+      if (pendingColumn) pendingColumn.innerHTML = ''; 
+      if (hiredColumn) hiredColumn.innerHTML = '';
+      
+      let pendingCount = 0;
+      let hiredCount = 0;
+
+      if (Array.isArray(applications) && applications.length > 0) {
+        applications.forEach(app => {
+          let initials = 'U';
+          if (app.seeker_name && app.seeker_name.trim().length >= 2) {
+            const parts = app.seeker_name.trim().split(/\s+/);
+            initials = parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : app.seeker_name.trim().substring(0, 2).toUpperCase();
+          } else if (app.seeker_name && app.seeker_name.trim().length === 1) {
+            initials = app.seeker_name.trim().toUpperCase();
+          }
+
+          const rawPhoto = app.profile_photo_url || app.profile_photo;
+          const hasPhoto = rawPhoto && typeof rawPhoto === 'string' && rawPhoto.trim() !== '' && rawPhoto !== 'null' && rawPhoto !== 'undefined' && !rawPhoto.includes('default-avatar');
+          const photoUrl = hasPhoto ? (typeof normalizePhotoPath === 'function' ? normalizePhotoPath(rawPhoto) : rawPhoto) : null;
+
+          const avatarHtml = photoUrl
+            ? `<div class="card-icon-circle card-icon-sm" style="overflow: hidden; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%;">
+                 <img src="${photoUrl}" alt="${app.seeker_name || 'Applicant'}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block;" onerror="this.parentElement.className='card-icon-bg card-icon-circle card-icon-slate card-icon-sm'; this.parentElement.textContent='${initials}';" />
+               </div>`
+            : `<div class="card-icon-bg card-icon-circle card-icon-slate card-icon-sm" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 700; border-radius: 50%;">${initials}</div>`;
+
+          const appliedDate = app.applied_at ? new Date(app.applied_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently';
+
+          const cvAction = app.resume_file_url 
+            ? `window.open('${app.resume_file_url}', '_blank')`
+            : `if (typeof showToast === 'function') { showToast('No CV uploaded by this applicant yet.', 'info'); } else { alert('No CV uploaded.'); }`;
+          const cvBtnText = app.resume_file_url ? 'Download CV' : 'No CV';
+          const cvBtnClass = app.resume_file_url ? 'btn-outline' : 'btn-outline opacity-60';
+
+          const isHired = String(app.status || '').toLowerCase() === 'hired';
+
+          if (isHired) {
+            hiredCount++;
+            const cardHtml = `
+              <div class="kanban-card opacity-95" draggable="true" data-id="${app.id}" style="border-left: 4px solid var(--green-500, #22c55e);">
+                 <div class="flex items-start justify-between gap-3 mb-3">
+                   <div class="flex items-center gap-3">
+                     ${avatarHtml}
+                     <div>
+                       <h4 class="font-bold text-slate-900 text-sm m-0">${app.seeker_name || 'Applicant'}</h4>
+                       <p class="text-xs text-slate-500 mt-0.5 mb-0 font-medium">Hired for: <span class="text-slate-800 font-semibold">${app.job_title || 'Position'}</span></p>
+                       <p class="text-xs text-green-700 mt-0.5 mb-0 font-medium">Hired: ${appliedDate}</p>
+                     </div>
+                   </div>
+                   <span class="badge badge-green text-xs font-semibold">Hired</span>
+                 </div>
+                 <div class="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100 flex-wrap">
+                   <button type="button" class="btn ${cvBtnClass} flex-grow btn-sm text-xs flex items-center justify-center gap-1" onclick="${cvAction}">
+                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                     <span>${cvBtnText}</span>
+                   </button>
+                   <button type="button" class="btn btn-outline flex-grow btn-sm text-xs flex items-center justify-center gap-1" onclick="viewProfile(${app.seeker_id})">
+                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                     <span>View Profile</span>
+                   </button>
+                   <button type="button" class="btn btn-outline flex-grow btn-sm text-xs text-red-600 hover:bg-red-50" style="border-color: rgba(220, 38, 38, 0.3);" onclick="rejectApplication(${app.id}, this)">
+                     <span>Remove</span>
+                   </button>
+                 </div>
+              </div>
+            `;
+            if (hiredColumn) hiredColumn.insertAdjacentHTML('beforeend', cardHtml);
+          } else {
+            pendingCount++;
+            const statusBadge = app.status === 'rejected'
+              ? `<span class="badge badge-red text-xs font-semibold">Rejected</span>`
+              : `<span class="badge badge-amber text-xs font-semibold">Pending Review</span>`;
+
+            const cardHtml = `
+              <div class="kanban-card" draggable="true" data-id="${app.id}">
+                 <div class="flex items-start justify-between gap-3 mb-3">
+                   <div class="flex items-center gap-3">
+                     ${avatarHtml}
+                     <div>
+                       <h4 class="font-bold text-slate-900 text-sm m-0">${app.seeker_name || 'Applicant'}</h4>
+                       <p class="text-xs text-slate-500 mt-0.5 mb-0 font-medium">Applied for: <span class="text-slate-800 font-semibold">${app.job_title || 'Position'}</span></p>
+                       <p class="text-xs text-slate-400 mt-0.5 mb-0">Applied: ${appliedDate}</p>
+                     </div>
+                   </div>
+                   ${statusBadge}
+                 </div>
+                 
+                 <div class="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100 flex-wrap">
+                   <button type="button" class="btn ${cvBtnClass} btn-sm flex-grow text-xs flex items-center justify-center gap-1" onclick="${cvAction}">
+                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                     <span>${cvBtnText}</span>
+                   </button>
+                   <button type="button" class="btn btn-outline btn-sm flex-grow text-xs flex items-center justify-center gap-1" onclick="viewProfile(${app.seeker_id})">
+                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                     <span>View Profile</span>
+                   </button>
+                   <button type="button" class="btn btn-primary btn-sm flex-grow text-xs flex items-center justify-center gap-1" style="background-color: var(--green-600, #16a34a); border-color: var(--green-600, #16a34a);" onclick="hireApplication(${app.id}, this)">
+                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                     <span>Hire</span>
+                   </button>
+                   <button type="button" class="btn btn-outline btn-sm flex-grow text-xs flex items-center justify-center gap-1" style="color: var(--danger, #dc2626); border-color: rgba(220, 38, 38, 0.3);" onclick="rejectApplication(${app.id}, this)">
+                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                     <span>Reject</span>
+                   </button>
+                 </div>
+              </div>
+            `;
+            if (pendingColumn) pendingColumn.insertAdjacentHTML('beforeend', cardHtml);
+          }
+        });
+      }
+
+      if (pendingCount === 0 && pendingColumn) {
+        pendingColumn.innerHTML = '<div class="text-center py-8 text-slate-400 text-xs italic">No candidates pending review.</div>';
+      }
+      if (hiredCount === 0 && hiredColumn) {
+        hiredColumn.innerHTML = '<div class="text-center py-8 text-slate-400 text-xs italic">No candidates marked as hired yet.</div>';
+      }
+
+      // Update badge counts
+      const totalBadge = document.getElementById('pipeline-total-badge');
+      if (totalBadge) totalBadge.textContent = `${(applications && applications.length) || 0} Candidates`;
+
+      const pendingBadge = document.getElementById('pipeline-pending-badge') || 
+                           document.querySelector('.kanban-cards[data-column="pending"]')?.closest('.kanban-col')?.querySelector('.badge');
+      if (pendingBadge) pendingBadge.textContent = pendingCount;
+      
+      const hiredBadge = document.getElementById('pipeline-hired-badge') || 
+                         document.querySelector('.kanban-cards[data-column="hired"]')?.closest('.kanban-col')?.querySelector('.badge');
+      if (hiredBadge) hiredBadge.textContent = hiredCount;
+
+      // Realtime search filter
+      const searchInput = document.getElementById('pipeline-search-input');
+      if (searchInput && !searchInput.dataset.pipelineBound) {
+        searchInput.dataset.pipelineBound = 'true';
+        searchInput.addEventListener('input', (e) => {
+          const term = (e.target.value || '').toLowerCase().trim();
+          document.querySelectorAll('.kanban-card').forEach(card => {
+            const txt = card.textContent.toLowerCase();
+            card.style.display = txt.includes(term) ? '' : 'none';
+          });
+        });
+      }
+
+      if (typeof window.setupKanbanDragAndDrop === 'function') {
+        window.setupKanbanDragAndDrop();
+      }
+
+    } catch (error) {
+      console.error('Error loading employer applications:', error);
+    }
+  };
+  window.loadEmployerApplications = loadEmployerApplications;
+  loadEmployerApplications();
+
+  // Employer Dashboard Overview Analytics & Statistics
+  const loadEmployerAnalytics = async () => {
+    const statViews = document.getElementById('stat-job-views');
+    const statApps = document.getElementById('stat-total-applicants');
+    const statConv = document.getElementById('stat-conversion-rate');
+    const statActive = document.getElementById('stat-active-postings');
+
+    if (!statViews && !statApps && !statConv && !statActive) return;
+
+    const empAuth = typeof getEmployerAuth === 'function' ? getEmployerAuth() : { user: null, token: null };
+    const token = empAuth?.token || 
+                  localStorage.getItem('employer_token') || 
+                  localStorage.getItem('accessToken') || 
+                  sessionStorage.getItem('accessToken') || 
+                  sessionStorage.getItem('employer_token') || 
+                  localStorage.getItem('token');
+
+    const headers = { 'Accept': 'application/json' };
+    if (token && !token.includes('cookie')) {
+      const cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
+      headers['Authorization'] = `Bearer ${cleanToken}`;
+    }
+
+    const updateStatsUI = (data) => {
+      if (!data) return;
+      const totalViews = data.totalJobViews !== undefined ? data.totalJobViews : (data.total_job_views !== undefined ? data.total_job_views : 0);
+      const totalApplicants = data.totalApplicants !== undefined ? data.totalApplicants : (data.total_applicants !== undefined ? data.total_applicants : 0);
+      const activePostings = data.activePostings !== undefined ? data.activePostings : (data.active_postings !== undefined ? data.active_postings : 0);
+      let convRate = data.conversionRate || data.conversion_rate;
+      if (convRate === undefined || convRate === null || convRate === '') {
+        convRate = totalViews > 0 ? (((totalApplicants / totalViews) * 100).toFixed(1) + '%') : '0%';
+      }
+
+      if (statViews) statViews.textContent = Number(totalViews).toLocaleString();
+      if (statApps) statApps.textContent = Number(totalApplicants).toLocaleString();
+      if (statConv) statConv.textContent = convRate;
+      if (statActive) statActive.textContent = Number(activePostings).toLocaleString();
     };
-    window.loadEmployerApplications = loadEmployerApplications;
-    loadEmployerApplications();
 
-    const loadEmployerAnalytics = async () => {
-      const statViews = document.getElementById('stat-job-views');
-      const statApps = document.getElementById('stat-total-applicants');
-      const statConv = document.getElementById('stat-conversion-rate');
-      const statActive = document.getElementById('stat-active-postings');
-
-      if (!statViews && !statApps && !statConv && !statActive) return;
-
-      const empAuth = typeof getEmployerAuth === 'function' ? getEmployerAuth() : { user: null, token: null };
-      const headers = { 'Accept': 'application/json' };
-      if (empAuth && empAuth.token && !empAuth.token.includes('cookie')) {
-        headers['Authorization'] = `Bearer ${empAuth.token}`;
+    try {
+      const res = await fetch('/api/employer/stats', { headers, credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        updateStatsUI(data);
+        return;
       }
+    } catch (err) {
+      console.warn('GET /api/employer/stats request failed, attempting fallback:', err);
+    }
 
-      const updateStatsUI = (data) => {
-        if (!data) return;
-        const totalViews = data.totalJobViews !== undefined ? data.totalJobViews : (data.total_job_views !== undefined ? data.total_job_views : 0);
-        const totalApplicants = data.totalApplicants !== undefined ? data.totalApplicants : (data.total_applicants !== undefined ? data.total_applicants : 0);
-        const activePostings = data.activePostings !== undefined ? data.activePostings : (data.active_postings !== undefined ? data.active_postings : 0);
-        let convRate = data.conversionRate || data.conversion_rate;
-        if (convRate === undefined || convRate === null) {
-          convRate = totalViews > 0 ? (((totalApplicants / totalViews) * 100).toFixed(1) + '%') : '0%';
-        }
-
-        if (statViews) statViews.textContent = Number(totalViews).toLocaleString();
-        if (statApps) statApps.textContent = Number(totalApplicants).toLocaleString();
-        if (statConv) statConv.textContent = convRate;
-        if (statActive) statActive.textContent = Number(activePostings).toLocaleString();
-      };
-
+    // Fallback to legacy endpoint if available
+    let employerId = empAuth?.user?.id || empAuth?.user?.employer_id;
+    if (!employerId) {
       try {
-        const res = await fetch('/api/employer/stats', { headers, credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
+        const storedUser = JSON.parse(localStorage.getItem('employer_user') || localStorage.getItem('user') || 'null');
+        if (storedUser && storedUser.id) employerId = storedUser.id;
+      } catch (e) {}
+    }
+
+    if (employerId) {
+      try {
+        const fallbackRes = await fetch(`/api/jobs/employer/${employerId}/analytics`, { headers, credentials: 'include' });
+        if (fallbackRes.ok) {
+          const data = await fallbackRes.json();
           updateStatsUI(data);
           return;
         }
-      } catch (err) {
-        console.warn('GET /api/employer/stats request failed, attempting fallback:', err);
+      } catch (e) {
+        console.error('Failed to load employer stats from fallback:', e);
       }
+    }
 
-      // Fallback to legacy endpoint if available
-      if (empAuth && empAuth.user && empAuth.user.id) {
-        try {
-          const fallbackRes = await fetch(`/api/jobs/employer/${empAuth.user.id}/analytics`, { headers, credentials: 'include' });
-          if (fallbackRes.ok) {
-            const data = await fallbackRes.json();
-            updateStatsUI(data);
-            return;
-          }
-        } catch (e) {
-          console.error('Failed to load employer stats from fallback:', e);
-        }
-      }
+    // Presentation fallbacks so stats are clean numbers instead of raw dashes if offline/unauthenticated
+    if (statViews && (statViews.textContent === '--' || !statViews.textContent)) statViews.textContent = '0';
+    if (statApps && (statApps.textContent === '--' || !statApps.textContent)) statApps.textContent = '0';
+    if (statConv && (statConv.textContent === '--' || !statConv.textContent)) statConv.textContent = '0%';
+    if (statActive && (statActive.textContent === '--' || !statActive.textContent)) statActive.textContent = '0';
+  };
 
-      // Presentation fallbacks so stats are clean numbers instead of raw dashes
-      if (statViews && (statViews.textContent === '--' || !statViews.textContent)) statViews.textContent = '1,240';
-      if (statApps && (statApps.textContent === '--' || !statApps.textContent)) statApps.textContent = '48';
-      if (statConv && (statConv.textContent === '--' || !statConv.textContent)) statConv.textContent = '3.8%';
-      if (statActive && (statActive.textContent === '--' || !statActive.textContent)) statActive.textContent = '3';
-    };
-
-    window.loadEmployerAnalytics = loadEmployerAnalytics;
-    window.loadEmployerStats = loadEmployerAnalytics;
-    loadEmployerAnalytics();
-  }
+  window.loadEmployerAnalytics = loadEmployerAnalytics;
+  window.loadEmployerStats = loadEmployerAnalytics;
+  loadEmployerAnalytics();
 
   // Fetch Seeker Dashboard Data
   const seekerAppsTable = document.querySelector('#applications .table tbody');
@@ -3216,6 +3722,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 4. Load Active Alerts
         window.loadAlerts = async function() {
+          if (typeof window.loadActiveAlerts === 'function' && window.loadActiveAlerts !== window.loadAlerts) {
+            return window.loadActiveAlerts();
+          }
           const container = document.getElementById('active-alerts-container') ||
                             document.querySelector('#alerts .dashboard-grid .card:last-child');
           const titleEl = document.getElementById('active-alerts-title') ||
@@ -3224,15 +3733,16 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (!container) return;
 
           const seekerAuth = getSeekerAuth();
-          if (!seekerAuth.user || seekerAuth.user.role !== 'job_seeker') return;
-
           const headers = {};
           if (seekerAuth.token && !seekerAuth.token.includes('cookie')) {
             headers['Authorization'] = `Bearer ${seekerAuth.token}`;
           }
 
           try {
-            const res = await fetch('/api/alerts', { headers, credentials: 'include' });
+            let res = await fetch('/api/seeker/alerts', { headers, credentials: 'include' });
+            if (!res.ok && res.status === 404) {
+              res = await fetch('/api/alerts', { headers, credentials: 'include' });
+            }
             if (!res.ok) return;
             const alerts = await res.json();
             const count = Array.isArray(alerts) ? alerts.length : 0;
@@ -3249,14 +3759,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
               alerts.forEach(alert => {
                 const alertId = alert.id;
-                const sector = alert.job_sector || alert.keyword || 'Software & Tech';
+                const sector = alert.job_sector || alert.sector || alert.keyword || 'Software & Tech';
                 const location = alert.location || 'Addis Ababa';
                 const frequency = alert.frequency || 'daily';
-
-                let channels = [];
-                if (alert.email_notification) channels.push('Email');
-                if (alert.telegram_notification) channels.push('Telegram');
-                const channelText = channels.length > 0 ? channels.join(' & ') : 'None';
+                const channelText = alert.email_notification ? 'Email Notification' : 'Notifications Disabled';
 
                 const cardHtml = `
                   <div class="alert-card mb-3" id="alert-${alertId}" data-id="${alertId}">
@@ -3283,25 +3789,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.loadAlerts();
 
         const alertForm = document.getElementById('alert-form');
-        if (alertForm) {
+        if (alertForm && !alertForm.dataset.seekerAlertBound) {
+          alertForm.dataset.seekerAlertBound = 'true';
           alertForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const seekerAuth = getSeekerAuth();
-            if (!seekerAuth.token || !seekerAuth.user || seekerAuth.user.role !== 'job_seeker') {
-              showToast('Please log in as a job seeker first', 'error');
-              return;
-            }
-
-            const sectorEl = document.getElementById('alert-sector');
-            const locationEl = document.getElementById('alert-location');
+            const sectorEl = document.getElementById('job-sector') || document.getElementById('alert-sector');
+            const locationEl = document.getElementById('alert-location') || document.getElementById('job-location');
             const emailEl = document.getElementById('alert-email');
-            const telegramEl = document.getElementById('alert-telegram');
 
             const job_sector = sectorEl ? sectorEl.value : 'Software & Tech';
             const location = locationEl ? locationEl.value : 'Addis Ababa';
             const email_notification = emailEl ? emailEl.checked : true;
-            const telegram_notification = telegramEl ? telegramEl.checked : true;
 
             const submitBtn = alertForm.querySelector('button[type="submit"]');
             const originalBtnText = submitBtn ? submitBtn.textContent : 'Save Alert Preferences';
@@ -3316,19 +3816,34 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             try {
-              const res = await fetch('/api/alerts', {
+              let res = await fetch('/api/seeker/alerts', {
                 method: 'POST',
                 headers: headers,
                 credentials: 'include',
                 body: JSON.stringify({
-                  seekerId: seekerAuth.user.id,
+                  seekerId: seekerAuth.user ? seekerAuth.user.id : undefined,
                   job_sector,
+                  sector: job_sector,
                   location,
                   email_notification,
-                  telegram_notification,
                   frequency: 'daily'
                 })
               });
+              if (!res.ok && res.status === 404) {
+                res = await fetch('/api/alerts', {
+                  method: 'POST',
+                  headers: headers,
+                  credentials: 'include',
+                  body: JSON.stringify({
+                    seekerId: seekerAuth.user ? seekerAuth.user.id : undefined,
+                    job_sector,
+                    sector: job_sector,
+                    location,
+                    email_notification,
+                    frequency: 'daily'
+                  })
+                });
+              }
 
               const data = await res.json();
               if (res.ok) {
@@ -3371,25 +3886,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Global functions for dynamic elements
 window.rejectApplication = function(appId, btnElement) {
   if (confirm('Are you sure you want to reject this application?')) {
+    const empAuth = typeof getEmployerAuth === 'function' ? getEmployerAuth() : {};
+    const token = empAuth.token || localStorage.getItem('employer_token') || localStorage.getItem('accessToken') || localStorage.getItem('token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token && !token.includes('cookie')) {
+      headers['Authorization'] = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+    }
+
     fetch(`/api/applications/${appId}/status`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: headers,
+      credentials: 'include',
       body: JSON.stringify({ status: 'Rejected' })
     })
     .then(res => res.json())
     .then(data => {
       if (data.message === 'Application status updated successfully') {
         showToast('Application rejected', 'info');
-        const card = btnElement.closest('.kanban-card');
-        if (card) card.remove();
-        
-        // Update badge count
-        const badge = document.querySelector('.kanban-header .badge-slate');
-        if (badge) {
-          const currentCount = parseInt(badge.textContent, 10);
-          if (!isNaN(currentCount) && currentCount > 0) {
-            badge.textContent = currentCount - 1;
-          }
+        if (typeof window.loadEmployerApplications === 'function') {
+          window.loadEmployerApplications();
+        } else {
+          const card = btnElement ? btnElement.closest('.kanban-card') : null;
+          if (card) card.remove();
+        }
+        if (typeof window.loadEmployerStats === 'function') {
+          window.loadEmployerStats();
         }
       } else {
         showToast(data.message || 'Error updating status', 'error');
@@ -3401,16 +3922,29 @@ window.rejectApplication = function(appId, btnElement) {
 
 window.hireApplication = function(appId, btnElement) {
   if (confirm('Are you sure you want to select/hire this candidate?')) {
+    const empAuth = typeof getEmployerAuth === 'function' ? getEmployerAuth() : {};
+    const token = empAuth.token || localStorage.getItem('employer_token') || localStorage.getItem('accessToken') || localStorage.getItem('token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token && !token.includes('cookie')) {
+      headers['Authorization'] = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+    }
+
     fetch(`/api/applications/${appId}/status`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: headers,
+      credentials: 'include',
       body: JSON.stringify({ status: 'Hired' })
     })
     .then(res => res.json())
     .then(data => {
       if (data.message === 'Application status updated successfully') {
         showToast('Candidate Hired successfully!', 'success');
-        setTimeout(() => window.location.reload(), 500);
+        if (typeof window.loadEmployerApplications === 'function') {
+          window.loadEmployerApplications();
+        }
+        if (typeof window.loadEmployerStats === 'function') {
+          window.loadEmployerStats();
+        }
       } else {
         showToast(data.message || 'Error updating status', 'error');
       }
@@ -4311,6 +4845,12 @@ function switchTab(tabId) {
     }
   }
 
+  if (tabId === 'post-job-tab') {
+    if (typeof window.loadFreemiumStatus === 'function') {
+      window.loadFreemiumStatus();
+    }
+  }
+
   if (tabId === 'employer-profile-tab') {
     const empAuth = typeof getEmployerAuth === 'function' ? getEmployerAuth() : {};
     if (empAuth && empAuth.user && typeof populateDashboardUserData === 'function') {
@@ -4325,6 +4865,8 @@ function switchTab(tabId) {
   }
 }
 window.switchTab = switchTab;
+
+
 
 // Global delegated click listener for Tab Switching
 document.addEventListener('click', (e) => {
@@ -4739,6 +5281,11 @@ const loadManageJobs = async () => {
         }
       }
 
+      const isPendingPayment = job.payment_status === 'pending';
+      const paymentBadge = isPendingPayment 
+        ? '<span class="badge badge-amber text-xs ml-2">Pending Payment (300 ETB)</span>' 
+        : (job.payment_status === 'paid' ? '<span class="badge badge-primary text-xs ml-2">Paid Listing</span>' : '');
+
       const badgeType = typeof getJobTypeBadgeClass === 'function' ? getJobTypeBadgeClass(job.job_type) : 'badge-green';
 
       html += `
@@ -4748,6 +5295,7 @@ const loadManageJobs = async () => {
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
               <h3 class="job-manage-title text-lg font-bold text-slate-900 m-0" style="margin: 0; text-align: left;">${job.title}</h3>
               ${editedBadge}
+              ${paymentBadge}
             </div>
             <span class="badge ${badgeType} text-xs" style="flex-shrink: 0;">${job.job_type || 'Full-time'}</span>
           </div>
@@ -4766,6 +5314,11 @@ const loadManageJobs = async () => {
 
           <!-- Button Container: Edit & Remove buttons in flex container justified right with border-top -->
           <div class="job-manage-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; width: 100%;">
+            ${isPendingPayment ? `
+            <button type="button" class="btn btn-primary btn-sm btn-job-action btn-pay-pending-job" data-job-id="${job.id}" data-job-title="${encodeURIComponent(job.title || 'Job Listing')}">
+              <svg class="icon-sm inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> Complete Payment (300 ETB)
+            </button>
+            ` : ''}
             <button class="btn btn-outline btn-sm btn-job-action" data-action="open-edit-job" data-job-id="${job.id}">
               <svg class="icon-sm inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg> Edit
             </button>
@@ -4784,6 +5337,41 @@ const loadManageJobs = async () => {
   }
 };
 window.loadManageJobs = loadManageJobs;
+
+// Delegated click handler for completing payment on pending jobs in Manage Jobs
+document.addEventListener('click', async (e) => {
+  const payBtn = e.target.closest('.btn-pay-pending-job');
+  if (payBtn) {
+    e.preventDefault();
+    const jobId = payBtn.getAttribute('data-job-id');
+    const rawTitle = decodeURIComponent(payBtn.getAttribute('data-job-title') || 'Job Listing');
+    
+    if (typeof window.openPaymentMethodModal === 'function') {
+      window.openPaymentMethodModal({
+        jobTitle: rawTitle,
+        onProceed: async (selectedMethod) => {
+          const empAuth = getEmployerAuth();
+          const token = empAuth.token || '';
+          const headers = { 'Content-Type': 'application/json' };
+          if (token && !token.includes('cookie')) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+          const res = await fetch('/api/payments/initialize', {
+            method: 'POST',
+            headers,
+            credentials: 'include',
+            body: JSON.stringify({ jobId, payment_method: selectedMethod })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.checkout_url) {
+            throw new Error(data.error || data.message || 'Failed to initialize payment');
+          }
+          window.location.href = data.checkout_url;
+        }
+      });
+    }
+  }
+});
 
 if (manageJobsTab || editJobModal || manageJobsContainer) {
   // Load on tab switch

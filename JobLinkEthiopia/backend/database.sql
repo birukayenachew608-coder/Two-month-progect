@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS employers (
     about_company TEXT DEFAULT NULL,
     bio TEXT DEFAULT NULL,
     profile_photo_url VARCHAR(255) DEFAULT NULL,
+    free_jobs_posted INT NOT NULL DEFAULT 0,
     
     account_status ENUM('active', 'banned', 'pending_verification') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -100,6 +101,8 @@ CREATE TABLE IF NOT EXISTS jobs (
     apply_link VARCHAR(255) DEFAULT NULL,
     
     report_reason TEXT DEFAULT NULL,
+    payment_status ENUM('free', 'paid', 'pending') DEFAULT 'free',
+    payment_reference VARCHAR(255) DEFAULT NULL,
     status ENUM('active', 'closed', 'flagged', 'pending_review') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -129,14 +132,17 @@ CREATE TABLE IF NOT EXISTS saved_jobs (
 
 CREATE TABLE IF NOT EXISTS job_alerts (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    seeker_id INT NOT NULL,
+    job_seeker_id INT NULL,
+    seeker_id INT NULL,
     job_sector VARCHAR(255) NOT NULL DEFAULT 'Software & Tech',
     keyword VARCHAR(255) DEFAULT NULL,
     location VARCHAR(255) DEFAULT 'Addis Ababa',
     frequency ENUM('daily', 'weekly', 'instant') DEFAULT 'daily',
     email_notification BOOLEAN DEFAULT TRUE,
-    telegram_notification BOOLEAN DEFAULT TRUE,
+    telegram_notification BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (job_seeker_id) REFERENCES job_seekers(id) ON DELETE CASCADE,
     FOREIGN KEY (seeker_id) REFERENCES job_seekers(id) ON DELETE CASCADE
 );
 

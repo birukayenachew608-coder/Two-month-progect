@@ -55,6 +55,13 @@
           } else {
             window.location.replace('index.html');
           }
+        } else {
+          if (typeof window.loadEmployerStats === 'function') {
+            window.loadEmployerStats();
+          }
+          if (typeof window.loadEmployerApplications === 'function') {
+            window.loadEmployerApplications();
+          }
         }
       })
       .catch(() => {
@@ -342,10 +349,16 @@
     document.addEventListener('DOMContentLoaded', () => {
       initNotificationListeners();
       loadEmployerNotifications();
+      if (typeof window.loadFreemiumStatus === 'function') {
+        window.loadFreemiumStatus();
+      }
     });
   } else {
     initNotificationListeners();
     loadEmployerNotifications();
+    if (typeof window.loadFreemiumStatus === 'function') {
+      window.loadFreemiumStatus();
+    }
   }
 })();
 

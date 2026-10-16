@@ -41,39 +41,10 @@ exports.deleteCV = async (req, res) => {
     }
 };
 
-exports.createAlert = async (req, res) => {
-    const { seekerId, sector, location, notification } = req.body;
-    try {
-        await pool.query(
-            'INSERT INTO job_alerts (seeker_id, keyword, location, frequency) VALUES (?, ?, ?, ?)',
-            [seekerId, sector, location, notification]
-        );
-        res.status(201).json({ message: 'Alert created successfully' });
-    } catch (error) {
-        console.error('Error creating alert:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-};
-
-exports.getAlerts = async (req, res) => {
-    const { seekerId } = req.params;
-    try {
-        const [alerts] = await pool.query('SELECT * FROM job_alerts WHERE seeker_id = ? ORDER BY created_at DESC', [seekerId]);
-        res.status(200).json(alerts);
-    } catch (error) {
-        res.status(500).json({ message: 'Internal server error' });
-    }
-};
-
-exports.deleteAlert = async (req, res) => {
-    const { id } = req.params;
-    try {
-        await pool.query('DELETE FROM job_alerts WHERE id = ?', [id]);
-        res.status(200).json({ message: 'Alert deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Internal server error' });
-    }
-};
+const alertController = require('./alertController');
+exports.createAlert = alertController.createAlert;
+exports.getAlerts = alertController.getAlerts;
+exports.deleteAlert = alertController.deleteAlert;
 
 exports.getProfile = async (req, res) => {
     const rawId = req.params.id || req.params.seekerId;

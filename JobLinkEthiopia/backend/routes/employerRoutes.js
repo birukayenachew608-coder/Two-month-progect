@@ -14,6 +14,7 @@ router.use(authenticateToken, authorizeRole('employer', 'admin', 'super_admin'))
 
 router.get('/stats', jobController.getEmployerStats);
 router.get('/jobs', jobController.getEmployerJobs);
+router.get('/freemium-status', jobController.getFreemiumStatus);
 
 // Notifications & Messages from Admin
 router.get('/messages', employerController.getEmployerMessages);

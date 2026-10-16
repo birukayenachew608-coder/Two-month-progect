@@ -116,7 +116,11 @@ exports.authorizeRole = (...allowedRoles) => {
         }
 
         if (!allowedRoles.includes(req.user.role)) {
+            if (req.accepts && req.accepts('html') && !req.xhr && !req.path.startsWith('/api/')) {
+                return res.redirect('/admin.html');
+            }
             return res.status(403).json({ 
+                error: 'Forbidden: Super Admin access required',
                 message: `Forbidden: Access requires role ${allowedRoles.join(' or ')}.` 
             });
         }
@@ -128,13 +132,31 @@ exports.authorizeRole = (...allowedRoles) => {
 exports.requireRole = exports.authorizeRole;
 
 exports.verifySuperAdmin = (req, res, next) => {
-    // Requires authenticateToken to be run first, which sets req.user
-    if (!req.user) {
-        return res.status(401).json({ message: 'Access denied. No user context.' });
+    // If req.user is not yet populated, extract and verify access token from headers or cookies
+    if (!req.user || !req.user.role) {
+        let authHeader = req.headers && req.headers['authorization'];
+        let token = authHeader && authHeader.split(' ')[1];
+
+        if (req.cookies && (!token || token.includes('cookie'))) {
+            token = req.cookies.token;
+        }
+
+        if (token && token !== 'secure_cookie_auth') {
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production');
+                req.user = decoded;
+            } catch (error) {
+                return res.status(403).json({ error: 'Forbidden: Super Admin access required', message: 'Invalid or expired token.' });
+            }
+        }
+    }
+
+    if (!req.user || !req.user.role) {
+        return res.status(401).json({ error: 'Unauthorized: Authentication required', message: 'Access denied. No user context.' });
     }
     
     if (req.user.role !== 'super_admin') {
-        return res.status(403).json({ message: 'Forbidden. Super Admin access required.' });
+        return res.status(403).json({ error: 'Forbidden: Super Admin access required', message: 'Forbidden: Super Admin access required' });
     }
     
     next();

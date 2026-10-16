@@ -437,12 +437,12 @@ exports.dismissReport = async (req, res) => {
             await pool.query('DELETE FROM reports WHERE job_id = ?', [id]);
         }
 
-        // Unflag job and reset report_reason
+        // Unflag job and reset report_reason, keeping pending if payment is still pending
         if (jobId) {
-            await pool.query("UPDATE jobs SET report_reason = NULL, status = CASE WHEN status = 'flagged' THEN 'active' ELSE status END WHERE id = ?", [jobId]);
+            await pool.query("UPDATE jobs SET report_reason = NULL, status = CASE WHEN payment_status = 'pending' THEN 'pending' WHEN status = 'flagged' THEN 'active' ELSE status END WHERE id = ?", [jobId]);
             await pool.query('DELETE FROM reports WHERE job_id = ?', [jobId]);
         }
-        await pool.query("UPDATE jobs SET report_reason = NULL, status = CASE WHEN status = 'flagged' THEN 'active' ELSE status END WHERE id = ?", [id]);
+        await pool.query("UPDATE jobs SET report_reason = NULL, status = CASE WHEN payment_status = 'pending' THEN 'pending' WHEN status = 'flagged' THEN 'active' ELSE status END WHERE id = ?", [id]);
 
         res.status(200).json({ success: true, message: 'Report dismissed successfully' });
     } catch (error) {
@@ -551,6 +551,12 @@ exports.updateJobStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
     try {
+        if (status === 'active') {
+            const [jobRows] = await pool.query('SELECT payment_status FROM jobs WHERE id = ?', [id]);
+            if (jobRows.length > 0 && jobRows[0].payment_status === 'pending') {
+                return res.status(400).json({ message: 'Cannot activate job. Payment of 300 ETB is pending and must be completed via Chapa.' });
+            }
+        }
         const [result] = await pool.query('UPDATE jobs SET status = ? WHERE id = ?', [status, id]);
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Job not found' });

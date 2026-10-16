@@ -3,8 +3,9 @@ const router = express.Router();
 const superAdminController = require('../controllers/superAdminController');
 const { authenticateToken, verifySuperAdmin } = require('../middleware/authMiddleware');
 
-// Protect all routes with authenticateToken
+// Protect all routes with authenticateToken and verifySuperAdmin
 router.use(authenticateToken);
+router.use(verifySuperAdmin);
 
 // IP Whitelisting Routes
 router.get('/ips', superAdminController.getIps);

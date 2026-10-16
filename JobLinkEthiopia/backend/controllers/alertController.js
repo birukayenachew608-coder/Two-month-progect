@@ -5,71 +5,140 @@ const pool = require('../config/db');
  * JobLink Ethiopia - Full-Stack Isolated Alert Management
  */
 
-// POST /api/alerts - Saves a new alert preference for the authenticated seeker
+// POST /api/alerts or /api/seeker/alerts - Saves a new or updates an existing alert preference
 exports.createAlert = async (req, res) => {
     try {
-        const seeker_id = req.user ? req.user.id : req.body.seekerId;
+        const seeker_id = req.user ? req.user.id : (req.body.seekerId || req.body.job_seeker_id || req.body.seeker_id);
         if (!seeker_id) {
             return res.status(401).json({ message: 'Authentication required. No seeker identified.' });
         }
 
-        const job_sector = (req.body.job_sector || req.body.sector || 'Software & Tech').toString().trim().slice(0, 255);
-        const location = req.body.location ? String(req.body.location).trim().slice(0, 255) : 'Addis Ababa';
+        const job_sector = (req.body.job_sector || req.body.sector || req.body.Sector || 'Software & Tech').toString().trim().slice(0, 255);
+        const location = (req.body.location || req.body.Location || 'Addis Ababa').toString().trim().slice(0, 255);
         const frequency = req.body.frequency ? String(req.body.frequency).trim() : 'daily';
 
-        const email_notification = req.body.email_notification !== undefined ? req.body.email_notification : true;
-        const telegram_notification = req.body.telegram_notification !== undefined ? req.body.telegram_notification : true;
-        const emailBool = email_notification === true || email_notification === 'true' || email_notification === 1 || email_notification === '1';
-        const telegramBool = telegram_notification === true || telegram_notification === 'true' || telegram_notification === 1 || telegram_notification === '1';
+        let emailBool = true;
+        if (req.body.email_notification !== undefined) {
+            emailBool = req.body.email_notification === true || req.body.email_notification === 'true' || req.body.email_notification === 1 || req.body.email_notification === '1';
+        } else if (req.body.emailPreference !== undefined) {
+            emailBool = req.body.emailPreference === true || req.body.emailPreference === 'true' || req.body.emailPreference === 1 || req.body.emailPreference === '1';
+        } else if (req.body.email !== undefined) {
+            emailBool = req.body.email === true || req.body.email === 'true' || req.body.email === 1 || req.body.email === '1';
+        } else if (req.body.notification !== undefined) {
+            emailBool = req.body.notification === true || req.body.notification === 'true' || req.body.notification === 1 || req.body.notification === '1';
+        }
 
-        const [result] = await pool.query(
-            `INSERT INTO job_alerts (seeker_id, job_sector, keyword, location, email_notification, telegram_notification, frequency)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [seeker_id, job_sector, job_sector, location, emailBool ? 1 : 0, telegramBool ? 1 : 0, frequency]
-        );
+        const alertId = req.body.id || req.body.alertId || req.body.alert_id;
+        let savedAlert = null;
+        let isUpdate = false;
 
-        const newAlert = {
-            id: result.insertId,
-            seeker_id,
-            job_sector,
-            keyword: job_sector,
-            location,
-            email_notification: emailBool,
-            telegram_notification: telegramBool,
-            frequency,
-            created_at: new Date()
-        };
+        // If explicit alert ID provided, update that alert
+        if (alertId) {
+            const [updateRes] = await pool.query(
+                `UPDATE job_alerts
+                 SET job_sector = ?, keyword = ?, location = ?, email_notification = ?, telegram_notification = 0, frequency = ?, updated_at = CURRENT_TIMESTAMP
+                 WHERE id = ? AND (job_seeker_id = ? OR seeker_id = ?)`,
+                [job_sector, job_sector, location, emailBool ? 1 : 0, frequency, alertId, seeker_id, seeker_id]
+            );
+            if (updateRes.affectedRows > 0) {
+                isUpdate = true;
+                savedAlert = {
+                    id: Number(alertId),
+                    job_seeker_id: seeker_id,
+                    seeker_id,
+                    job_sector,
+                    sector: job_sector,
+                    location,
+                    email_notification: emailBool,
+                    frequency,
+                    updated_at: new Date()
+                };
+            }
+        }
 
-        res.status(201).json({
-            message: 'Alert preferences saved successfully',
-            alert: newAlert
+        if (!savedAlert) {
+            // Check if alert for this seeker and sector already exists (prevent duplicate sector alert for same user)
+            const [existing] = await pool.query(
+                `SELECT id FROM job_alerts 
+                 WHERE (job_seeker_id = ? OR seeker_id = ?) AND job_sector = ? 
+                 ORDER BY id DESC LIMIT 1`,
+                [seeker_id, seeker_id, job_sector]
+            );
+
+            if (existing.length > 0) {
+                const targetId = existing[0].id;
+                await pool.query(
+                    `UPDATE job_alerts
+                     SET location = ?, email_notification = ?, telegram_notification = 0, frequency = ?, keyword = ?, updated_at = CURRENT_TIMESTAMP
+                     WHERE id = ?`,
+                    [location, emailBool ? 1 : 0, frequency, job_sector, targetId]
+                );
+                isUpdate = true;
+                savedAlert = {
+                    id: targetId,
+                    job_seeker_id: seeker_id,
+                    seeker_id,
+                    job_sector,
+                    sector: job_sector,
+                    location,
+                    email_notification: emailBool,
+                    frequency,
+                    updated_at: new Date()
+                };
+            } else {
+                const [result] = await pool.query(
+                    `INSERT INTO job_alerts (job_seeker_id, seeker_id, job_sector, keyword, location, email_notification, telegram_notification, frequency)
+                     VALUES (?, ?, ?, ?, ?, ?, 0, ?)`,
+                    [seeker_id, seeker_id, job_sector, job_sector, location, emailBool ? 1 : 0, frequency]
+                );
+                savedAlert = {
+                    id: result.insertId,
+                    job_seeker_id: seeker_id,
+                    seeker_id,
+                    job_sector,
+                    sector: job_sector,
+                    location,
+                    email_notification: emailBool,
+                    frequency,
+                    created_at: new Date()
+                };
+            }
+        }
+
+        res.status(isUpdate ? 200 : 201).json({
+            message: isUpdate ? 'Alert preferences updated successfully' : 'Alert preferences saved successfully',
+            alert: savedAlert
         });
     } catch (error) {
-        console.error('Error creating job alert:', error);
+        console.error('Error saving job alert:', error);
         res.status(500).json({ message: 'Internal server error while saving alert' });
     }
 };
 
-// GET /api/alerts - Fetches all active alerts for the authenticated seeker
+// GET /api/alerts or /api/seeker/alerts - Fetches all active alerts for the authenticated seeker
 exports.getAlerts = async (req, res) => {
     try {
-        let seeker_id = req.user ? req.user.id : req.params.seekerId;
+        let seeker_id = req.user ? req.user.id : (req.params.seekerId || req.query.seekerId);
         if (!seeker_id) {
             return res.status(401).json({ message: 'Authentication required.' });
         }
 
         const [alerts] = await pool.query(
-            `SELECT id, seeker_id, job_sector, keyword, location, frequency, email_notification, telegram_notification, created_at
+            `SELECT id, job_seeker_id, seeker_id, job_sector, keyword, location, frequency, email_notification, telegram_notification, created_at, updated_at
              FROM job_alerts
-             WHERE seeker_id = ?
+             WHERE job_seeker_id = ? OR seeker_id = ?
              ORDER BY created_at DESC`,
-            [seeker_id]
+            [seeker_id, seeker_id]
         );
 
-        // Normalize boolean values
+        // Normalize boolean values and aliases
         const normalized = alerts.map(a => ({
             ...a,
+            job_seeker_id: a.job_seeker_id || a.seeker_id,
+            seeker_id: a.seeker_id || a.job_seeker_id,
             job_sector: a.job_sector || a.keyword || 'Software & Tech',
+            sector: a.job_sector || a.keyword || 'Software & Tech',
+            location: a.location || 'Addis Ababa',
             email_notification: Boolean(a.email_notification),
             telegram_notification: Boolean(a.telegram_notification)
         }));
@@ -81,7 +150,7 @@ exports.getAlerts = async (req, res) => {
     }
 };
 
-// DELETE /api/alerts/:id - Deletes a specific alert
+// DELETE /api/alerts/:id or /api/seeker/alerts/:id - Deletes a specific alert
 exports.deleteAlert = async (req, res) => {
     try {
         const { id } = req.params;
@@ -95,9 +164,9 @@ exports.deleteAlert = async (req, res) => {
         let params = [id];
 
         // If authenticated as seeker, ensure they can only delete their own alert
-        if (seeker_id) {
-            query += ' AND seeker_id = ?';
-            params.push(seeker_id);
+        if (seeker_id && (!req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin'))) {
+            query += ' AND (job_seeker_id = ? OR seeker_id = ?)';
+            params.push(seeker_id, seeker_id);
         }
 
         const [result] = await pool.query(query, params);
