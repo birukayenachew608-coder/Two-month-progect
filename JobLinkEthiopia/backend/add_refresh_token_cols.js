@@ -3,7 +3,7 @@ const pool = require('./config/db');
 async function addColumns() {
     try {
         console.log('Adding refresh_token to job_seekers...');
-        await pool.query('ALTER TABLE job_seekers ADD COLUMN refresh_token VARCHAR(255) DEFAULT NULL');
+        await pool.query('ALTER TABLE job_seekers ADD COLUMN refresh_token VARCHAR(512) DEFAULT NULL');
         console.log('Success: job_seekers updated.');
     } catch (err) {
         if (err.code === 'ER_DUP_FIELDNAME') {
@@ -15,7 +15,7 @@ async function addColumns() {
 
     try {
         console.log('Adding refresh_token to employers...');
-        await pool.query('ALTER TABLE employers ADD COLUMN refresh_token VARCHAR(255) DEFAULT NULL');
+        await pool.query('ALTER TABLE employers ADD COLUMN refresh_token VARCHAR(512) DEFAULT NULL');
         console.log('Success: employers updated.');
     } catch (err) {
         if (err.code === 'ER_DUP_FIELDNAME') {

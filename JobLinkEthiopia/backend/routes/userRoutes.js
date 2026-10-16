@@ -69,5 +69,8 @@ router.get('/profile-photo', authenticateToken, userController.getProfilePhoto);
 // Route: DELETE /api/user/profile-photo (authenticated)
 router.delete('/profile-photo', authenticateToken, userController.removeProfilePhoto);
 
+// Public employer profile route
+router.get('/employer/:id', userController.getPublicEmployerProfile);
+
 module.exports = router;
 module.exports.handleImageUpload = handleImageUpload;

@@ -9,46 +9,32 @@ async function runTests() {
     console.log('=== Starting Full Stack Feature Verification ===\n');
 
     // ----------------------------------------------------
-    // TEST 1: ISOLATED RATE LIMITING
+    // TEST 1: RATE LIMITING (8 attempts / 60 seconds per IP)
     // ----------------------------------------------------
-    console.log('[Test 1] Testing Isolated Rate Limiting on Login...');
-    const emailA = `ratetest_a_${Date.now()}@example.com`;
-    const emailB = `ratetest_b_${Date.now()}@example.com`;
+    console.log('[Test 1] Testing Rate Limiting on Login (8 attempts per IP in 60s)...');
+    const testEmail = `ratetest_${Date.now()}@example.com`;
 
-    console.log(`Sending 5 failed login attempts for ${emailA}...`);
-    for (let i = 1; i <= 5; i++) {
+    console.log(`Sending 8 failed login attempts for ${testEmail}...`);
+    for (let i = 1; i <= 8; i++) {
         const res = await fetch(`${BASE_URL}/api/auth/seeker/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: emailA, password: 'wrongpassword' })
+            body: JSON.stringify({ email: testEmail, password: 'wrongpassword' })
         });
-        console.log(` Attempt ${i} (${emailA}): Status ${res.status}`);
+        console.log(` Attempt ${i}: Status ${res.status}`);
     }
 
-    // Attempt 6 for Email A should be 429 Too Many Requests
-    const resA6 = await fetch(`${BASE_URL}/api/auth/seeker/login`, {
+    // Attempt 9 should be 429 Too Many Requests
+    const res9 = await fetch(`${BASE_URL}/api/auth/seeker/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailA, password: 'wrongpassword' })
+        body: JSON.stringify({ email: testEmail, password: 'wrongpassword' })
     });
-    console.log(` Attempt 6 for ${emailA}: Status ${resA6.status}`);
-    if (resA6.status === 429) {
-        console.log(' PASS: Email A correctly hit rate limit (429 Too Many Requests)');
+    console.log(` Attempt 9: Status ${res9.status}`);
+    if (res9.status === 429) {
+        console.log(' PASS: 9th login attempt correctly hit rate limit (429 Too Many Requests)');
     } else {
-        console.error(` FAIL: Expected 429 for Email A, got ${resA6.status}`);
-    }
-
-    // Attempt 1 for Email B from SAME IP should NOT be blocked (should be 401, not 429)
-    const resB1 = await fetch(`${BASE_URL}/api/auth/seeker/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailB, password: 'wrongpassword' })
-    });
-    console.log(` Attempt 1 for ${emailB} (same IP): Status ${resB1.status}`);
-    if (resB1.status === 401) {
-        console.log(' PASS: Email B is NOT blocked! Rate limiting is strictly isolated per email/IP!');
-    } else {
-        console.error(` FAIL: Email B was incorrectly blocked with status ${resB1.status}`);
+        console.error(` FAIL: Expected 429 on 9th attempt, got ${res9.status}`);
     }
 
     // ----------------------------------------------------

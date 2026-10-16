@@ -56,6 +56,12 @@
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* Theme Surfaces & Borders (Light Mode Default) */
+  --bg-card: #ffffff;
+  --card-bg: #ffffff;
+  --bg-body: #f8fafc;
+  --border-color: #e2e8f0;
 }
 
 * {
@@ -831,9 +837,9 @@ a {
   padding: 1.75rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -2579,7 +2585,9 @@ a {
   --slate-900: #f8fafc;
 
   --bg-card: #1e293b;
+  --card-bg: #1e293b;
   --bg-body: #0f172a;
+  --border-color: rgba(255, 255, 255, 0.12);
 }
 
 [data-theme="dark"] body {
@@ -2845,9 +2853,9 @@ a {
   background-color: #151f32 !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-theme="dark"] .card-hover:hover {
@@ -2901,7 +2909,8 @@ a {
   box-shadow: 0 6px 18px rgba(14, 165, 233, 0.4);
 }
 
-.btn-save-job, .btn-report {
+.btn-save-job,
+.btn-report {
   border-radius: 0.375rem;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -3199,8 +3208,10 @@ a {
 }
 
 
-#edit-job-modal .modal-content {
+#edit-job-modal .modal-content,
+#edit-job-form.modal-content {
   max-width: 42rem !important;
+  padding: 0 !important;
 }
 
 /* --- Auth Modal (Login & Register) Dialog Styles --- */
@@ -3224,33 +3235,115 @@ a {
   flex-direction: column !important;
 }
 
-#login-modal .flex.justify-between.items-center {
+#login-modal .flex.justify-between.items-center,
+.auth-modal .auth-modal-header {
   margin-bottom: 1.25rem !important;
 }
 
-#login-modal #auth-title {
-  color: #f8fafc !important;
+/* ========================================================
+   AUTH MODAL TEXT CONTRAST: DEFAULT (LIGHT MODE)
+   ======================================================== */
+
+/* Modal Headings (Default / Light Mode) */
+.modal-content h2,
+#login-modal h2,
+#login-modal #auth-title,
+.auth-modal .modal-content h2,
+.auth-modal h2 {
+  color: #1f2937 !important;
   font-size: 1.25rem !important;
   font-weight: 700 !important;
   margin: 0 !important;
 }
 
-#login-modal [data-action="close-login"] {
-  color: #38bdf8 !important;
+#login-modal #auth-subtitle,
+#auth-subtitle,
+.auth-modal-header #auth-subtitle {
+  display: none !important;
+}
+
+/* Modal Form Labels (Default / Light Mode) */
+.modal-content label,
+.modal-content .form-label,
+#login-modal label,
+#login-modal .form-label,
+.auth-modal label,
+.auth-modal .form-label {
+  color: #1f2937 !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 0.35rem !important;
+  display: block !important;
+}
+
+/* Helper Text (like 'Or email', 'Don't have an account?' etc.) in Light Mode */
+#login-modal .text-xs.font-semibold,
+#login-modal .text-xs.font-semibold.text-slate-400,
+#login-modal .auth-divider span,
+#login-modal .auth-divider-wrap span,
+.auth-modal .auth-divider span,
+.auth-modal .auth-divider-wrap span,
+.auth-modal .text-xs.font-semibold,
+.modal-content .auth-divider span,
+.modal-content .auth-divider-wrap span,
+.modal-content .text-xs.font-semibold,
+.modal-content .helper-text,
+.modal-content .form-helper {
+  color: #374151 !important;
+}
+
+#login-modal p.text-sm,
+#login-modal #auth-toggle-text,
+.auth-modal p.text-sm,
+.auth-footer-text,
+.modal-content p.text-sm {
+  margin-top: 0.85rem !important;
+  color: #374151 !important;
+}
+
+#login-modal [data-action="toggle-auth"],
+.auth-modal [data-action="toggle-auth"] {
+  color: #0284c7 !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+}
+
+/* Close Button (Default / Light Mode) */
+.close-btn,
+.modal-content .close-btn,
+#login-modal [data-action="close-login"],
+.auth-modal [data-action="close-login"],
+.modal-content [data-action="close-login"],
+#login-modal .close-btn,
+.auth-modal .close-btn,
+.modal-close,
+.modal-close-icon {
+  color: #6b7280 !important;
   cursor: pointer;
   padding: 0.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: color 0.2s ease;
 }
 
-#login-modal [data-action="close-login"]:hover {
-  color: #7dd3fc !important;
+.close-btn:hover,
+.modal-content .close-btn:hover,
+#login-modal [data-action="close-login"]:hover,
+.auth-modal [data-action="close-login"]:hover,
+.modal-content [data-action="close-login"]:hover,
+#login-modal .close-btn:hover,
+.auth-modal .close-btn:hover,
+.modal-close:hover,
+.modal-close-icon:hover {
+  color: #1f2937 !important;
 }
 
-/* Social Buttons Container & Spacing */
+/* Social Buttons Container & Spacing (Default / Light Mode) */
 #login-modal .flex.flex-col.gap-3,
-#login-modal .social-logins {
+#login-modal .social-logins,
+#login-modal .auth-social-list,
+.auth-modal .auth-social-list {
   display: flex !important;
   flex-direction: column !important;
   gap: 0.75rem !important;
@@ -3258,7 +3351,10 @@ a {
 }
 
 #login-modal .flex.flex-col.gap-3 .btn,
-#login-modal .social-logins .btn {
+#login-modal .social-logins .btn,
+#login-modal .auth-social-btn,
+.auth-modal .auth-social-btn,
+.auth-modal .btn-linkedin {
   height: 44px !important;
   padding: 0.65rem 1rem !important;
   font-size: 0.875rem !important;
@@ -3269,22 +3365,27 @@ a {
   justify-content: center !important;
   gap: 0.5rem !important;
   box-sizing: border-box !important;
-  background-color: #1e293b !important;
-  border: 1px solid #334155 !important;
-  color: #f1f5f9 !important;
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1f2937 !important;
   width: 100% !important;
   transition: all 0.2s ease;
 }
 
 #login-modal .flex.flex-col.gap-3 .btn:hover,
-#login-modal .social-logins .btn:hover {
-  background-color: #334155 !important;
-  border-color: #475569 !important;
+#login-modal .social-logins .btn:hover,
+#login-modal .auth-social-btn:hover,
+.auth-modal .auth-social-btn:hover,
+.auth-modal .btn-linkedin:hover {
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
 }
 
-/* 'Or email' Divider Spacing */
+/* 'Or email' Divider Spacing (Default / Light Mode) */
 #login-modal .flex.items-center.gap-3,
-#login-modal .auth-divider {
+#login-modal .auth-divider,
+.auth-modal .auth-divider-wrap,
+#login-modal .auth-divider-wrap {
   display: flex !important;
   align-items: center !important;
   gap: 0.75rem !important;
@@ -3292,51 +3393,47 @@ a {
 }
 
 #login-modal .flex.items-center.gap-3 .border-t,
-#login-modal .auth-divider-line {
-  border-color: #334155 !important;
-  border-top-color: #334155 !important;
+#login-modal .auth-divider-line,
+#login-modal .border-slate-200,
+.auth-modal .border-slate-200 {
+  border-color: #e2e8f0 !important;
+  border-top-color: #e2e8f0 !important;
 }
 
-#login-modal .text-xs.font-semibold.text-slate-400 {
-  color: #94a3b8 !important;
-}
-
-/* Input Fields & Form Group Sizing */
-#login-modal .form-group {
+/* Input Fields & Form Group Sizing (Default / Light Mode) */
+#login-modal .form-group,
+.auth-modal .form-group {
   margin-bottom: 0.85rem !important;
 }
 
-#login-modal .form-label {
-  color: #cbd5e1 !important;
-  font-size: 0.875rem !important;
-  font-weight: 600 !important;
-  margin-bottom: 0.35rem !important;
-  display: block !important;
-}
-
 #login-modal .form-input,
-#login-modal input.form-input {
+#login-modal input.form-input,
+.auth-modal .form-input,
+.modal-content .form-input {
   height: 44px !important;
   padding: 0.65rem 1rem !important;
   font-size: 0.875rem !important;
   border-radius: 0.5rem !important;
-  background-color: #0f172a !important;
-  border: 1px solid #334155 !important;
-  color: #f1f5f9 !important;
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1f2937 !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
 
 #login-modal .form-input:focus,
-#login-modal input.form-input:focus {
-  border-color: #38bdf8 !important;
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15) !important;
+#login-modal input.form-input:focus,
+.auth-modal .form-input:focus,
+.modal-content .form-input:focus {
+  border-color: #0ea5e9 !important;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15) !important;
   outline: none !important;
 }
 
 /* Action Submit Button Sizing */
 #login-modal #auth-submit,
-#login-modal button[type="submit"] {
+#login-modal button[type="submit"],
+.auth-modal button[type="submit"] {
   height: 44px !important;
   padding: 0.65rem 1rem !important;
   font-size: 0.875rem !important;
@@ -3356,87 +3453,695 @@ a {
 }
 
 #login-modal #auth-submit:hover,
-#login-modal button[type="submit"]:hover {
+#login-modal button[type="submit"]:hover,
+.auth-modal button[type="submit"]:hover {
   background: #0284c7 !important;
 }
 
-#login-modal p.text-sm {
-  margin-top: 0.85rem !important;
+/* ========================================================
+   AUTH MODAL TEXT CONTRAST: DARK MODE SUPPORT
+   (.dark-theme, .dark, body.dark-theme, body.dark, [data-theme="dark"])
+   ======================================================== */
+
+/* Modal Content Background in Dark Mode */
+[data-theme="dark"] .modal-content,
+[data-theme="dark"] .modal .modal-content,
+[data-theme="dark"] .modal-overlay .modal-content,
+.dark-theme .modal-content,
+.dark-theme .modal .modal-content,
+.dark-theme .modal-overlay .modal-content,
+.dark .modal-content,
+.dark .modal .modal-content,
+.dark .modal-overlay .modal-content,
+body.dark-theme .modal-content,
+body.dark .modal-content {
+  background-color: #1e293b !important;
+  background: #1e293b !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Modal Headings (Dark Mode) */
+[data-theme="dark"] .modal-content h2,
+[data-theme="dark"] #login-modal h2,
+[data-theme="dark"] #login-modal #auth-title,
+[data-theme="dark"] .auth-modal .modal-content h2,
+[data-theme="dark"] .auth-modal h2,
+.dark-theme .modal-content h2,
+.dark-theme #login-modal h2,
+.dark-theme #login-modal #auth-title,
+.dark-theme .auth-modal .modal-content h2,
+.dark-theme .auth-modal h2,
+.dark .modal-content h2,
+.dark #login-modal h2,
+.dark #login-modal #auth-title,
+.dark .auth-modal .modal-content h2,
+.dark .auth-modal h2,
+body.dark-theme .modal-content h2,
+body.dark-theme #login-modal h2,
+body.dark-theme #login-modal #auth-title,
+body.dark .modal-content h2,
+body.dark #login-modal h2,
+body.dark #login-modal #auth-title {
+  color: #f9fafb !important;
+}
+
+/* Modal Form Labels (Dark Mode) */
+[data-theme="dark"] .modal-content label,
+[data-theme="dark"] .modal-content .form-label,
+[data-theme="dark"] #login-modal label,
+[data-theme="dark"] #login-modal .form-label,
+[data-theme="dark"] .auth-modal label,
+[data-theme="dark"] .auth-modal .form-label,
+.dark-theme .modal-content label,
+.dark-theme .modal-content .form-label,
+.dark-theme #login-modal label,
+.dark-theme #login-modal .form-label,
+.dark-theme .auth-modal label,
+.dark-theme .auth-modal .form-label,
+.dark .modal-content label,
+.dark .modal-content .form-label,
+.dark #login-modal label,
+.dark #login-modal .form-label,
+.dark .auth-modal label,
+.dark .auth-modal .form-label,
+body.dark-theme .modal-content label,
+body.dark-theme .modal-content .form-label,
+body.dark-theme #login-modal label,
+body.dark-theme #login-modal .form-label,
+body.dark .modal-content label,
+body.dark .modal-content .form-label,
+body.dark #login-modal label,
+body.dark #login-modal .form-label {
+  color: #f9fafb !important;
+}
+
+/* Helper Text (Dark Mode) */
+[data-theme="dark"] #login-modal .text-xs.font-semibold,
+[data-theme="dark"] #login-modal .text-xs.font-semibold.text-slate-400,
+[data-theme="dark"] #login-modal .auth-divider span,
+[data-theme="dark"] #login-modal .auth-divider-wrap span,
+[data-theme="dark"] .auth-modal .auth-divider span,
+[data-theme="dark"] .auth-modal .auth-divider-wrap span,
+[data-theme="dark"] .auth-modal .text-xs.font-semibold,
+[data-theme="dark"] .modal-content .auth-divider span,
+[data-theme="dark"] .modal-content .auth-divider-wrap span,
+[data-theme="dark"] .modal-content .text-xs.font-semibold,
+[data-theme="dark"] .modal-content .helper-text,
+[data-theme="dark"] .modal-content .form-helper,
+[data-theme="dark"] #login-modal p.text-sm,
+[data-theme="dark"] #login-modal #auth-toggle-text,
+[data-theme="dark"] .auth-modal p.text-sm,
+[data-theme="dark"] .modal-content p.text-sm,
+.dark-theme #login-modal .text-xs.font-semibold,
+.dark-theme #login-modal .text-xs.font-semibold.text-slate-400,
+.dark-theme #login-modal .auth-divider span,
+.dark-theme #login-modal .auth-divider-wrap span,
+.dark-theme .auth-modal .auth-divider span,
+.dark-theme .auth-modal .auth-divider-wrap span,
+.dark-theme .auth-modal .text-xs.font-semibold,
+.dark-theme .modal-content .auth-divider span,
+.dark-theme .modal-content .auth-divider-wrap span,
+.dark-theme .modal-content .text-xs.font-semibold,
+.dark-theme .modal-content .helper-text,
+.dark-theme .modal-content .form-helper,
+.dark-theme #login-modal p.text-sm,
+.dark-theme #login-modal #auth-toggle-text,
+.dark-theme .auth-modal p.text-sm,
+.dark-theme .modal-content p.text-sm,
+.dark #login-modal .text-xs.font-semibold,
+.dark #login-modal .text-xs.font-semibold.text-slate-400,
+.dark #login-modal .auth-divider span,
+.dark #login-modal .auth-divider-wrap span,
+.dark .auth-modal .auth-divider span,
+.dark .auth-modal .auth-divider-wrap span,
+.dark .auth-modal .text-xs.font-semibold,
+.dark .modal-content .auth-divider span,
+.dark .modal-content .auth-divider-wrap span,
+.dark .modal-content .text-xs.font-semibold,
+.dark .modal-content .helper-text,
+.dark .modal-content .form-helper,
+.dark #login-modal p.text-sm,
+.dark #login-modal #auth-toggle-text,
+.dark .auth-modal p.text-sm,
+.dark .modal-content p.text-sm,
+body.dark-theme #login-modal .text-xs.font-semibold,
+body.dark-theme #login-modal .auth-divider span,
+body.dark-theme #login-modal p.text-sm,
+body.dark-theme #login-modal #auth-toggle-text,
+body.dark #login-modal .text-xs.font-semibold,
+body.dark #login-modal .auth-divider span,
+body.dark #login-modal p.text-sm,
+body.dark #login-modal #auth-toggle-text {
   color: #94a3b8 !important;
 }
 
-#login-modal [data-action="toggle-auth"] {
+[data-theme="dark"] #login-modal [data-action="toggle-auth"],
+[data-theme="dark"] .auth-modal [data-action="toggle-auth"],
+.dark-theme #login-modal [data-action="toggle-auth"],
+.dark #login-modal [data-action="toggle-auth"] {
   color: #38bdf8 !important;
-  font-weight: 600 !important;
-  cursor: pointer;
+}
+
+/* Close Button (Dark Mode) */
+[data-theme="dark"] .close-btn,
+[data-theme="dark"] .modal-content .close-btn,
+[data-theme="dark"] #login-modal [data-action="close-login"],
+[data-theme="dark"] .auth-modal [data-action="close-login"],
+[data-theme="dark"] .modal-content [data-action="close-login"],
+[data-theme="dark"] #login-modal .close-btn,
+[data-theme="dark"] .auth-modal .close-btn,
+[data-theme="dark"] .modal-close,
+[data-theme="dark"] .modal-close-icon,
+.dark-theme .close-btn,
+.dark-theme .modal-content .close-btn,
+.dark-theme #login-modal [data-action="close-login"],
+.dark-theme .auth-modal [data-action="close-login"],
+.dark-theme .modal-content [data-action="close-login"],
+.dark-theme #login-modal .close-btn,
+.dark-theme .auth-modal .close-btn,
+.dark-theme .modal-close,
+.dark-theme .modal-close-icon,
+.dark .close-btn,
+.dark .modal-content .close-btn,
+.dark #login-modal [data-action="close-login"],
+.dark .auth-modal [data-action="close-login"],
+.dark .modal-content [data-action="close-login"],
+.dark #login-modal .close-btn,
+.dark .auth-modal .close-btn,
+.dark .modal-close,
+.dark .modal-close-icon,
+body.dark-theme .close-btn,
+body.dark-theme .modal-content .close-btn,
+body.dark-theme #login-modal [data-action="close-login"],
+body.dark-theme #login-modal .close-btn,
+body.dark .close-btn,
+body.dark .modal-content .close-btn,
+body.dark #login-modal [data-action="close-login"],
+body.dark #login-modal .close-btn {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .close-btn:hover,
+[data-theme="dark"] .modal-content .close-btn:hover,
+[data-theme="dark"] #login-modal [data-action="close-login"]:hover,
+[data-theme="dark"] .auth-modal [data-action="close-login"]:hover,
+[data-theme="dark"] .modal-content [data-action="close-login"]:hover,
+[data-theme="dark"] #login-modal .close-btn:hover,
+[data-theme="dark"] .auth-modal .close-btn:hover,
+[data-theme="dark"] .modal-close:hover,
+[data-theme="dark"] .modal-close-icon:hover,
+.dark-theme .close-btn:hover,
+.dark-theme .modal-content .close-btn:hover,
+.dark-theme #login-modal [data-action="close-login"]:hover,
+.dark-theme .auth-modal [data-action="close-login"]:hover,
+.dark-theme .modal-content [data-action="close-login"]:hover,
+.dark-theme #login-modal .close-btn:hover,
+.dark-theme .auth-modal .close-btn:hover,
+.dark-theme .modal-close:hover,
+.dark-theme .modal-close-icon:hover,
+.dark .close-btn:hover,
+.dark .modal-content .close-btn:hover,
+.dark #login-modal [data-action="close-login"]:hover,
+.dark .auth-modal [data-action="close-login"]:hover,
+.dark .modal-content [data-action="close-login"]:hover,
+.dark #login-modal .close-btn:hover,
+.dark .close-btn:hover,
+body.dark-theme .close-btn:hover,
+body.dark-theme #login-modal [data-action="close-login"]:hover,
+body.dark .close-btn:hover,
+body.dark #login-modal [data-action="close-login"]:hover {
+  color: #ffffff !important;
+}
+
+/* Dark Mode Social Buttons */
+[data-theme="dark"] #login-modal .flex.flex-col.gap-3 .btn,
+[data-theme="dark"] #login-modal .social-logins .btn,
+[data-theme="dark"] #login-modal .auth-social-btn,
+[data-theme="dark"] .auth-modal .auth-social-btn,
+[data-theme="dark"] .auth-modal .btn-linkedin,
+.dark-theme #login-modal .flex.flex-col.gap-3 .btn,
+.dark-theme #login-modal .social-logins .btn,
+.dark-theme #login-modal .auth-social-btn,
+.dark-theme .auth-modal .auth-social-btn,
+.dark-theme .auth-modal .btn-linkedin,
+.dark #login-modal .flex.flex-col.gap-3 .btn,
+.dark #login-modal .social-logins .btn,
+.dark #login-modal .auth-social-btn,
+.dark .auth-modal .auth-social-btn,
+.dark .auth-modal .btn-linkedin,
+body.dark-theme #login-modal .social-logins .btn,
+body.dark #login-modal .social-logins .btn,
+body.dark-theme #login-modal .auth-social-btn,
+body.dark #login-modal .auth-social-btn {
+  background-color: #1e293b !important;
+  border: 1px solid #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] #login-modal .flex.flex-col.gap-3 .btn:hover,
+[data-theme="dark"] #login-modal .social-logins .btn:hover,
+[data-theme="dark"] #login-modal .auth-social-btn:hover,
+[data-theme="dark"] .auth-modal .auth-social-btn:hover,
+[data-theme="dark"] .auth-modal .btn-linkedin:hover,
+.dark-theme #login-modal .flex.flex-col.gap-3 .btn:hover,
+.dark-theme #login-modal .social-logins .btn:hover,
+.dark-theme #login-modal .auth-social-btn:hover,
+.dark-theme .auth-modal .auth-social-btn:hover,
+.dark-theme .auth-modal .btn-linkedin:hover,
+.dark #login-modal .flex.flex-col.gap-3 .btn:hover,
+.dark #login-modal .social-logins .btn:hover,
+.dark #login-modal .auth-social-btn:hover,
+.dark .auth-modal .auth-social-btn:hover,
+.dark .auth-modal .btn-linkedin:hover,
+body.dark-theme #login-modal .social-logins .btn:hover,
+body.dark #login-modal .social-logins .btn:hover,
+body.dark-theme #login-modal .auth-social-btn:hover,
+body.dark #login-modal .auth-social-btn:hover {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+}
+
+/* Dark Mode Divider Line */
+[data-theme="dark"] #login-modal .flex.items-center.gap-3 .border-t,
+[data-theme="dark"] #login-modal .auth-divider-line,
+[data-theme="dark"] #login-modal .border-slate-200,
+[data-theme="dark"] .auth-modal .border-slate-200,
+.dark-theme #login-modal .flex.items-center.gap-3 .border-t,
+.dark-theme #login-modal .auth-divider-line,
+.dark-theme #login-modal .border-slate-200,
+.dark-theme .auth-modal .border-slate-200,
+.dark #login-modal .flex.items-center.gap-3 .border-t,
+.dark #login-modal .auth-divider-line,
+.dark #login-modal .border-slate-200,
+.dark .auth-modal .border-slate-200,
+body.dark-theme #login-modal .auth-divider-line,
+body.dark #login-modal .auth-divider-line {
+  border-color: #334155 !important;
+  border-top-color: #334155 !important;
+}
+
+/* Dark Mode Form Inputs */
+[data-theme="dark"] #login-modal .form-input,
+[data-theme="dark"] #login-modal input.form-input,
+[data-theme="dark"] .auth-modal .form-input,
+[data-theme="dark"] .modal-content .form-input,
+.dark-theme #login-modal .form-input,
+.dark-theme #login-modal input.form-input,
+.dark-theme .auth-modal .form-input,
+.dark-theme .modal-content .form-input,
+.dark #login-modal .form-input,
+.dark #login-modal input.form-input,
+.dark .auth-modal .form-input,
+.dark .modal-content .form-input,
+body.dark-theme #login-modal .form-input,
+body.dark-theme .auth-modal .form-input,
+body.dark-theme .modal-content .form-input,
+body.dark #login-modal .form-input,
+body.dark #login-modal input.form-input,
+body.dark .auth-modal .form-input,
+body.dark .modal-content .form-input {
+  background-color: #0f172a !important;
+  border: 1px solid #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] #login-modal .form-input:focus,
+[data-theme="dark"] #login-modal input.form-input:focus,
+[data-theme="dark"] .auth-modal .form-input:focus,
+[data-theme="dark"] .modal-content .form-input:focus,
+.dark-theme #login-modal .form-input:focus,
+.dark-theme #login-modal input.form-input:focus,
+.dark-theme .auth-modal .form-input:focus,
+.dark-theme .modal-content .form-input:focus,
+.dark #login-modal .form-input:focus,
+.dark #login-modal input.form-input:focus,
+.dark .auth-modal .form-input:focus,
+.dark .modal-content .form-input:focus,
+body.dark-theme #login-modal .form-input:focus,
+body.dark-theme .auth-modal .form-input:focus,
+body.dark-theme .modal-content .form-input:focus,
+body.dark #login-modal .form-input:focus,
+body.dark #login-modal input.form-input:focus,
+body.dark .auth-modal .form-input:focus,
+body.dark .modal-content .form-input:focus {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15) !important;
 }
 
 .modal-overlay.hidden .modal-content {
   transform: scale(0.95);
 }
 
-/* Modal Header & Footer Dark Theme Styles */
-.modal-header,
+/* ========================================================
+   EDIT JOB MODAL: RESPONSIVE & THEME COMPATIBILITY
+   ======================================================== */
+
+#edit-job-modal.modal-overlay {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 1rem !important;
+  z-index: 1050 !important;
+}
+
+#edit-job-modal.hidden {
+  display: none !important;
+}
+
+#edit-job-modal .modal-content,
+#edit-job-form.modal-content {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 42rem !important;
+  max-height: 90vh !important;
+  margin: auto !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background-color: var(--bg-card, #ffffff) !important;
+  background: var(--bg-card, #ffffff) !important;
+  color: var(--slate-800, #1e293b) !important;
+  border: 1px solid var(--border-color, #e2e8f0) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.25) !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* Modal Header */
 #edit-job-modal .modal-header {
+  padding: 1.25rem 1.75rem !important;
+  background-color: var(--bg-card, #ffffff) !important;
+  background: var(--bg-card, #ffffff) !important;
+  border-bottom: 1px solid var(--border-color, #e2e8f0) !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+  border-top-left-radius: 1rem !important;
+  border-top-right-radius: 1rem !important;
+}
+
+#edit-job-modal h2,
+#edit-job-modal .modal-header h2 {
+  color: var(--slate-900, #0f172a) !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  margin: 0 !important;
+}
+
+#edit-job-modal p,
+#edit-job-modal .modal-header p {
+  color: var(--slate-500, #64748b) !important;
+  font-size: 0.875rem !important;
+  margin-top: 0.25rem !important;
+  margin-bottom: 0 !important;
+}
+
+#edit-job-modal .modal-close-icon {
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  padding: 0.35rem !important;
+  border-radius: 0.375rem !important;
+  color: var(--slate-400, #94a3b8) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: color 0.15s ease, background-color 0.15s ease !important;
+}
+
+#edit-job-modal .modal-close-icon:hover {
+  color: var(--slate-800, #1e293b) !important;
+  background-color: var(--slate-100, #f1f5f9) !important;
+}
+
+/* Modal Body & Overflow Management */
+#edit-job-modal .modal-body,
+#edit-job-modal-body {
+  padding: 1.5rem 1.75rem !important;
+  background-color: var(--bg-card, #ffffff) !important;
+  background: var(--bg-card, #ffffff) !important;
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  max-height: calc(90vh - 145px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.15rem !important;
+  box-sizing: border-box !important;
+}
+
+/* Form Labels & Text Contrast (Light Mode Default) */
+#edit-job-modal label,
+#edit-job-modal .form-label {
+  color: var(--slate-700, #334155) !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 0.35rem !important;
+  display: block !important;
+}
+
+/* Form Inputs, Selects, and Textareas */
+#edit-job-modal .form-input,
+#edit-job-modal input.form-input,
+#edit-job-modal select.form-input,
+#edit-job-modal textarea.form-input {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 0.5rem !important;
+  padding: 0.625rem 0.875rem !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+#edit-job-modal .form-input:focus,
+#edit-job-modal input.form-input:focus,
+#edit-job-modal select.form-input:focus,
+#edit-job-modal textarea.form-input:focus {
+  outline: none !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15) !important;
+}
+
+/* Description Textarea Fixed Container & Overflow Prevention */
+#edit-job-modal .modal-textarea-desc,
+#edit-job-description {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  min-height: 120px !important;
+  max-height: 240px !important;
+  resize: vertical !important;
+  line-height: 1.5 !important;
+  margin-bottom: 0.25rem !important;
+}
+
+/* Modal Footer */
+#edit-job-modal .modal-footer {
+  padding: 1.15rem 1.75rem !important;
+  background-color: var(--bg-card, #ffffff) !important;
+  background: var(--bg-card, #ffffff) !important;
+  border-top: 1px solid var(--border-color, #e2e8f0) !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  flex-shrink: 0 !important;
+  border-bottom-left-radius: 1rem !important;
+  border-bottom-right-radius: 1rem !important;
+}
+
+#edit-job-modal .modal-cancel-btn {
+  padding: 0.625rem 1.25rem !important;
+  border-radius: 0.5rem !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  cursor: pointer !important;
+  background-color: #f8fafc !important;
+  background: #f8fafc !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+  transition: background-color 0.15s ease, color 0.15s ease !important;
+}
+
+#edit-job-modal .modal-cancel-btn:hover {
+  background-color: #e2e8f0 !important;
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+#edit-job-modal .modal-submit-btn {
+  padding: 0.625rem 1.5rem !important;
+  border-radius: 0.5rem !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  background-color: #0284c7 !important;
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  border: none !important;
+  cursor: pointer !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  transition: background-color 0.15s ease !important;
+}
+
+#edit-job-modal .modal-submit-btn:hover {
+  background-color: #0369a1 !important;
+  background: #0369a1 !important;
+}
+
+/* Scrollbar Styling for Modal Body (Light Mode) */
+#edit-job-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+#edit-job-modal-body::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+#edit-job-modal-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+#edit-job-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ========================================================
+   DARK THEME SPECIFICS FOR EDIT JOB MODAL
+   ======================================================== */
+[data-theme="dark"] #edit-job-modal .modal-content,
+[data-theme="dark"] #edit-job-form.modal-content,
+.dark-theme #edit-job-modal .modal-content,
+.dark #edit-job-modal .modal-content {
+  background-color: #1e293b !important;
+  background: #1e293b !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75) !important;
+}
+
+[data-theme="dark"] #edit-job-modal .modal-header,
+.dark-theme #edit-job-modal .modal-header,
+.dark #edit-job-modal .modal-header {
   background-color: #1e293b !important;
   background: #1e293b !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-.modal-header h2,
-#edit-job-modal h2,
-#edit-job-modal .modal-header h2 {
+[data-theme="dark"] #edit-job-modal h2,
+[data-theme="dark"] #edit-job-modal .modal-header h2,
+.dark-theme #edit-job-modal h2,
+.dark #edit-job-modal h2 {
   color: #f8fafc !important;
 }
 
-.modal-header p,
-#edit-job-modal p,
-#edit-job-modal .modal-header p {
+[data-theme="dark"] #edit-job-modal p,
+[data-theme="dark"] #edit-job-modal .modal-header p,
+.dark-theme #edit-job-modal p,
+.dark #edit-job-modal p {
   color: #94a3b8 !important;
 }
 
-.modal-body,
-#edit-job-modal-body {
+[data-theme="dark"] #edit-job-modal .modal-close-icon,
+.dark-theme #edit-job-modal .modal-close-icon,
+.dark #edit-job-modal .modal-close-icon {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] #edit-job-modal .modal-close-icon:hover,
+.dark-theme #edit-job-modal .modal-close-icon:hover,
+.dark #edit-job-modal .modal-close-icon:hover {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] #edit-job-modal .modal-body,
+[data-theme="dark"] #edit-job-modal-body,
+.dark-theme #edit-job-modal-body,
+.dark #edit-job-modal-body {
   background-color: #1e293b !important;
   background: #1e293b !important;
 }
 
-.modal-footer,
-#edit-job-modal .modal-footer {
+[data-theme="dark"] #edit-job-modal label,
+[data-theme="dark"] #edit-job-modal .form-label,
+.dark-theme #edit-job-modal label,
+.dark #edit-job-modal label {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] #edit-job-modal .form-input,
+[data-theme="dark"] #edit-job-modal input.form-input,
+[data-theme="dark"] #edit-job-modal select.form-input,
+[data-theme="dark"] #edit-job-modal textarea.form-input,
+.dark-theme #edit-job-modal .form-input,
+.dark #edit-job-modal .form-input {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
+}
+
+[data-theme="dark"] #edit-job-modal .form-input:focus,
+[data-theme="dark"] #edit-job-modal input.form-input:focus,
+[data-theme="dark"] #edit-job-modal select.form-input:focus,
+[data-theme="dark"] #edit-job-modal textarea.form-input:focus,
+.dark-theme #edit-job-modal .form-input:focus,
+.dark #edit-job-modal .form-input:focus {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+}
+
+[data-theme="dark"] #edit-job-modal .modal-footer,
+.dark-theme #edit-job-modal .modal-footer,
+.dark #edit-job-modal .modal-footer {
   background-color: #1e293b !important;
   background: #1e293b !important;
   border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Modal Inner Body Scrollbar */
-#edit-job-modal-body::-webkit-scrollbar {
-  width: 8px;
+[data-theme="dark"] #edit-job-modal .modal-cancel-btn,
+.dark-theme #edit-job-modal .modal-cancel-btn,
+.dark #edit-job-modal .modal-cancel-btn {
+  background-color: #334155 !important;
+  background: #334155 !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
-#edit-job-modal-body::-webkit-scrollbar-track {
+
+[data-theme="dark"] #edit-job-modal .modal-cancel-btn:hover,
+.dark-theme #edit-job-modal .modal-cancel-btn:hover,
+.dark #edit-job-modal .modal-cancel-btn:hover {
+  background-color: #475569 !important;
+  background: #475569 !important;
+}
+
+[data-theme="dark"] #edit-job-modal-body::-webkit-scrollbar-track,
+.dark-theme #edit-job-modal-body::-webkit-scrollbar-track,
+.dark #edit-job-modal-body::-webkit-scrollbar-track {
   background: #1e293b;
-  border-radius: 4px;
 }
-#edit-job-modal-body::-webkit-scrollbar-thumb {
+
+[data-theme="dark"] #edit-job-modal-body::-webkit-scrollbar-thumb,
+.dark-theme #edit-job-modal-body::-webkit-scrollbar-thumb,
+.dark #edit-job-modal-body::-webkit-scrollbar-thumb {
   background: #475569;
-  border-radius: 4px;
 }
-#edit-job-modal-body::-webkit-scrollbar-thumb:hover {
+
+[data-theme="dark"] #edit-job-modal-body::-webkit-scrollbar-thumb:hover,
+.dark-theme #edit-job-modal-body::-webkit-scrollbar-thumb:hover,
+.dark #edit-job-modal-body::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
 
-/* Dark theme specific inputs for modal */
-.modal-content .form-label {
-  color: #cbd5e1 !important;
-}
+/* Ensure modal inputs allow interaction and have proper default styling */
 .modal-content .form-input {
-  background-color: #0f172a !important;
-  border-color: #334155 !important;
-  color: #f1f5f9 !important;
   pointer-events: auto;
-}
-.modal-content .form-input:focus {
-  border-color: #38bdf8 !important;
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1) !important;
 }
 
 /* ========================================================
@@ -3450,6 +4155,61 @@ a {
   flex-direction: column;
   background-color: var(--slate-50);
 }
+
+/* --- Admin Login 'Back to Home' Button --- */
+.auth-page .logout-link,
+.auth-page .header .logout-link,
+.btn-back-home,
+a.btn-back-home {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.auth-page .logout-link:hover,
+.auth-page .header .logout-link:hover,
+.btn-back-home:hover,
+a.btn-back-home:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+}
+
+.auth-page .logout-link:active,
+.auth-page .header .logout-link:active,
+.btn-back-home:active,
+a.btn-back-home:active {
+  transform: scale(0.98);
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Light mode support for Back to Home button */
+[data-theme="light"] .auth-page .logout-link,
+[data-theme="light"] .auth-page .header .logout-link,
+[data-theme="light"] .btn-back-home {
+  color: #1f2937;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .auth-page .logout-link:hover,
+[data-theme="light"] .auth-page .header .logout-link:hover,
+[data-theme="light"] .btn-back-home:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.4);
+  color: #0f172a;
+}
+
 .auth-container {
   flex: 1;
   display: flex;
@@ -3457,6 +4217,7 @@ a {
   justify-content: center;
   padding: 2rem;
 }
+
 .auth-card {
   width: 100%;
   max-width: 480px;
@@ -3628,7 +4389,7 @@ a {
 
 /* Standardize top section labels: bold (700) */
 .job-details-meta-list .job-meta-label,
-.job-details-meta-list div > span:first-child {
+.job-details-meta-list div>span:first-child {
   font-family: 'Playfair Display', Georgia, serif !important;
   font-size: 1rem !important;
   line-height: 1.6 !important;
@@ -3844,8 +4605,32 @@ html[data-theme="dark"] #btn-save svg {
   padding: 0.65rem 1rem !important;
 }
 
-.auth-modal-header {
+.auth-modal-header,
+#login-modal .auth-modal-header {
+  position: relative !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
   margin-bottom: 1.15rem;
+  width: 100%;
+}
+
+.auth-modal-header .close-btn,
+#login-modal .close-btn,
+#login-modal .auth-modal-header .close-btn {
+  position: absolute !important;
+  right: 1rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin: 0 !important;
+}
+
+.auth-modal-header h2,
+#login-modal #auth-title,
+.auth-modal-header #auth-title {
+  text-align: center !important;
+  margin: 0 !important;
+  width: auto;
 }
 
 .auth-social-list {
@@ -4273,6 +5058,114 @@ html[data-theme="dark"] #btn-save svg {
   line-height: 1.4 !important;
 }
 
+/* Candidate Profile Social & Web Links */
+.profile-social-links-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+}
+
+.profile-social-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.75rem !important;
+  padding: 0.625rem 0.875rem !important;
+  border-radius: 8px !important;
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  text-decoration: none !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  color: #f8fafc !important;
+  box-sizing: border-box !important;
+}
+
+.profile-social-item:hover {
+  background-color: rgba(255, 255, 255, 0.09) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+.profile-social-item-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  min-width: 0 !important;
+  flex-grow: 1 !important;
+}
+
+.profile-social-icon-wrap {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  flex-shrink: 0 !important;
+  font-size: 15px !important;
+}
+
+.profile-social-icon-github {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+.profile-social-icon-linkedin {
+  background-color: rgba(10, 102, 194, 0.18) !important;
+  border: 1px solid rgba(10, 102, 194, 0.35) !important;
+  color: #60a5fa !important;
+}
+
+.profile-social-icon-portfolio {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  color: #34d399 !important;
+}
+
+.profile-social-info {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.profile-social-name {
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  color: #f8fafc !important;
+  line-height: 1.25 !important;
+}
+
+.profile-social-url {
+  font-size: 0.75rem !important;
+  color: #94a3b8 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  line-height: 1.3 !important;
+}
+
+.profile-social-item:hover .profile-social-url {
+  color: #cbd5e1 !important;
+}
+
+.profile-social-arrow {
+  color: #64748b !important;
+  flex-shrink: 0 !important;
+  transition: transform 0.2s ease, color 0.2s ease !important;
+}
+
+.profile-social-item:hover .profile-social-arrow {
+  color: var(--primary, #3b82f6) !important;
+  transform: translate(2px, -2px) !important;
+}
+
 /* About text readability */
 .profile-about-text {
   font-size: 0.9rem !important;
@@ -4489,17 +5382,21 @@ html[data-theme="dark"] #btn-save svg {
   transition: all 0.2s;
 }
 
-/* --- User Profile Avatar & Dashboard Sidebar Layout --- */
+/* --- Dashboard Layout (Full-Width Content Area) --- */
 .dashboard-with-sidebar {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 1.5rem;
-  align-items: start;
+  display: block;
+  width: 100%;
+}
+
+.dashboard-main-content {
+  width: 100%;
+  max-width: 100%;
 }
 
 @media (max-width: 960px) {
   .dashboard-with-sidebar {
-    grid-template-columns: 1fr;
+    display: block;
+    width: 100%;
   }
 }
 
@@ -4733,5 +5630,945 @@ html[data-theme="dark"] #btn-company-profile * {
   pointer-events: auto !important;
 }
 
+/* ==========================================================================
+   Top-Right Navbar Auth Buttons (Professional SaaS Style)
+   ========================================================================== */
+.nav-auth-btn {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  padding: 0.45rem 1rem !important;
+  border-radius: 0.5rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1.25 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  text-decoration: none !important;
+  box-sizing: border-box !important;
+}
 
+/* Login Button */
+.nav-login-btn {
+  background: transparent !important;
+  border: 1px solid var(--slate-300, #cbd5e1) !important;
+  color: var(--slate-700, #334155) !important;
+}
 
+[data-theme="dark"] .nav-login-btn {
+  background: rgba(30, 41, 59, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  color: #e2e8f0 !important;
+}
+
+.nav-login-btn:hover {
+  background: rgba(2, 132, 199, 0.08) !important;
+  border-color: var(--primary, #0284c7) !important;
+  color: var(--primary, #0284c7) !important;
+  transform: translateY(-1px) !important;
+}
+
+[data-theme="dark"] .nav-login-btn:hover {
+  background: rgba(2, 132, 199, 0.15) !important;
+  border-color: #38bdf8 !important;
+  color: #38bdf8 !important;
+}
+
+/* Register Button */
+.nav-register-btn {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35) !important;
+}
+
+.nav-register-btn:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%) !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.5) !important;
+  transform: translateY(-1px) !important;
+  color: #ffffff !important;
+}
+
+.nav-register-btn:active,
+.nav-login-btn:active {
+  transform: translateY(0) !important;
+}
+
+/* ==========================================================================
+   Unified Auth Modal - Role Switch Tabs
+   ========================================================================== */
+.auth-role-switch {
+  display: flex !important;
+  background: #f1f5f9 !important;
+  border-radius: 0.625rem !important;
+  padding: 0.25rem !important;
+  gap: 0.25rem !important;
+  border: 1px solid #e2e8f0 !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+}
+
+[data-theme="dark"] .auth-role-switch {
+  background: rgba(15, 23, 42, 0.75) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.role-switch-btn {
+  flex: 1 1 50% !important;
+  padding: 0.625rem 0.75rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  border-radius: 0.5rem !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--slate-500, #64748b) !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.375rem !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  user-select: none !important;
+  white-space: nowrap !important;
+  text-decoration: none !important;
+}
+
+[data-theme="dark"] .role-switch-btn {
+  color: #94a3b8 !important;
+}
+
+.role-switch-btn:hover:not(.active) {
+  color: #0284c7 !important;
+  background: rgba(2, 132, 199, 0.08) !important;
+}
+
+[data-theme="dark"] .role-switch-btn:hover:not(.active) {
+  color: #38bdf8 !important;
+  background: rgba(56, 189, 248, 0.1) !important;
+}
+
+.role-switch-btn.active {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35) !important;
+}
+
+[data-theme="dark"] .role-switch-btn.active {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.5) !important;
+}
+
+.role-switch-btn i {
+  font-size: 0.875rem !important;
+}
+
+/* Report Job Modal & Undo/Withdraw Button Styles */
+.btn-undo-report {
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  color: #ea580c !important;
+  border-color: #f97316 !important;
+  background-color: rgba(249, 115, 22, 0.1) !important;
+  padding: 0.25rem 0.5rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  cursor: pointer !important;
+  border-radius: 0.375rem !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.btn-undo-report:hover {
+  background-color: #ea580c !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.3);
+}
+
+[data-theme="dark"] .btn-undo-report {
+  color: #fb923c !important;
+  border-color: #ea580c !important;
+  background-color: rgba(234, 88, 12, 0.2) !important;
+}
+
+[data-theme="dark"] .btn-undo-report:hover {
+  background-color: #ea580c !important;
+  color: #ffffff !important;
+}
+
+#report-word-error {
+  font-size: 0.75rem;
+  color: #ef4444;
+  margin-top: 0.375rem;
+  font-weight: 500;
+  display: none;
+}
+
+#submit-report-btn:disabled {
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+/* Employer Dashboard Notifications & Inbox */
+.employer-notif-card {
+  border: 1px solid var(--slate-200);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  background: #ffffff;
+  transition: all 0.2s ease-in-out;
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+
+.employer-notif-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--slate-300);
+}
+
+.employer-notif-card.employer-notif-unread {
+  border-left: 4px solid #ef4444;
+  background: #fffafa;
+}
+
+[data-theme="dark"] .employer-notif-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .employer-notif-card.employer-notif-unread {
+  border-left: 4px solid #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.notif-badge-unread {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.notif-badge-read {
+  background-color: #f1f5f9;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.notif-badge-admin {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.notif-content-box {
+  background-color: #f8fafc;
+  border: 1px solid var(--slate-200);
+  border-radius: 0.375rem;
+  padding: 0.875rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--slate-800);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+[data-theme="dark"] .notif-content-box {
+  background-color: #0f172a;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+#employer-notif-badge {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+  background-color: #ef4444;
+  color: #ffffff;
+  font-weight: 700;
+  display: inline-block;
+  line-height: 1;
+  margin-left: 0.25rem;
+}
+
+/* ==========================================================================
+   Profile Photo Management Card UI (Matching image_36d85a.png)
+   ========================================================================== */
+.profile-management-grid {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 1.75rem;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .profile-management-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.profile-photo-card {
+  background: #131b2e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 2.5rem 1.75rem 1.75rem 1.75rem;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.45);
+  box-sizing: border-box;
+  position: relative;
+}
+
+.profile-photo-card .profile-avatar-wrapper {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 1.25rem auto;
+}
+
+.profile-photo-card .profile-avatar-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  background: #1e293b;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.profile-photo-card .profile-avatar-camera-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #131b2e;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.profile-photo-card .profile-avatar-camera-badge:hover {
+  transform: scale(1.1);
+}
+
+.profile-photo-card .profile-avatar-camera-badge svg {
+  width: 18px;
+  height: 18px;
+  stroke: #1e293b;
+  fill: none;
+}
+
+.profile-photo-card .profile-card-name {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.profile-photo-card .profile-card-role-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.35rem 1.15rem;
+  border-radius: 9999px;
+  margin-bottom: 0.65rem;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+}
+
+.profile-photo-card .profile-card-email {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  margin: 0 0 1.5rem 0;
+  font-weight: 400;
+  word-break: break-all;
+}
+
+.profile-photo-card .profile-change-photo-btn {
+  width: 100%;
+  background: #0ea5e9;
+  border-radius: 18px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  cursor: pointer;
+  border: none;
+  color: #ffffff;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  box-shadow: 0 6px 18px rgba(14, 165, 233, 0.35);
+  margin-bottom: 0.85rem;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+.profile-photo-card .profile-change-photo-btn:hover {
+  background: #0284c7;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(14, 165, 233, 0.45);
+}
+
+.profile-photo-card .profile-change-photo-btn:active {
+  transform: translateY(0);
+}
+
+.profile-photo-card .profile-change-photo-icon-box {
+  width: 76px;
+  height: 76px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-photo-card .profile-change-photo-icon-box svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.profile-photo-card .profile-change-photo-label {
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-photo-card .profile-remove-photo-btn {
+  width: 100%;
+  background: #ffe4e6;
+  color: #e11d48;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.8rem 1rem;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  display: block;
+  text-align: center;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  box-sizing: border-box;
+}
+
+.profile-photo-card .profile-remove-photo-btn:hover {
+  background: #fecdd3;
+  color: #be123c;
+  transform: translateY(-1px);
+}
+
+.profile-photo-card .profile-remove-photo-btn:active {
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   Seeker Dashboard - Redesigned Resume Upload & Social Profiles UI
+   ========================================================================== */
+
+/* Constrained Center Layout for Resume Tab */
+.resume-section-container {
+  max-width: 700px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0.5rem 0;
+}
+
+.resume-card {
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+  transition: all 0.2s ease;
+}
+
+.resume-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--slate-100);
+}
+
+.resume-header-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(2, 132, 199, 0.18));
+  color: var(--primary-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.resume-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--slate-900);
+  margin: 0 0 0.25rem 0;
+  line-height: 1.25;
+}
+
+.resume-title-amharic {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--slate-500);
+  margin-left: 0.35rem;
+}
+
+.resume-subtitle {
+  font-size: 0.85rem;
+  color: var(--slate-500);
+  margin: 0;
+}
+
+/* Modern Dashed Drag & Drop Zone */
+.resume-dropzone {
+  border: 2px dashed #94a3b8;
+  border-radius: 1rem;
+  padding: 2.25rem 1.5rem;
+  text-align: center;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  outline: none;
+}
+
+.resume-dropzone:hover,
+.resume-dropzone.dragover {
+  border-color: var(--primary-500);
+  background: rgba(14, 165, 233, 0.05);
+  box-shadow: 0 4px 18px rgba(14, 165, 233, 0.12);
+  transform: translateY(-2px);
+}
+
+.resume-dropzone:focus-visible {
+  border-color: var(--primary-600);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25);
+}
+
+.dropzone-icon-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #e0f2fe;
+  color: var(--primary-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 0.85rem;
+  transition: transform 0.25s ease, background-color 0.25s ease;
+}
+
+.resume-dropzone:hover .dropzone-icon-circle,
+.resume-dropzone.dragover .dropzone-icon-circle {
+  transform: scale(1.1);
+  background: #bae6fd;
+}
+
+.dropzone-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--slate-800);
+  margin: 0 0 0.35rem 0;
+}
+
+.dropzone-action-highlight {
+  color: var(--primary-600);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.dropzone-subtitle {
+  font-size: 0.8rem;
+  color: var(--slate-500);
+  margin: 0;
+}
+
+/* Active Resume Section */
+.active-resume-container {
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--slate-200);
+}
+
+.active-resume-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.active-resume-badge-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--slate-800);
+  display: flex;
+  align-items: center;
+}
+
+.active-resume-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+}
+
+/* Active Resume File Card */
+.active-resume-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.active-resume-card:hover {
+  border-color: var(--slate-300);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.active-resume-info {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.resume-doc-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.resume-doc-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.resume-doc-text .preview-filename {
+  font-size: 0.925rem;
+  font-weight: 600;
+  color: var(--slate-900);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resume-doc-text .preview-meta {
+  font-size: 0.775rem;
+  color: var(--slate-500);
+  margin: 0.15rem 0 0 0;
+}
+
+/* Clean, Compact, Perfectly Aligned Action Buttons */
+.active-resume-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.active-resume-btn-download,
+.active-resume-btn-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 0.875rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.active-resume-btn-download {
+  border-color: var(--primary-500);
+  color: var(--primary-600);
+  background: transparent;
+}
+
+.active-resume-btn-download:hover {
+  background: var(--primary-500);
+  color: #ffffff;
+}
+
+.active-resume-btn-delete {
+  border-color: #fca5a5;
+  color: #dc2626;
+  background: transparent;
+}
+
+.active-resume-btn-delete:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+/* Social & Portfolio Links in Personal Profile Form */
+.profile-social-links-section {
+  transition: border-color 0.2s ease;
+}
+
+.social-links-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .social-links-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.input-with-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-icon-prefix {
+  position: absolute;
+  left: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-size: 1.05rem;
+  color: var(--slate-400);
+  transition: color 0.15s ease;
+}
+
+.input-with-icon {
+  width: 100%;
+  padding-left: 2.5rem !important;
+  font-size: 0.9rem;
+  height: 42px;
+  border: 1px solid var(--slate-200);
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  color: var(--slate-800);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input-with-icon:focus {
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+  outline: none;
+}
+
+.input-with-icon-wrapper:focus-within .input-icon-prefix {
+  color: var(--primary-600);
+}
+
+/* ==========================================================================
+   Dark Mode Overrides for Resume Upload & Social Profiles
+   ========================================================================== */
+[data-theme="dark"] .resume-card {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .resume-card-header {
+  border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .resume-header-icon {
+  background: rgba(14, 165, 233, 0.2);
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .resume-title {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .resume-title-amharic {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .resume-subtitle {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .resume-dropzone {
+  border-color: #475569;
+  background: #0f172a;
+}
+
+[data-theme="dark"] .resume-dropzone:hover,
+[data-theme="dark"] .resume-dropzone.dragover {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .dropzone-icon-circle {
+  background: #1e293b;
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .resume-dropzone:hover .dropzone-icon-circle,
+[data-theme="dark"] .resume-dropzone.dragover .dropzone-icon-circle {
+  background: #334155;
+}
+
+[data-theme="dark"] .dropzone-title {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .dropzone-action-highlight {
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .dropzone-subtitle {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .active-resume-container {
+  border-top-color: #334155;
+}
+
+[data-theme="dark"] .active-resume-badge-label {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .active-resume-status {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="dark"] .active-resume-card {
+  background: #0f172a;
+  border-color: #334155;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .active-resume-card:hover {
+  border-color: #475569;
+}
+
+[data-theme="dark"] .resume-doc-icon {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+[data-theme="dark"] .resume-doc-text .preview-filename {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .resume-doc-text .preview-meta {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .active-resume-btn-download {
+  border-color: #0284c7;
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .active-resume-btn-download:hover {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .active-resume-btn-delete {
+  border-color: #991b1b;
+  color: #f87171;
+}
+
+[data-theme="dark"] .active-resume-btn-delete:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+}
+
+[data-theme="dark"] .profile-social-links-section {
+  border-top-color: #334155;
+}
+
+[data-theme="dark"] .profile-social-links-section h3 {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .input-with-icon {
+  background-color: #0f172a;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .input-with-icon:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+}

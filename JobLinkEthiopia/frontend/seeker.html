@@ -22,9 +22,7 @@
       <!-- Desktop Nav -->
       <nav class="nav-menu">
         <a href="index.html" class="nav-btn">Home</a>
-        <a href="seeker.html" class="nav-btn active">Job Seeker</a>
-        <a href="employer.html" class="nav-btn">Employer</a>
-        <a href="admin-login.html" class="nav-btn">Admin</a>
+        <a href="seeker.html" class="nav-btn active">Seeker Dashboard</a>
       </nav>
 
       <!-- Auth Actions -->
@@ -54,42 +52,16 @@
       </div>
     </div>
 
-    <!-- Dashboard layout with sidebar -->
-    <div class="dashboard-with-sidebar">
-      
-      <!-- Seeker Profile Sidebar -->
-      <aside class="dashboard-sidebar card" id="seeker-sidebar">
-        <div class="sidebar-avatar-wrapper">
-          <img id="sidebar-user-avatar" class="sidebar-avatar-img" src="/uploads/default-avatar.png" alt="Profile Photo" onerror="this.src='/uploads/default-avatar.png'" />
-          <label class="avatar-upload-overlay" title="Upload new photo">
-            <svg class="icon-xs" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            <input type="file" id="sidebar-profile-upload" class="input-hidden-file user-avatar-input" accept="image/*" />
-          </label>
-        </div>
-        <h3 id="sidebar-user-name" class="font-bold text-slate-900 text-base mb-1">Abebe Kebede</h3>
-        <span id="sidebar-user-role" class="badge badge-primary-light text-xs mb-2">Job Seeker</span>
-        <p id="sidebar-user-email" class="text-xs text-slate-500 mb-4">abebe@example.com</p>
-
-        <div class="flex flex-col gap-2 w-full">
-          <label class="btn btn-primary btn-sm text-xs cursor-pointer flex items-center justify-center gap-2 m-0">
-            <svg class="icon-xs" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-            Change Photo
-            <input type="file" class="input-hidden-file user-avatar-input" accept="image/*" />
-          </label>
-          <button type="button" class="btn btn-outline-danger btn-sm text-xs btn-remove-avatar">Remove Photo</button>
-        </div>
-      </aside>
-
-      <!-- Main Dashboard Content Column -->
-      <div class="dashboard-main-content">
-        <!-- Tabs -->
-        <div class="tabs">
-          <div class="tab active" data-target="applications" data-action="switch-tab">My Applications</div>
-          <div class="tab" data-target="saved-jobs" data-action="switch-tab">Saved Jobs</div>
-          <div class="tab" data-target="cv" data-action="switch-tab">CV / Resume Builder</div>
-          <div class="tab" data-target="alerts" data-action="switch-tab">Job Alerts</div>
-          <div class="tab" data-target="profile" data-action="switch-tab">My Profile</div>
-        </div>
+    <!-- Main Dashboard Content Column (Full Width) -->
+    <div class="dashboard-main-content">
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tab active" data-target="applications" data-action="switch-tab">My Applications</div>
+        <div class="tab" data-target="saved-jobs" data-action="switch-tab">Saved Jobs</div>
+        <div class="tab" data-target="cv" data-action="switch-tab">CV / Resume Builder</div>
+        <div class="tab" data-target="alerts" data-action="switch-tab">Job Alerts</div>
+        <div class="tab" data-target="profile" data-action="switch-tab">My Profile</div>
+      </div>
 
     <!-- Tab 1: Applications -->
     <div id="applications" class="tab-content active space-y-6">
@@ -185,28 +157,55 @@
 
     <!-- Tab 2: CV Builder -->
     <div id="cv" class="tab-content">
-      <div class="card card-mb-8">
-        <h2 class="card-title-lg mb-2">Upload Existing Resume (ፋይል ጫን)</h2>
-        <p class="card-description mb-4">Supported formats: PDF, DOCX, DOC (Max size: 5MB)</p>
-        
-        <div class="job-grid">
-          <div class="upload-box" id="cv-upload-box">
-            <input type="file" id="cv-file" class="hidden">
-            <svg class="icon-xl text-primary mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-            <p class="upload-text">Click to upload or drag & drop</p>
+      <div class="resume-section-container">
+        <div class="card resume-card">
+          <div class="resume-card-header">
+            <div class="resume-header-icon">
+              <i class="fa-solid fa-file-arrow-up"></i>
+            </div>
+            <div>
+              <h2 class="resume-title">Upload Existing Resume <span class="resume-title-amharic">(ፋይል ጫን)</span></h2>
+              <p class="resume-subtitle">Supported formats: PDF, DOCX, DOC (Max size: 5MB)</p>
+            </div>
           </div>
           
-          <div class="file-info-box">
-            <div>
-              <span class="preview-label">Active Resume</span>
-              <div class="file-preview">
-                <p class="preview-filename">Abebe_Kebede_Resume.pdf</p>
-                <p class="preview-meta">1.4 MB • Updated 3 days ago</p>
-              </div>
+          <div class="resume-dropzone" id="cv-upload-box" role="button" tabindex="0" title="Click to upload or drag & drop">
+            <input type="file" id="cv-file" class="hidden" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+            <div class="dropzone-icon-circle">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
             </div>
-            <div class="preview-actions">
-              <button class="btn btn-outline flex-grow text-xs" data-action="download-cv">Download</button>
-              <button class="btn btn-outline-danger flex-grow text-xs" data-action="delete-cv">Delete</button>
+            <p class="dropzone-title"><span class="dropzone-action-highlight">Click to upload</span> <span class="font-normal text-slate-500">or drag & drop</span></p>
+            <p class="dropzone-subtitle">Attach your polished resume for fast 1-click job applications</p>
+          </div>
+          
+          <div class="active-resume-container">
+            <div class="active-resume-header">
+              <span class="active-resume-badge-label">
+                <i class="fa-solid fa-circle-check text-emerald-500 mr-1.5"></i> Active Resume
+              </span>
+              <span class="active-resume-status">Available for Employers</span>
+            </div>
+
+            <div class="active-resume-card" id="active-resume-card">
+              <div class="active-resume-info">
+                <div class="resume-doc-icon">
+                  <i class="fa-solid fa-file-pdf"></i>
+                </div>
+                <div class="resume-doc-text">
+                  <p class="preview-filename font-bold text-slate-900" id="preview-filename">
+                    <span class="resume-name-text">Abebe_Kebede_Resume.pdf</span>
+                  </p>
+                  <p class="preview-meta text-xs text-slate-500 mt-0.5" id="preview-meta">1.4 MB • Updated recently</p>
+                </div>
+              </div>
+              <div class="active-resume-actions">
+                <button type="button" class="btn btn-outline btn-sm active-resume-btn-download" data-action="download-cv" title="Download Active Resume">
+                  <i class="fa-solid fa-download mr-1.5"></i> Download
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-sm active-resume-btn-delete" data-action="delete-cv" title="Delete Active Resume">
+                  <i class="fa-solid fa-trash-can mr-1.5"></i> Delete
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -254,95 +253,168 @@
     </div>
 
     <!-- Tab 4: Profile -->
-    <div id="profile" class="tab-content space-y-8">
-      <div class="card">
-        <h2 class="text-xl font-bold text-slate-900 mb-6">Personal Profile</h2>
-        <form id="profile-form">
-          <!-- Profile Photo Upload -->
-          <div class="mb-8 flex items-center gap-6 pb-6 seeker-avatar-row">
-            <div id="profile-pic-preview" class="profile-avatar-preview">
-              <img id="profile-tab-avatar" src="/uploads/default-avatar.png" alt="Profile" onerror="this.src='/uploads/default-avatar.png'" />
-            </div>
-            <div>
-              <h3 class="font-semibold text-sm text-slate-800 mb-2">Profile Photo</h3>
-              <div class="flex gap-3 items-center">
-                <label class="btn btn-primary text-xs py-2 cursor-pointer m-0">
-                  Upload Photo
-                  <input type="file" id="profile-upload" accept="image/*" class="input-hidden-file user-avatar-input">
-                </label>
-                <button type="button" id="remove-photo" class="btn btn-outline-danger text-xs py-2 m-0 btn-remove-avatar">Remove</button>
-              </div>
-              <p class="text-xs text-slate-500 mt-2">JPG, GIF or PNG. Max size of 5MB.</p>
-            </div>
+    <div id="profile" class="tab-content">
+      <div class="profile-management-grid">
+        
+        <!-- Profile Photo Management Card (Matching image_36d85a.png) -->
+        <div class="profile-photo-card" id="seeker-profile-photo-card">
+          <div class="profile-avatar-wrapper">
+            <img id="profile-tab-avatar" class="profile-avatar-circle" src="/uploads/default-avatar.png" alt="Profile Avatar" onerror="this.src='/uploads/default-avatar.png'" />
+            <label class="profile-avatar-camera-badge" for="profile-upload" title="Change photo">
+              <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </label>
           </div>
 
-          <div class="dashboard-grid">
-            <div class="dashboard-column">
-              <div class="form-group">
-                <label class="form-label">Full Name</label>
-                <input type="text" id="profile-name" class="form-input" value="Abebe Kebede">
+          <h3 class="profile-card-name" id="profile-card-name">abebe</h3>
+          <span class="profile-card-role-badge" id="profile-card-role">Job Seeker</span>
+          <p class="profile-card-email" id="profile-card-email">ayenachew608@gmail.com</p>
+
+          <!-- Large Blue Change Photo Block -->
+          <label class="profile-change-photo-btn" for="profile-upload" id="btn-change-photo-block" title="Change Profile Photo">
+            <div class="profile-change-photo-icon-box">
+              <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="8" y="8" width="64" height="64" rx="16" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="52" cy="28" r="6" fill="white"/>
+                <path d="M18 56L34 38C36.5 35 41 35 43.5 38L50 46C52.2 48.5 56 48.5 58.2 46L62 42" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="profile-change-photo-label">
+              <span>Change</span>
+              <span>Photo</span>
+            </div>
+            <input type="file" id="profile-upload" accept="image/*" class="input-hidden-file user-avatar-input" style="display: none;" />
+          </label>
+
+          <!-- Light Pink Remove Photo Button -->
+          <button type="button" id="remove-photo" class="profile-remove-photo-btn btn-remove-avatar">
+            Remove Photo
+          </button>
+        </div>
+
+        <!-- Personal Details Card -->
+        <div class="card flex-1">
+          <h2 class="text-xl font-bold text-slate-900 mb-6">Personal Profile</h2>
+          <form id="profile-form">
+            <div class="dashboard-grid">
+              <div class="dashboard-column">
+                <div class="form-group">
+                  <label class="form-label">Full Name</label>
+                  <input type="text" id="profile-name" class="form-input" value="Abebe Kebede">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email Address</label>
+                  <input type="email" id="profile-email" class="form-input" value="abebe@example.com" disabled>
+                  <p class="text-xs text-slate-500 mt-1">Email cannot be changed.</p>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Phone Number</label>
+                  <input type="tel" id="profile-phone" class="form-input" value="+251 91 123 4567">
+                </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">Email Address</label>
-                <input type="email" id="profile-email" class="form-input" value="abebe@example.com" disabled>
-                <p class="text-xs text-slate-500 mt-1">Email cannot be changed.</p>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Phone Number</label>
-                <input type="tel" id="profile-phone" class="form-input" value="+251 91 123 4567">
+              
+              <div class="dashboard-column">
+                <div class="form-group">
+                  <label class="form-label">Professional Title</label>
+                  <input type="text" id="profile-title" class="form-input" value="Junior Web Developer">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Location</label>
+                  <input type="text" id="profile-location" class="form-input" list="location-options" placeholder="Select or type your city..." autocomplete="off">
+                  <datalist id="location-options">
+                    <option value="Addis Ababa"></option>
+                    <option value="Hawassa"></option>
+                    <option value="Dire Dawa"></option>
+                    <option value="Bahir Dar"></option>
+                    <option value="Mekelle"></option>
+                    <option value="Adama (Nazret)"></option>
+                    <option value="Gondar"></option>
+                    <option value="Jimma"></option>
+                    <option value="Bishoftu"></option>
+                    <option value="Dessie"></option>
+                    <option value="Jigjiga"></option>
+                    <option value="Arba Minch"></option>
+                    <option value="Dilla"></option>
+                    <option value="Harar"></option>
+                    <option value="Shashamane"></option>
+                    <option value="Debre Birhan"></option>
+                    <option value="Asosa"></option>
+                    <option value="Gambela"></option>
+                    <option value="Remote"></option>
+                  </datalist>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Bio (Short Summary)</label>
+                  <textarea id="profile-bio" class="form-input" rows="3">Passionate frontend developer with experience in React and Node.js.</textarea>
+                </div>
               </div>
             </div>
-            
-            <div class="dashboard-column">
-              <div class="form-group">
-                <label class="form-label">Professional Title</label>
-                <input type="text" id="profile-title" class="form-input" value="Junior Web Developer">
+
+            <!-- Professional Social & Portfolio Links Section -->
+            <div class="profile-social-links-section mt-6 pt-5 border-t border-slate-200">
+              <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-link text-primary"></i>
+                    Social Profiles & Portfolio Website
+                  </h3>
+                  <p class="text-xs text-slate-500 mt-0.5">Showcase your coding profiles, professional network, and personal work to recruiters.</p>
+                </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">Location</label>
-                <input type="text" id="profile-location" class="form-input" list="location-options" placeholder="Select or type your city..." autocomplete="off">
-                <datalist id="location-options">
-                  <option value="Addis Ababa"></option>
-                  <option value="Hawassa"></option>
-                  <option value="Dire Dawa"></option>
-                  <option value="Bahir Dar"></option>
-                  <option value="Mekelle"></option>
-                  <option value="Adama (Nazret)"></option>
-                  <option value="Gondar"></option>
-                  <option value="Jimma"></option>
-                  <option value="Bishoftu"></option>
-                  <option value="Dessie"></option>
-                  <option value="Jigjiga"></option>
-                  <option value="Arba Minch"></option>
-                  <option value="Dilla"></option>
-                  <option value="Harar"></option>
-                  <option value="Shashamane"></option>
-                  <option value="Debre Birhan"></option>
-                  <option value="Asosa"></option>
-                  <option value="Gambela"></option>
-                  <option value="Remote"></option>
-                </datalist>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Bio (Short Summary)</label>
-                <textarea id="profile-bio" class="form-input" rows="3">Passionate frontend developer with experience in React and Node.js.</textarea>
+
+              <div class="social-links-grid">
+                <!-- GitHub -->
+                <div class="form-group mb-0">
+                  <label class="form-label" for="profile-github">
+                    <i class="fa-brands fa-github text-slate-800 mr-1.5"></i> GitHub Link
+                  </label>
+                  <div class="input-with-icon-wrapper">
+                    <span class="input-icon-prefix"><i class="fa-brands fa-github"></i></span>
+                    <input type="url" id="profile-github" class="form-input input-with-icon" placeholder="https://github.com/username" autocomplete="url">
+                  </div>
+                </div>
+
+                <!-- LinkedIn -->
+                <div class="form-group mb-0">
+                  <label class="form-label" for="profile-linkedin">
+                    <i class="fa-brands fa-linkedin text-blue-600 mr-1.5"></i> LinkedIn Profile
+                  </label>
+                  <div class="input-with-icon-wrapper">
+                    <span class="input-icon-prefix text-blue-600"><i class="fa-brands fa-linkedin"></i></span>
+                    <input type="url" id="profile-linkedin" class="form-input input-with-icon" placeholder="https://linkedin.com/in/username" autocomplete="url">
+                  </div>
+                </div>
+
+                <!-- Portfolio -->
+                <div class="form-group mb-0">
+                  <label class="form-label" for="profile-portfolio">
+                    <i class="fa-solid fa-globe text-emerald-600 mr-1.5"></i> Portfolio Website
+                  </label>
+                  <div class="input-with-icon-wrapper">
+                    <span class="input-icon-prefix text-emerald-600"><i class="fa-solid fa-globe"></i></span>
+                    <input type="url" id="profile-portfolio" class="form-input input-with-icon" placeholder="https://yourportfolio.com" autocomplete="url">
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="divider mt-4"></div>
-          <div class="flex justify-end gap-3">
-            <button type="button" class="btn btn-outline">Cancel</button>
-            <button type="submit" class="btn btn-primary" data-action="save-profile">Save Profile</button>
-          </div>
-        </form>
+
+            <div class="divider mt-4"></div>
+            <div class="flex justify-end gap-3">
+              <button type="button" class="btn btn-outline">Cancel</button>
+              <button type="submit" class="btn btn-primary" data-action="save-profile">Save Profile</button>
+            </div>
+          </form>
+        </div>
+
       </div>
     </div> <!-- Close #profile -->
 
       </div> <!-- Close .dashboard-main-content -->
-    </div> <!-- Close .dashboard-with-sidebar -->
-
   </main>
 
+  <script src="js/seeker.js"></script>
   <script src="js/main.js" defer></script>
 </body>
 </html>

@@ -20,7 +20,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
-    const res = await fetch(`/api/employer/${encodeURIComponent(employerId)}`);
+    let res = await fetch(`/api/user/employer/${encodeURIComponent(employerId)}`);
+    if (!res.ok) {
+      res = await fetch(`/api/employer/${encodeURIComponent(employerId)}`);
+    }
     if (!res.ok) {
       throw new Error(`Failed to load company profile (${res.status})`);
     }

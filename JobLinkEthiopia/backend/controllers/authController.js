@@ -1,8 +1,60 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const pool = require('../config/db');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+
+// Issue access & refresh tokens with sliding session rotation, 15m/7d expiration and HttpOnly cookie
+const issueAuthTokens = async (res, user, role) => {
+    const userRole = user.role || role || 'job_seeker';
+    
+    // Set accessToken expiration to 15m
+    const accessToken = jwt.sign(
+        { id: user.id, email: user.email, role: userRole },
+        process.env.JWT_SECRET || 'supersecretkey_change_me_in_production',
+        { expiresIn: '15m' }
+    );
+
+    // Set refreshToken expiration to 7d
+    const refreshToken = jwt.sign(
+        { id: user.id, email: user.email, role: userRole, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') },
+        process.env.JWT_SECRET || 'supersecretkey_change_me_in_production',
+        { expiresIn: '7d' }
+    );
+
+    let table = 'job_seekers';
+    if (userRole === 'employer') table = 'employers';
+    if (userRole === 'admin' || userRole === 'super_admin') table = 'admins';
+
+    try {
+        await pool.query(`UPDATE ${table} SET refresh_token = ? WHERE id = ?`, [refreshToken, user.id]);
+    } catch (dbErr) {
+        console.error(`Error saving refresh token to ${table}:`, dbErr);
+    }
+
+    // Attach HttpOnly cookie for refreshToken (7 days)
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    // Also attach role-specific cookies for backward compatibility
+    if (userRole === 'job_seeker') {
+        res.cookie('seeker_accessToken', accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 15 * 60 * 1000 });
+        res.cookie('seeker_refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    } else if (userRole === 'employer') {
+        res.cookie('employer_accessToken', accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 15 * 60 * 1000 });
+        res.cookie('employer_refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    } else {
+        res.cookie('token', accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 15 * 60 * 1000 });
+    }
+
+    return { accessToken, refreshToken };
+};
 
 // Configure Google OAuth Strategy
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
@@ -205,21 +257,18 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        // Generate JWT token
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'supersecretkey_change_me_in_production',
-            { expiresIn: '7d' }
-        );
+        // Issue access & refresh tokens (15m access / 7d refresh in HttpOnly cookie)
+        const { accessToken } = await issueAuthTokens(res, user, user.role || foundRole);
 
         res.status(200).json({
             message: 'Login successful',
-            token,
+            token: accessToken,
+            accessToken,
             user: {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                role: user.role,
+                role: user.role || foundRole,
                 account_status: user.account_status,
                 profile_photo: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png',
                 profile_photo_url: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png'
@@ -249,15 +298,12 @@ exports.switchRole = async (req, res) => {
         const user = users[0];
         const role = tableName === 'admins' ? user.role : targetRole;
 
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: role },
-            process.env.JWT_SECRET || 'supersecretkey_change_me_in_production',
-            { expiresIn: '7d' }
-        );
+        const { accessToken } = await issueAuthTokens(res, user, role);
 
         res.status(200).json({
             message: 'Switched role successfully',
-            token,
+            token: accessToken,
+            accessToken,
             user: {
                 id: user.id,
                 name: user.name,
@@ -296,25 +342,25 @@ exports.getMe = async (req, res) => {
         const user = users[0];
         user.role = role || user.role || 'job_seeker';
 
-        let photo = user.profile_photo || user.profile_photo_url;
+        let photo = user.profile_picture || user.profile_photo || user.profile_photo_url;
         
         // If not found directly, check strictly role-specific table
         if (!photo) {
             if (user.role === 'job_seeker') {
                 const [seekers] = await pool.query(
-                    'SELECT profile_photo, profile_photo_url FROM job_seekers WHERE id = ? OR email = ?',
+                    'SELECT profile_picture, profile_photo, profile_photo_url FROM job_seekers WHERE id = ? OR email = ?',
                     [id, email || user.email || '']
                 ).catch(() => [[]]);
                 if (seekers.length > 0) {
-                    photo = seekers[0].profile_photo || seekers[0].profile_photo_url;
+                    photo = seekers[0].profile_picture || seekers[0].profile_photo || seekers[0].profile_photo_url;
                 }
             } else if (user.role === 'employer') {
                 const [employers] = await pool.query(
-                    'SELECT profile_photo, profile_photo_url FROM employers WHERE id = ? OR email = ?',
+                    'SELECT profile_picture, profile_photo, profile_photo_url FROM employers WHERE id = ? OR email = ?',
                     [id, email || user.email || '']
                 ).catch(() => [[]]);
                 if (employers.length > 0) {
-                    photo = employers[0].profile_photo || employers[0].profile_photo_url;
+                    photo = employers[0].profile_picture || employers[0].profile_photo || employers[0].profile_photo_url;
                 }
             } else if (user.role === 'admin' || user.role === 'super_admin') {
                 const [admins] = await pool.query(
@@ -330,11 +376,11 @@ exports.getMe = async (req, res) => {
         // Check unified users table strictly with AND role = ?
         if (!photo && (email || user.email || id)) {
             const [globalUsers] = await pool.query(
-                'SELECT profile_photo FROM users WHERE (id = ? OR email = ?) AND role = ?',
+                'SELECT profile_picture, profile_photo FROM users WHERE (id = ? OR email = ?) AND role = ?',
                 [id, email || user.email || '', user.role]
             ).catch(() => [[]]);
-            if (globalUsers.length > 0 && globalUsers[0].profile_photo) {
-                photo = globalUsers[0].profile_photo;
+            if (globalUsers.length > 0 && (globalUsers[0].profile_picture || globalUsers[0].profile_photo)) {
+                photo = globalUsers[0].profile_picture || globalUsers[0].profile_photo;
             }
         }
 
@@ -349,6 +395,7 @@ exports.getMe = async (req, res) => {
         const defaultAvatar = '/uploads/default-avatar.png';
         const finalPhoto = photo || defaultAvatar;
 
+        user.profile_picture = finalPhoto;
         user.profile_photo = finalPhoto;
         user.profile_photo_url = finalPhoto;
 
@@ -400,8 +447,7 @@ exports.githubCallback = async (req, res) => {
             user = users[0];
         }
         user.role = 'job_seeker';
-        
-        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production', { expiresIn: '7d' });
+        const { accessToken: token } = await issueAuthTokens(res, user, 'job_seeker');
         
         res.send(`<html><body><script>
             localStorage.setItem('token', '${token}');
@@ -416,65 +462,394 @@ exports.githubCallback = async (req, res) => {
     }
 };
 
-// --- LinkedIn OAuth ---
+/* --- LinkedIn OAuth (temporarily disabled per mentor advice) ---
 exports.linkedinAuth = (req, res) => {
-    const role = req.query.role || 'job_seeker';
-    const clientId = process.env.LINKEDIN_CLIENT_ID || 'mock_linkedin_client_id';
-    const redirectUri = `http://localhost:${process.env.PORT || 3000}/api/auth/linkedin/callback`;
-    const url = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=r_liteprofile%20r_emailaddress&state=${role}`;
-    res.redirect(url);
+    const rawRole = (req.query.role || req.query.state || 'jobseeker').toLowerCase();
+    const role = rawRole.includes('employer') ? 'employer' : 'job_seeker';
+    const clientId = process.env.LINKEDIN_CLIENT_ID;
+    const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
+    const port = process.env.PORT || 3000;
+
+    const isApiPath = req.baseUrl ? req.baseUrl.includes('/api/auth') : (req.originalUrl && req.originalUrl.startsWith('/api/'));
+    const defaultCallback = isApiPath 
+        ? `http://localhost:${port}/api/auth/linkedin/callback`
+        : `http://localhost:${port}/auth/linkedin/callback`;
+    const redirectUri = process.env.LINKEDIN_CALLBACK_URL || defaultCallback;
+
+    // Check if valid production credentials exist in environment
+    const isConfigured = clientId && clientSecret && 
+                         clientId !== 'mock_linkedin_client_id' && 
+                         clientSecret !== 'mock_linkedin_client_secret';
+
+    if (!isConfigured) {
+        // Development / Simulated LinkedIn OAuth dialog
+        const roleLabel = role === 'employer' ? 'Employer' : 'Job Seeker';
+        return res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in with LinkedIn - JobLink Ethiopia</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 1.5rem;
+      box-sizing: border-box;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 2.25rem;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+      box-sizing: border-box;
+      text-align: left;
+    }
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #0a66c2;
+    }
+    .env-tag {
+      background: #e0f2fe;
+      color: #0369a1;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    h2 {
+      margin: 0 0 0.5rem 0;
+      color: #0f172a;
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+    .subtitle {
+      color: #64748b;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+    }
+    .form-group {
+      margin-bottom: 1.15rem;
+    }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 0.4rem;
+    }
+    input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      outline: none;
+      border-color: #0a66c2;
+      box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.15);
+    }
+    .btn-submit {
+      width: 100%;
+      background: #0a66c2;
+      color: #ffffff;
+      border: none;
+      border-radius: 28px;
+      padding: 0.85rem 1.25rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-submit:hover {
+      background: #004182;
+    }
+    .btn-submit:active {
+      transform: scale(0.99);
+    }
+    .cancel-link {
+      display: block;
+      margin-top: 1.25rem;
+      text-align: center;
+      color: #64748b;
+      font-size: 0.875rem;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .cancel-link:hover {
+      color: #0f172a;
+      text-decoration: underline;
+    }
+    .note-box {
+      background: #f8fafc;
+      border-left: 3px solid #0a66c2;
+      padding: 0.75rem 1rem;
+      font-size: 0.8rem;
+      color: #475569;
+      margin-top: 1.5rem;
+      border-radius: 0 6px 6px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header-bar">
+      <div class="logo-container">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="#0a66c2"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+        LinkedIn
+      </div>
+      <span class="env-tag">Dev Simulation</span>
+    </div>
+    <h2>Sign in with LinkedIn</h2>
+    <p class="subtitle">Authorize <strong>JobLink Ethiopia</strong> to sign you in as a verified <strong>${roleLabel}</strong>.</p>
+    
+    <form method="GET" action="${redirectUri}">
+      <input type="hidden" name="code" value="mock_${Date.now()}" />
+      <input type="hidden" name="state" value="${role}" />
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" name="name" value="${role === 'employer' ? 'Ethiopian Tech Recruiter' : 'Abebe Kebede'}" required />
+      </div>
+      <div class="form-group">
+        <label>LinkedIn Email Address</label>
+        <input type="email" name="email" value="${role === 'employer' ? 'recruiter@ethiojobs.et' : 'abebe.kebede@example.com'}" required />
+      </div>
+      <button type="submit" class="btn-submit">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+        Continue as ${roleLabel}
+      </button>
+      <a href="${role === 'employer' ? '/employer.html' : '/'}" class="cancel-link">Cancel and return</a>
+    </form>
+    <div class="note-box">
+      <strong>Pro Tip:</strong> To connect your live LinkedIn app, set <code>LINKEDIN_CLIENT_ID</code> and <code>LINKEDIN_CLIENT_SECRET</code> in <code>.env</code>.
+    </div>
+  </div>
+</body>
+</html>`);
+    }
+
+    // Live LinkedIn OpenID Connect authorization URL
+    const scopes = 'openid profile email';
+    const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&state=${role}`;
+    res.redirect(authUrl);
 };
 
 exports.linkedinCallback = async (req, res) => {
-    const { code, state } = req.query;
-    if (!code) return res.status(400).send('No code provided');
-    
-    const role = state === 'employer' ? 'employer' : 'job_seeker';
-    const table = role === 'employer' ? 'employers' : 'job_seekers';
-    
+    const { code, state, error, error_description } = req.query;
+
+    if (error) {
+        console.error('LinkedIn OAuth Provider Error:', error, error_description);
+        return res.redirect(`/?error=${encodeURIComponent(error_description || error || 'LinkedIn authentication cancelled')}`);
+    }
+
+    if (!code) {
+        return res.redirect(`/?error=${encodeURIComponent('No authorization code received from LinkedIn')}`);
+    }
+
+    const rawState = (state || '').toLowerCase();
+    const intendedRole = rawState.includes('employer') ? 'employer' : 'job_seeker';
+    const isMock = code.startsWith('mock_') || !process.env.LINKEDIN_CLIENT_SECRET || process.env.LINKEDIN_CLIENT_SECRET === 'mock_linkedin_client_secret';
+
+    let name = '';
+    let email = '';
+    let linkedinId = '';
+    let photo = null;
+
     try {
-        let name = 'LinkedIn User';
-        let email = `linkedin_${code}@mock.com`;
-        let linkedinId = `li_${code}`;
-        
-        let [users] = await pool.query(`SELECT * FROM ${table} WHERE linkedin_id = ?`, [linkedinId]);
-        let user;
-        
-        if (users.length === 0) {
-            [users] = await pool.query(`SELECT * FROM ${table} WHERE email = ?`, [email]);
-            if (users.length > 0) {
-                user = users[0];
-                await pool.query(`UPDATE ${table} SET linkedin_id = ? WHERE id = ?`, [linkedinId, user.id]);
-            } else {
-                const [result] = await pool.query(
-                    `INSERT INTO ${table} (name, email, linkedin_id) VALUES (?, ?, ?)`,
-                    [name, email, linkedinId]
-                );
-                const [newUsers] = await pool.query(`SELECT * FROM ${table} WHERE id = ?`, [result.insertId]);
-                user = newUsers[0];
-            }
+        if (isMock) {
+            // Simulated development data from prompt or parameters
+            name = req.query.name || (intendedRole === 'employer' ? 'LinkedIn Employer' : 'LinkedIn Seeker');
+            email = req.query.email || `linkedin_${code.slice(-6)}@joblink.et`;
+            linkedinId = `li_${code}`;
+            photo = '/uploads/default-avatar.png';
         } else {
-            user = users[0];
+            // Live LinkedIn OAuth Token Exchange
+            const port = process.env.PORT || 3000;
+            const isApiPath = req.baseUrl ? req.baseUrl.includes('/api/auth') : (req.originalUrl && req.originalUrl.startsWith('/api/'));
+            const defaultCallback = isApiPath 
+                ? `http://localhost:${port}/api/auth/linkedin/callback`
+                : `http://localhost:${port}/auth/linkedin/callback`;
+            const redirectUri = process.env.LINKEDIN_CALLBACK_URL || defaultCallback;
+
+            const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    grant_type: 'authorization_code',
+                    code: code,
+                    client_id: process.env.LINKEDIN_CLIENT_ID,
+                    client_secret: process.env.LINKEDIN_CLIENT_SECRET,
+                    redirect_uri: redirectUri
+                })
+            });
+
+            const tokenData = await tokenResponse.json();
+            if (!tokenResponse.ok || !tokenData.access_token) {
+                console.error('LinkedIn Token Exchange Failed:', tokenData);
+                throw new Error(tokenData.error_description || tokenData.error || 'Failed to exchange authorization code with LinkedIn');
+            }
+
+            const accessToken = tokenData.access_token;
+
+            // Fetch user profile from LinkedIn OpenID Connect userinfo endpoint
+            const userinfoResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
+                headers: { Authorization: `Bearer ${accessToken}` }
+            });
+
+            const userinfo = await userinfoResponse.json();
+            if (!userinfoResponse.ok || !userinfo.sub) {
+                console.error('LinkedIn Userinfo Retrieval Failed:', userinfo);
+                throw new Error('Failed to retrieve user profile from LinkedIn');
+            }
+
+            linkedinId = userinfo.sub;
+            name = userinfo.name || `${userinfo.given_name || ''} ${userinfo.family_name || ''}`.trim() || 'LinkedIn User';
+            email = userinfo.email;
+            photo = userinfo.picture || null;
         }
+
+        if (!email && !linkedinId) {
+            return res.redirect(`/?error=${encodeURIComponent('LinkedIn did not return user email or ID')}`);
+        }
+
+        // Query existing accounts across all tables to enforce unique role and email constraints
+        const [employers] = await pool.query('SELECT * FROM employers WHERE linkedin_id = ? OR email = ?', [linkedinId, email]);
+        const [seekers] = await pool.query('SELECT * FROM job_seekers WHERE linkedin_id = ? OR email = ?', [linkedinId, email]);
+        const [admins] = await pool.query('SELECT * FROM admins WHERE email = ?', [email]);
+
+        let user = null;
+        let role = intendedRole;
+
+        if (employers.length > 0) {
+            if (intendedRole !== 'employer') {
+                return res.redirect(`/?error=${encodeURIComponent('This email is already registered as an Employer')}`);
+            }
+            user = employers[0];
+            user.role = 'employer';
+            role = 'employer';
+            if (!user.linkedin_id) {
+                await pool.query('UPDATE employers SET linkedin_id = ? WHERE id = ?', [linkedinId, user.id]);
+                user.linkedin_id = linkedinId;
+            }
+        } else if (seekers.length > 0) {
+            if (intendedRole !== 'job_seeker') {
+                return res.redirect(`/?error=${encodeURIComponent('This email is already registered as a Job Seeker')}`);
+            }
+            user = seekers[0];
+            user.role = 'job_seeker';
+            role = 'job_seeker';
+            if (!user.linkedin_id) {
+                await pool.query('UPDATE job_seekers SET linkedin_id = ? WHERE id = ?', [linkedinId, user.id]);
+                user.linkedin_id = linkedinId;
+            }
+        } else if (admins.length > 0) {
+            return res.redirect(`/?error=${encodeURIComponent('This email is already registered as an Administrator')}`);
+        } else {
+            // Register new user with the intended role
+            if (intendedRole === 'employer') {
+                role = 'employer';
+                const [result] = await pool.query(
+                    'INSERT INTO employers (name, email, password, linkedin_id, company_name, profile_photo_url, account_status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [name, email, 'linkedin_oauth_user', linkedinId, name, photo, 'active']
+                );
+                const [newEmployers] = await pool.query('SELECT * FROM employers WHERE id = ?', [result.insertId]);
+                user = newEmployers[0];
+
+                try {
+                    await pool.query(
+                        'INSERT IGNORE INTO users (name, email, linkedin_id, role, account_status) VALUES (?, ?, ?, ?, ?)',
+                        [name, email, linkedinId, 'employer', 'active']
+                    );
+                } catch (e) {
+                    console.error('Users table sync error for LinkedIn employer:', e);
+                }
+            } else {
+                role = 'job_seeker';
+                const [result] = await pool.query(
+                    'INSERT INTO job_seekers (name, email, linkedin_id, profile_photo_url, is_email_verified, account_status) VALUES (?, ?, ?, ?, true, ?)',
+                    [name, email, linkedinId, photo, 'active']
+                );
+                const [newUsers] = await pool.query('SELECT * FROM job_seekers WHERE id = ?', [result.insertId]);
+                user = newUsers[0];
+
+                try {
+                    await pool.query(
+                        'INSERT IGNORE INTO users (name, email, linkedin_id, role, account_status) VALUES (?, ?, ?, ?, ?)',
+                        [name, email, linkedinId, 'job_seeker', 'active']
+                    );
+                } catch (e) {
+                    console.error('Users table sync error for LinkedIn job_seeker:', e);
+                }
+            }
+        }
+
         user.role = role;
-        
-        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production', { expiresIn: '7d' });
-        
-        const redirectPage = role === 'employer' ? '/employer.html' : '/seeker.html';
-        const rolePrefix = role === 'employer' ? 'employer_' : 'seeker_';
-        
-        res.send(`<html><body><script>
-            localStorage.setItem('token', '${token}');
-            localStorage.setItem('user', JSON.stringify(${JSON.stringify({ id: user.id, name: user.name, email: user.email, role: user.role, account_status: user.account_status || 'active' })}));
-            localStorage.setItem('${rolePrefix}token', '${token}');
-            localStorage.setItem('${rolePrefix}user', JSON.stringify(${JSON.stringify({ id: user.id, name: user.name, email: user.email, role: user.role, account_status: user.account_status || 'active' })}));
-            window.location.href = '${redirectPage}';
-        </script></body></html>`);
+        const { accessToken: token } = await issueAuthTokens(res, user, role);
+
+        const redirectPage = user.role === 'employer' ? '/employer.html' : '/seeker.html';
+        const rolePrefix = user.role === 'employer' ? 'employer_' : 'seeker_';
+
+        res.send(`<!DOCTYPE html>
+<html>
+<head><title>LinkedIn Authentication</title></head>
+<body>
+<script>
+    localStorage.setItem('token', '${token}');
+    localStorage.setItem('user', JSON.stringify(${JSON.stringify({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        company_name: user.company_name || null,
+        account_status: user.account_status || 'active'
+    })}));
+    localStorage.setItem('${rolePrefix}token', '${token}');
+    localStorage.setItem('${rolePrefix}user', JSON.stringify(${JSON.stringify({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        company_name: user.company_name || null,
+        account_status: user.account_status || 'active'
+    })}));
+    window.location.href = '${redirectPage}';
+</script>
+</body>
+</html>`);
     } catch (error) {
         console.error('LinkedIn OAuth Error:', error);
-        res.status(500).send('Authentication failed');
+        res.redirect(`/?error=${encodeURIComponent(error.message || 'LinkedIn authentication failed')}`);
     }
 };
+--- End LinkedIn OAuth --- */
 
 // --- Google OAuth ---
 exports.googleAuth = (req, res, next) => {
@@ -495,22 +870,7 @@ exports.googleCallback = (req, res, next) => {
         }
 
         try {
-            const token = jwt.sign(
-                { id: user.id, email: user.email, role: user.role },
-                process.env.JWT_SECRET || 'supersecretkey_change_me_in_production',
-                { expiresIn: '7d' }
-            );
-
-            const refreshToken = crypto.randomBytes(64).toString('hex');
-            const table = user.role === 'employer' ? 'employers' : 'job_seekers';
-            try {
-                await pool.query(`UPDATE ${table} SET refresh_token = ? WHERE id = ?`, [refreshToken, user.id]);
-                const cookiePrefix = user.role === 'employer' ? 'employer_' : 'seeker_';
-                res.cookie(`${cookiePrefix}accessToken`, token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-                res.cookie(`${cookiePrefix}refreshToken`, refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 30 * 24 * 60 * 60 * 1000 });
-            } catch (e) {
-                console.error('Error saving refresh token for Google user:', e);
-            }
+            const { accessToken: token } = await issueAuthTokens(res, user, user.role);
 
             const redirectPage = user.role === 'employer' ? '/employer.html' : '/seeker.html';
             const rolePrefix = user.role === 'employer' ? 'employer_' : 'seeker_';
@@ -549,7 +909,6 @@ exports.googleCallback = (req, res, next) => {
     })(req, res, next);
 };
 
-const crypto = require('crypto');
 const { sendVerificationEmail } = require('../utils/email');
 
 // --- Seeker Auth ---
@@ -571,12 +930,9 @@ exports.seekerRegister = async (req, res) => {
     }
 
     try {
-        const [existingAdmins] = await pool.query('SELECT id FROM admins WHERE email = ?', [email]);
-        const [existingEmployers] = await pool.query('SELECT id FROM employers WHERE email = ?', [email]);
         const [existingSeekers] = await pool.query('SELECT id FROM job_seekers WHERE email = ?', [email]);
-        
-        if (existingAdmins.length > 0 || existingEmployers.length > 0 || existingSeekers.length > 0) {
-            return res.status(400).json({ message: 'This email is already registered in the system.' });
+        if (existingSeekers.length > 0) {
+            return res.status(400).json({ message: 'This email is already registered as a Job Seeker.' });
         }
         
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -587,22 +943,12 @@ exports.seekerRegister = async (req, res) => {
         );
         
         const user = { id: result.insertId, name, email, role: 'job_seeker', account_status: 'active' };
-
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'supersecretkey_change_me_in_production',
-            { expiresIn: '7d' }
-        );
-        
-        const refreshToken = crypto.randomBytes(64).toString('hex');
-        await pool.query('UPDATE job_seekers SET refresh_token = ? WHERE id = ?', [refreshToken, user.id]);
-        
-        res.cookie('seeker_accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-        res.cookie('seeker_refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 30 * 24 * 60 * 60 * 1000 });
+        const { accessToken } = await issueAuthTokens(res, user, 'job_seeker');
         
         res.status(201).json({ 
             message: 'Registration successful.', 
-            token, 
+            token: accessToken, 
+            accessToken,
             user
         });
     } catch (error) {
@@ -639,27 +985,17 @@ exports.seekerLogin = async (req, res) => {
         }
         
         user.role = 'job_seeker';
-        
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'supersecretkey_change_me_in_production',
-            { expiresIn: '7d' }
-        );
-        
-        const refreshToken = crypto.randomBytes(64).toString('hex');
-        await pool.query('UPDATE job_seekers SET refresh_token = ? WHERE id = ?', [refreshToken, user.id]);
-        
-        res.cookie('seeker_accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-        res.cookie('seeker_refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 30 * 24 * 60 * 60 * 1000 });
+        const { accessToken } = await issueAuthTokens(res, user, 'job_seeker');
         
         res.status(200).json({
             message: 'Login successful',
-            token,
+            token: accessToken,
+            accessToken,
             user: { 
                 id: user.id, 
                 name: user.name, 
                 email: user.email, 
-                role: user.role, 
+                role: 'job_seeker', 
                 account_status: user.account_status,
                 profile_photo: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png',
                 profile_photo_url: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png'
@@ -672,39 +1008,85 @@ exports.seekerLogin = async (req, res) => {
 };
 
 exports.seekerRefresh = async (req, res) => {
-    const refreshToken = req.cookies.seeker_refreshToken;
-    if (!refreshToken) return res.status(401).json({ message: 'No refresh token' });
-    
+    const oldRefreshToken = req.cookies?.seeker_refreshToken || req.cookies?.refreshToken || req.body?.refreshToken;
+    if (!oldRefreshToken) {
+        return res.status(401).json({ message: 'No refresh token provided' });
+    }
+
     try {
-        const [users] = await pool.query('SELECT * FROM job_seekers WHERE refresh_token = ?', [refreshToken]);
-        if (users.length === 0) return res.status(403).json({ message: 'Invalid refresh token' });
-        
-        const user = users[0];
+        let decoded;
+        try {
+            decoded = jwt.verify(oldRefreshToken, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production');
+        } catch (jwtErr) {
+            return res.status(403).json({ message: 'Invalid or expired refresh token' });
+        }
+
+        if (decoded.role && decoded.role !== 'job_seeker') {
+            return res.status(403).json({ message: 'Forbidden: Invalid token role for Job Seeker refresh.' });
+        }
+
+        // Query exclusively job_seekers table
+        const [seekers] = await pool.query('SELECT * FROM job_seekers WHERE refresh_token = ?', [oldRefreshToken]);
+        if (seekers.length === 0) {
+            return res.status(403).json({ message: 'Invalid or revoked refresh token' });
+        }
+
+        const user = seekers[0];
+        if (user.account_status === 'banned') {
+            return res.status(403).json({ message: 'Account is banned' });
+        }
+        if (user.locked_until && new Date(user.locked_until) > new Date()) {
+            return res.status(403).json({ message: 'Account locked. Please try again later.' });
+        }
+
         user.role = 'job_seeker';
-        
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'supersecretkey_change_me_in_production',
-            { expiresIn: '7d' }
-        );
-        
-        res.cookie('seeker_accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-        
+        const { accessToken } = await issueAuthTokens(res, user, 'job_seeker');
+
         res.status(200).json({
             message: 'Token refreshed successfully',
-            token,
-            user: { 
-                id: user.id, 
-                name: user.name, 
-                email: user.email, 
-                role: user.role, 
+            token: accessToken,
+            accessToken,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: 'job_seeker',
                 account_status: user.account_status,
                 profile_photo: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png',
                 profile_photo_url: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png'
             }
         });
     } catch (error) {
-        console.error('Refresh Error:', error);
+        console.error('Seeker refresh token error:', error);
+        res.status(500).json({ message: `Internal server error: ${error.message}` });
+    }
+};
+
+exports.seekerGetMe = async (req, res) => {
+    try {
+        const seekerId = req.user.id;
+        const [seekers] = await pool.query('SELECT * FROM job_seekers WHERE id = ?', [seekerId]);
+        if (seekers.length === 0) {
+            return res.status(404).json({ message: 'Job Seeker not found' });
+        }
+        const user = seekers[0];
+        user.role = 'job_seeker';
+        let photo = user.profile_picture || user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png';
+        if (typeof photo === 'string') {
+            photo = photo.trim();
+            if (!photo.startsWith('http://') && !photo.startsWith('https://') && !photo.startsWith('/')) {
+                photo = '/' + photo;
+            }
+        }
+        user.profile_picture = photo;
+        user.profile_photo = photo;
+        user.profile_photo_url = photo;
+        delete user.password;
+        delete user.refresh_token;
+        delete user.two_factor_secret;
+        res.status(200).json(user);
+    } catch (error) {
+        console.error('Seeker GetMe Error:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
@@ -728,12 +1110,9 @@ exports.employerRegister = async (req, res) => {
     }
 
     try {
-        const [existingAdmins] = await pool.query('SELECT id FROM admins WHERE email = ?', [email]);
         const [existingEmployers] = await pool.query('SELECT id FROM employers WHERE email = ?', [email]);
-        const [existingSeekers] = await pool.query('SELECT id FROM job_seekers WHERE email = ?', [email]);
-        
-        if (existingAdmins.length > 0 || existingEmployers.length > 0 || existingSeekers.length > 0) {
-            return res.status(400).json({ message: 'This email is already registered in the system.' });
+        if (existingEmployers.length > 0) {
+            return res.status(400).json({ message: 'This email is already registered as an Employer.' });
         }
         
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -744,22 +1123,12 @@ exports.employerRegister = async (req, res) => {
         );
         
         const user = { id: result.insertId, name, email, role: 'employer', account_status: 'active' };
-
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'supersecretkey_change_me_in_production',
-            { expiresIn: '7d' }
-        );
-        
-        const refreshToken = crypto.randomBytes(64).toString('hex');
-        await pool.query('UPDATE employers SET refresh_token = ? WHERE id = ?', [refreshToken, user.id]);
-        
-        res.cookie('employer_accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-        res.cookie('employer_refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 30 * 24 * 60 * 60 * 1000 });
+        const { accessToken } = await issueAuthTokens(res, user, 'employer');
 
         res.status(201).json({ 
             message: 'Registration successful.', 
-            token, 
+            token: accessToken, 
+            accessToken,
             user 
         });
     } catch (error) {
@@ -796,28 +1165,19 @@ exports.employerLogin = async (req, res) => {
         }
 
         user.role = 'employer';
-        
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'supersecretkey_change_me_in_production',
-            { expiresIn: '7d' }
-        );
-        
-        const refreshToken = crypto.randomBytes(64).toString('hex');
-        await pool.query('UPDATE employers SET refresh_token = ? WHERE id = ?', [refreshToken, user.id]);
-        
-        res.cookie('employer_accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-        res.cookie('employer_refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 30 * 24 * 60 * 60 * 1000 });
+        const { accessToken } = await issueAuthTokens(res, user, 'employer');
         
         res.status(200).json({
             message: 'Login successful',
-            token,
+            token: accessToken,
+            accessToken,
             user: { 
                 id: user.id, 
                 name: user.name, 
                 email: user.email, 
-                role: user.role, 
+                role: 'employer', 
                 account_status: user.account_status,
+                company_name: user.company_name,
                 profile_photo: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png',
                 profile_photo_url: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png'
             }
@@ -829,40 +1189,112 @@ exports.employerLogin = async (req, res) => {
 };
 
 exports.employerRefresh = async (req, res) => {
-    const refreshToken = req.cookies.employer_refreshToken;
-    if (!refreshToken) return res.status(401).json({ message: 'No refresh token' });
-    
+    const oldRefreshToken = req.cookies?.employer_refreshToken || req.cookies?.refreshToken || req.body?.refreshToken;
+    if (!oldRefreshToken) {
+        return res.status(401).json({ message: 'No refresh token provided' });
+    }
+
     try {
-        const [users] = await pool.query('SELECT * FROM employers WHERE refresh_token = ?', [refreshToken]);
-        if (users.length === 0) return res.status(403).json({ message: 'Invalid refresh token' });
-        
-        const user = users[0];
+        let decoded;
+        try {
+            decoded = jwt.verify(oldRefreshToken, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production');
+        } catch (jwtErr) {
+            return res.status(403).json({ message: 'Invalid or expired refresh token' });
+        }
+
+        if (decoded.role && decoded.role !== 'employer') {
+            return res.status(403).json({ message: 'Forbidden: Invalid token role for Employer refresh.' });
+        }
+
+        // Query exclusively employers table
+        const [employers] = await pool.query('SELECT * FROM employers WHERE refresh_token = ?', [oldRefreshToken]);
+        if (employers.length === 0) {
+            return res.status(403).json({ message: 'Invalid or revoked refresh token' });
+        }
+
+        const user = employers[0];
+        if (user.account_status === 'banned') {
+            return res.status(403).json({ message: 'Account is banned' });
+        }
+        if (user.locked_until && new Date(user.locked_until) > new Date()) {
+            return res.status(403).json({ message: 'Account locked. Please try again later.' });
+        }
+
         user.role = 'employer';
-        
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'supersecretkey_change_me_in_production',
-            { expiresIn: '7d' }
-        );
-        
-        res.cookie('employer_accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-        
+        const { accessToken } = await issueAuthTokens(res, user, 'employer');
+
         res.status(200).json({
             message: 'Token refreshed successfully',
-            token,
-            user: { 
-                id: user.id, 
-                name: user.name, 
-                email: user.email, 
-                role: user.role, 
+            token: accessToken,
+            accessToken,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: 'employer',
                 account_status: user.account_status,
+                company_name: user.company_name,
                 profile_photo: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png',
                 profile_photo_url: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png'
             }
         });
     } catch (error) {
-        console.error('Refresh Error:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        console.error('Employer refresh token error:', error);
+        res.status(500).json({ message: `Internal server error: ${error.message}` });
+    }
+};
+
+exports.employerGetMe = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: 'Authentication required. No user session found.' });
+        }
+        const employerId = req.user.id;
+        const employerEmail = req.user.email;
+
+        let [employers] = await pool.query('SELECT * FROM employers WHERE id = ?', [employerId]);
+
+        if (employers.length === 0 && employerEmail) {
+            [employers] = await pool.query('SELECT * FROM employers WHERE email = ?', [employerEmail]);
+        }
+
+        if (employers.length === 0) {
+            const [users] = await pool.query('SELECT * FROM users WHERE (id = ? OR email = ?) AND role = "employer"', [employerId, employerEmail]);
+            if (users.length > 0) {
+                employers = users;
+            }
+        }
+
+        if (employers.length === 0) {
+            return res.status(404).json({ message: 'Employer profile not found' });
+        }
+
+        const user = employers[0];
+        user.role = 'employer';
+        let photo = user.profile_picture || user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png';
+        if (typeof photo === 'string') {
+            photo = photo.trim();
+            if (!photo.startsWith('http://') && !photo.startsWith('https://') && !photo.startsWith('/')) {
+                photo = '/' + photo;
+            }
+        }
+        user.profile_picture = photo;
+        user.profile_photo = photo;
+        user.profile_photo_url = photo;
+
+        // Ensure key company fields are present
+        user.company_name = user.company_name || user.name || '';
+        user.contact_person = user.contact_person || user.name || '';
+        user.headquarters_location = user.headquarters_location || user.location || '';
+        user.about_company = user.about_company || user.bio || '';
+
+        delete user.password;
+        delete user.refresh_token;
+        delete user.two_factor_secret;
+        res.status(200).json(user);
+    } catch (error) {
+        console.error('Employer GetMe Error:', error);
+        res.status(500).json({ message: `Database error while fetching profile: ${error.message}` });
     }
 };
 
@@ -881,22 +1313,12 @@ exports.seekerVerify = async (req, res) => {
         await pool.query('UPDATE job_seekers SET is_email_verified = true, email_verification_code = NULL, email_verification_expires = NULL WHERE id = ?', [user.id]);
         
         user.role = 'job_seeker';
-        
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'supersecretkey_change_me_in_production',
-            { expiresIn: '7d' }
-        );
-        
-        const refreshToken = crypto.randomBytes(64).toString('hex');
-        await pool.query('UPDATE job_seekers SET refresh_token = ? WHERE id = ?', [refreshToken, user.id]);
-        
-        res.cookie('seeker_accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-        res.cookie('seeker_refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 30 * 24 * 60 * 60 * 1000 });
+        const { accessToken } = await issueAuthTokens(res, user, 'job_seeker');
         
         res.status(200).json({
             message: 'Email verified successfully. Logging in...',
-            token,
+            token: accessToken,
+            accessToken,
             user: { id: user.id, name: user.name, email: user.email, role: user.role, account_status: user.account_status }
         });
     } catch (error) {
@@ -920,22 +1342,12 @@ exports.employerVerify = async (req, res) => {
         await pool.query('UPDATE employers SET is_email_verified = true, email_verification_code = NULL, email_verification_expires = NULL WHERE id = ?', [user.id]);
         
         user.role = 'employer';
-        
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'supersecretkey_change_me_in_production',
-            { expiresIn: '7d' }
-        );
-        
-        const refreshToken = crypto.randomBytes(64).toString('hex');
-        await pool.query('UPDATE employers SET refresh_token = ? WHERE id = ?', [refreshToken, user.id]);
-        
-        res.cookie('employer_accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-        res.cookie('employer_refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 30 * 24 * 60 * 60 * 1000 });
+        const { accessToken } = await issueAuthTokens(res, user, 'employer');
         
         res.status(200).json({
             message: 'Email verified successfully. Logging in...',
-            token,
+            token: accessToken,
+            accessToken,
             user: { id: user.id, name: user.name, email: user.email, role: user.role, account_status: user.account_status }
         });
     } catch (error) {
@@ -999,35 +1411,126 @@ exports.verifyOtp = async (req, res) => {
     }
 };
 
+// --- Refresh Token Rotation (Sliding Sessions) ---
+exports.refreshToken = async (req, res) => {
+    const oldRefreshToken = req.cookies?.refreshToken || req.cookies?.seeker_refreshToken || req.cookies?.employer_refreshToken || req.body?.refreshToken;
+    
+    if (!oldRefreshToken) {
+        return res.status(401).json({ message: 'No refresh token provided' });
+    }
+
+    try {
+        let user = null;
+        let role = null;
+        let table = null;
+
+        // Query database to find matching refresh token across all tables
+        const [seekers] = await pool.query('SELECT * FROM job_seekers WHERE refresh_token = ?', [oldRefreshToken]);
+        if (seekers.length > 0) {
+            user = seekers[0];
+            role = 'job_seeker';
+            table = 'job_seekers';
+        } else {
+            const [employers] = await pool.query('SELECT * FROM employers WHERE refresh_token = ?', [oldRefreshToken]);
+            if (employers.length > 0) {
+                user = employers[0];
+                role = 'employer';
+                table = 'employers';
+            } else {
+                const [admins] = await pool.query('SELECT * FROM admins WHERE refresh_token = ?', [oldRefreshToken]);
+                if (admins.length > 0) {
+                    user = admins[0];
+                    role = user.role || 'admin';
+                    table = 'admins';
+                }
+            }
+        }
+
+        if (!user) {
+            return res.status(403).json({ message: 'Invalid or revoked refresh token' });
+        }
+
+        // Account status check
+        if (user.account_status === 'banned') {
+            return res.status(403).json({ message: 'Account is banned' });
+        }
+        if (user.locked_until && new Date(user.locked_until) > new Date()) {
+            return res.status(403).json({ message: 'Account locked. Please try again later.' });
+        }
+
+        user.role = user.role || role;
+
+        // Generate BOTH new accessToken (15m) AND new refreshToken (7d),
+        // invalidate old token in DB, save new token, and overwrite the HttpOnly cookie
+        const { accessToken } = await issueAuthTokens(res, user, user.role);
+
+        res.status(200).json({
+            message: 'Token refreshed successfully',
+            token: accessToken,
+            accessToken,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                account_status: user.account_status,
+                profile_photo: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png',
+                profile_photo_url: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png'
+            }
+        });
+    } catch (error) {
+        console.error('Refresh token error:', error);
+        res.status(500).json({ message: `Internal server error: ${error.message}` });
+    }
+};
+
 exports.seekerLogout = async (req, res) => {
-    res.clearCookie('seeker_accessToken', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/'
-    });
-    res.clearCookie('seeker_refreshToken', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/'
-    });
+    const refreshToken = req.cookies?.refreshToken || req.cookies?.seeker_refreshToken;
+    if (refreshToken) {
+        try {
+            await pool.query('UPDATE job_seekers SET refresh_token = NULL WHERE refresh_token = ?', [refreshToken]);
+        } catch (e) {
+            console.error('Error clearing refresh token in DB:', e);
+        }
+    }
+    res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+    res.clearCookie('seeker_accessToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+    res.clearCookie('seeker_refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
     res.status(200).json({ message: 'Seeker logged out successfully' });
 };
 
 exports.employerLogout = async (req, res) => {
-    res.clearCookie('employer_accessToken', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/'
-    });
-    res.clearCookie('employer_refreshToken', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/'
-    });
+    const refreshToken = req.cookies?.refreshToken || req.cookies?.employer_refreshToken;
+    if (refreshToken) {
+        try {
+            await pool.query('UPDATE employers SET refresh_token = NULL WHERE refresh_token = ?', [refreshToken]);
+        } catch (e) {
+            console.error('Error clearing refresh token in DB:', e);
+        }
+    }
+    res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+    res.clearCookie('employer_accessToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+    res.clearCookie('employer_refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
     res.status(200).json({ message: 'Employer logged out successfully' });
+};
+
+exports.logout = async (req, res) => {
+    const refreshToken = req.cookies?.refreshToken || req.cookies?.seeker_refreshToken || req.cookies?.employer_refreshToken;
+    if (refreshToken) {
+        try {
+            await pool.query('UPDATE job_seekers SET refresh_token = NULL WHERE refresh_token = ?', [refreshToken]);
+            await pool.query('UPDATE employers SET refresh_token = NULL WHERE refresh_token = ?', [refreshToken]);
+            await pool.query('UPDATE admins SET refresh_token = NULL WHERE refresh_token = ?', [refreshToken]);
+        } catch (e) {
+            console.error('Error clearing refresh token in DB:', e);
+        }
+    }
+    res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+    res.clearCookie('seeker_accessToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+    res.clearCookie('seeker_refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+    res.clearCookie('employer_accessToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+    res.clearCookie('employer_refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+    res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+    res.status(200).json({ message: 'Logged out successfully' });
 };
 

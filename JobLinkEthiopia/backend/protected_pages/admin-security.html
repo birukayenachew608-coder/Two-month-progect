@@ -1,6 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    // Inline Authentication Guard: Verify admin authorization immediately before rendering
+    (async function verifyAdminAuth() {
+      try {
+        let res = await fetch('/api/auth/verify-admin', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+        if (res.status === 401 || res.status === 403 || !res.ok) {
+          // Attempt silent refresh before redirecting
+          const refreshRes = await fetch('/api/admin/refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+          });
+          if (refreshRes.ok) {
+            const data = await refreshRes.json();
+            if (data && data.user && (data.user.role === 'admin' || data.user.role === 'super_admin')) {
+              const newToken = data.accessToken || data.token || 'secure_cookie_auth';
+              localStorage.setItem('token', newToken);
+              localStorage.setItem('accessToken', newToken);
+              sessionStorage.setItem('token', newToken);
+              sessionStorage.setItem('accessToken', newToken);
+              localStorage.setItem('user', JSON.stringify(data.user));
+              sessionStorage.setItem('user', JSON.stringify(data.user));
+              return; // Verified successfully!
+            }
+          }
+          window.location.replace('/admin-login.html');
+        }
+      } catch (err) {
+        window.location.replace('/admin-login.html');
+      }
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Security - JobLink Ethiopia</title>
@@ -21,10 +57,8 @@
       <!-- Desktop Nav -->
       <nav class="nav-menu">
         <a href="index.html" class="nav-btn">Home</a>
-        <a href="seeker.html" class="nav-btn">Job Seeker</a>
-        <a href="employer.html" class="nav-btn">Employer</a>
         <a href="admin.html" class="nav-btn">Admin Dashboard</a>
-        <a href="admin-profile.html" class="nav-btn">Profile</a>
+        <a href="admin-security.html" class="nav-btn active">Security Settings</a>
       </nav>
       
       <!-- Auth Actions -->

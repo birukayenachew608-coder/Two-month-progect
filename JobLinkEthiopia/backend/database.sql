@@ -16,6 +16,9 @@ CREATE TABLE IF NOT EXISTS job_seekers (
     professional_title VARCHAR(255) DEFAULT NULL,
     bio TEXT DEFAULT NULL,
     resume_file_url VARCHAR(255) DEFAULT NULL,
+    github_url VARCHAR(255) DEFAULT NULL,
+    linkedin_url VARCHAR(255) DEFAULT NULL,
+    portfolio_url VARCHAR(255) DEFAULT NULL,
     
     account_status ENUM('active', 'banned', 'pending_verification') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -135,4 +138,14 @@ CREATE TABLE IF NOT EXISTS job_alerts (
     telegram_notification BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (seeker_id) REFERENCES job_seekers(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    job_id INT NOT NULL,
+    user_id INT NULL,
+    reason TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_job_id (job_id),
+    INDEX idx_user_id (user_id)
 );

@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -21,9 +22,7 @@
       <!-- Desktop Nav -->
       <nav class="nav-menu">
         <a href="index.html" class="nav-btn">Home</a>
-        <a href="seeker.html" class="nav-btn">Job Seeker</a>
-        <a href="employer.html" class="nav-btn active">Employer</a>
-        <a href="admin-login.html" class="nav-btn">Admin</a>
+        <a href="employer.html" class="nav-btn active">Employer Dashboard</a>
       </nav>
 
       <!-- Auth Actions -->
@@ -35,7 +34,7 @@
           <img id="nav-user-avatar" class="nav-avatar-img" src="/uploads/default-avatar.png" alt="Profile" onerror="this.src='/uploads/default-avatar.png'" />
           <span class="user-company-name">TechSolutions PLC</span>
         </div>
-        <a href="index.html" class="logout-link" data-action="logout-employer">Logout</a>
+        <a href="javascript:void(0)" class="logout-link" id="employer-logout-btn" data-action="logout-employer">Logout</a>
       </div>
     </div>
   </header>
@@ -50,41 +49,18 @@
       <button class="btn btn-primary" data-action="switch-tab" data-target="post-job-tab">Post a New Job</button>
     </div>
 
-    <!-- Dashboard layout with sidebar -->
-    <div class="dashboard-with-sidebar">
-      
-      <!-- Employer Profile Sidebar -->
-      <aside class="dashboard-sidebar card" id="employer-sidebar">
-        <div class="sidebar-avatar-wrapper">
-          <img id="sidebar-user-avatar" class="sidebar-avatar-img" src="/uploads/default-avatar.png" alt="Company Logo" onerror="this.src='/uploads/default-avatar.png'" />
-          <label class="avatar-upload-overlay" title="Upload company logo / photo">
-            <svg class="icon-xs" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            <input type="file" id="sidebar-employer-upload" class="input-hidden-file user-avatar-input" accept="image/*" />
-          </label>
+    <!-- Main Dashboard Content Column (Full Width) -->
+    <div class="dashboard-main-content">
+      <!-- Employer Tabs -->
+      <div class="tabs tabs-no-margin">
+        <div class="tab active" data-target="overview-tab" data-action="switch-tab">Overview & Pipeline</div>
+        <div class="tab" data-target="post-job-tab" data-action="switch-tab">Post a New Job</div>
+        <div class="tab" data-target="manage-jobs-tab" data-action="switch-tab">Manage Jobs</div>
+        <div class="tab" data-target="employer-profile-tab" data-action="switch-tab">Company Profile</div>
+        <div class="tab" data-target="notifications-tab" data-action="switch-tab" id="tab-employer-notifications">
+          Notifications <span class="badge badge-red badge-sm hidden" id="employer-notif-badge">0</span>
         </div>
-        <h3 id="sidebar-user-name" class="font-bold text-slate-900 text-base mb-1">TechSolutions PLC</h3>
-        <span id="sidebar-user-role" class="badge badge-primary-light text-xs mb-2">Employer</span>
-        <p id="sidebar-user-email" class="text-xs text-slate-500 mb-4">employer@techsolutions.et</p>
-
-        <div class="flex flex-col gap-2 w-full">
-          <label class="btn btn-primary btn-sm text-xs cursor-pointer flex items-center justify-center gap-2 m-0">
-            <svg class="icon-xs" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-            Change Photo
-            <input type="file" class="input-hidden-file user-avatar-input" accept="image/*" />
-          </label>
-          <button type="button" class="btn btn-outline-danger btn-sm text-xs btn-remove-avatar">Remove Photo</button>
-        </div>
-      </aside>
-
-      <!-- Main Dashboard Content Column -->
-      <div class="dashboard-main-content">
-        <!-- Employer Tabs -->
-        <div class="tabs tabs-no-margin">
-          <div class="tab active" data-target="overview-tab" data-action="switch-tab">Overview & Pipeline</div>
-          <div class="tab" data-target="post-job-tab" data-action="switch-tab">Post a New Job</div>
-          <div class="tab" data-target="manage-jobs-tab" data-action="switch-tab">Manage Jobs</div>
-          <div class="tab" data-target="employer-profile-tab" data-action="switch-tab">Company Profile</div>
-        </div>
+      </div>
 
     <!-- Overview Tab Content -->
     <div id="overview-tab" class="tab-content active flex-col gap-6">
@@ -304,70 +280,138 @@
 
     <!-- Company Profile Tab Content -->
     <div id="employer-profile-tab" class="tab-content post-job-tab-wrap hidden">
-      <div class="card post-job-card">
-        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight post-job-heading mb-6">Company Profile</h2>
-        <form id="employer-profile-form">
-          <!-- Profile Photo / Logo Upload -->
-          <div class="mb-8 flex items-center gap-6 pb-6 seeker-avatar-row">
-            <div id="employer-profile-pic-preview" class="profile-avatar-preview">
-              <img id="employer-tab-avatar" src="/uploads/default-avatar.png" alt="Company Logo" onerror="this.src='/uploads/default-avatar.png'" />
-            </div>
-            <div>
-              <h3 class="font-semibold text-sm text-slate-800 mb-2">Company Logo / Profile Photo</h3>
-              <div class="flex gap-3 items-center">
-                <label class="btn btn-primary text-xs py-2 cursor-pointer m-0">
-                  Upload Photo
-                  <input type="file" id="employer-profile-upload" accept="image/*" class="input-hidden-file user-avatar-input">
-                </label>
-                <button type="button" id="employer-remove-photo" class="btn btn-outline-danger text-xs py-2 m-0 btn-remove-avatar">Remove</button>
-              </div>
-              <p class="text-xs text-slate-500 mt-2">JPG, GIF or PNG. Max size of 5MB.</p>
-            </div>
+      <div class="profile-management-grid">
+        
+        <!-- Profile Photo Management Card (Matching image_36d85a.png) -->
+        <div class="profile-photo-card" id="employer-profile-photo-card">
+          <div class="profile-avatar-wrapper">
+            <img id="employer-tab-avatar" class="profile-avatar-circle" src="/uploads/default-avatar.png" alt="Company Profile Photo" onerror="this.src='/uploads/default-avatar.png'" />
+            <label class="profile-avatar-camera-badge" for="employer-profile-upload" title="Change photo">
+              <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </label>
           </div>
 
-          <div class="dashboard-grid">
-            <div class="dashboard-column">
-              <div class="form-group">
-                <label class="form-label">Company Name</label>
-                <input type="text" id="employer-profile-company" class="form-input" placeholder="e.g. Google Test Company">
+          <h3 class="profile-card-name" id="employer-card-name">TechSolutions PLC</h3>
+          <span class="profile-card-role-badge" id="employer-card-role">Employer</span>
+          <p class="profile-card-email" id="employer-card-email">employer@techsolutions.et</p>
+
+          <!-- Large Blue Change Photo Block -->
+          <label class="profile-change-photo-btn" for="employer-profile-upload" id="btn-employer-change-photo-block" title="Change Profile Photo">
+            <div class="profile-change-photo-icon-box">
+              <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="8" y="8" width="64" height="64" rx="16" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="52" cy="28" r="6" fill="white"/>
+                <path d="M18 56L34 38C36.5 35 41 35 43.5 38L50 46C52.2 48.5 56 48.5 58.2 46L62 42" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="profile-change-photo-label">
+              <span>Change</span>
+              <span>Photo</span>
+            </div>
+            <input type="file" id="employer-profile-upload" accept="image/*" class="input-hidden-file user-avatar-input" style="display: none;" />
+          </label>
+
+          <!-- Light Pink Remove Photo Button -->
+          <button type="button" id="employer-remove-photo" class="profile-remove-photo-btn btn-remove-avatar">
+            Remove Photo
+          </button>
+        </div>
+
+        <!-- Company Details Card -->
+        <div class="card post-job-card flex-1">
+          <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight post-job-heading mb-6">Company Profile</h2>
+          <form id="employer-profile-form">
+            <div class="dashboard-grid">
+              <div class="dashboard-column">
+                <div class="form-group">
+                  <label class="form-label">Company Name</label>
+                  <input type="text" id="employer-profile-company" class="form-input" placeholder="e.g. Google Test Company">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Contact Person Name</label>
+                  <input type="text" id="employer-profile-name" class="form-input" placeholder="e.g. Hanna Alemu">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email Address</label>
+                  <input type="email" id="employer-profile-email" class="form-input" placeholder="name@example.com" disabled>
+                  <p class="text-xs text-slate-500 mt-1">Email cannot be changed.</p>
+                </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">Contact Person Name</label>
-                <input type="text" id="employer-profile-name" class="form-input" placeholder="e.g. Hanna Alemu">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Email Address</label>
-                <input type="email" id="employer-profile-email" class="form-input" placeholder="name@example.com" disabled>
-                <p class="text-xs text-slate-500 mt-1">Email cannot be changed.</p>
+              
+              <div class="dashboard-column">
+                <div class="form-group">
+                  <label class="form-label">Phone Number</label>
+                  <input type="tel" id="employer-profile-phone" class="form-input" placeholder="e.g. +251 91 234 5678">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Headquarters Location</label>
+                  <input type="text" id="employer-profile-location" class="form-input" placeholder="e.g. Bole, Addis Ababa">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">About Company</label>
+                  <textarea id="employer-profile-bio" class="form-input" rows="3" placeholder="Describe your company..."></textarea>
+                </div>
               </div>
             </div>
-            
-            <div class="dashboard-column">
-              <div class="form-group">
-                <label class="form-label">Phone Number</label>
-                <input type="tel" id="employer-profile-phone" class="form-input" placeholder="e.g. +251 91 234 5678">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Headquarters Location</label>
-                <input type="text" id="employer-profile-location" class="form-input" placeholder="e.g. Bole, Addis Ababa">
-              </div>
-              <div class="form-group">
-                <label class="form-label">About Company</label>
-                <textarea id="employer-profile-bio" class="form-input" rows="3" placeholder="Describe your company..."></textarea>
-              </div>
+            <div class="divider mt-4"></div>
+            <div class="flex justify-end gap-3">
+              <button type="button" class="btn btn-outline" id="employer-profile-cancel">Cancel</button>
+              <button type="submit" class="btn btn-primary" data-action="save-employer-profile">Save Profile</button>
             </div>
-          </div>
-          <div class="divider mt-4"></div>
-          <div class="flex justify-end gap-3">
-            <button type="button" class="btn btn-outline" id="employer-profile-cancel">Cancel</button>
-            <button type="submit" class="btn btn-primary" data-action="save-employer-profile">Save Profile</button>
-          </div>
-        </form>
+          </form>
+        </div>
+
       </div>
     </div>
 
+    <!-- Notifications & Inbox Tab Content -->
+    <div id="notifications-tab" class="tab-content hidden flex-col gap-6">
+      <div class="card p-6">
+        <div class="flex-between items-center mb-4 flex-wrap gap-3">
+          <div>
+            <h2 class="page-title text-xl mb-1 flex items-center gap-2">
+              <svg class="icon-md text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+              Admin Notices & Inbox
+            </h2>
+            <p class="text-xs text-slate-500">Official warnings, alerts, and feedback from platform administrators regarding your job posts.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" class="btn btn-outline btn-sm text-xs flex items-center gap-1" id="btn-employer-refresh-notifs" title="Refresh Notifications">
+              <svg class="icon-xs" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+              Refresh
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm text-xs flex items-center gap-1" id="btn-employer-read-all" title="Mark All as Read">
+              <svg class="icon-xs" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              Mark All Read
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter tabs: All vs Unread -->
+        <div class="flex items-center gap-3 border-b border-slate-200 pb-3 mb-4 text-xs font-semibold">
+          <button type="button" class="btn-clear text-primary pb-1 border-b-2 border-primary cursor-pointer" id="notif-filter-all">
+            All Messages (<span id="notif-count-all">0</span>)
+          </button>
+          <button type="button" class="btn-clear text-slate-500 hover:text-slate-800 pb-1 cursor-pointer" id="notif-filter-unread">
+            Unread (<span id="notif-count-unread">0</span>)
+          </button>
+        </div>
+
+        <!-- Notifications Container -->
+        <div id="employer-notifications-list" class="flex flex-col gap-4">
+          <div class="text-center py-10 text-slate-500">
+            <svg class="icon-lg mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+            <p class="font-medium text-sm text-slate-600">Loading notifications...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
       </div> <!-- Close .dashboard-main-content -->
-    </div> <!-- Close .dashboard-with-sidebar -->
 
     <!-- Edit Job Modal -->
     <div id="edit-job-modal" class="modal-overlay hidden">
@@ -467,7 +511,7 @@
         <h2 class="text-xl font-bold text-slate-900" id="auth-title">
           Sign In
         </h2>
-        <button class="btn-clear text-slate-500" data-action="close-login">
+        <button class="btn-clear text-slate-500 close-btn" data-action="close-login" aria-label="Close modal">
           <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
@@ -475,7 +519,7 @@
       </div>
 
       <!-- Social Logins -->
-      <div class="flex flex-col auth-social-list">
+      <div class="flex flex-col gap-3 auth-social-list social-logins mb-4">
         <a href="/auth/google?state=employer" id="btn-google-auth-employer" data-action="google-auth" data-role="employer" class="btn btn-outline w-full flex items-center justify-center gap-2 auth-social-btn">
           <svg class="icon-md text-red-500" viewBox="0 0 24 24" fill="currentColor">
             <path
@@ -492,18 +536,18 @@
           </svg>
           <span class="font-medium text-sm">Continue with Google</span>
         </a>
-        <button type="button" data-action="linkedin-auth" data-role="employer" class="btn btn-outline w-full flex items-center justify-center gap-2 btn-linkedin">
+        <!-- <button type="button" id="btn-linkedin-auth-employer" data-action="linkedin-auth" data-role="employer" class="btn btn-outline w-full flex items-center justify-center gap-2 btn-linkedin">
           <svg class="icon-md" viewBox="0 0 24 24" fill="currentColor">
             <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
           </svg>
           <span class="font-medium text-sm">Continue with LinkedIn</span>
-        </button>
+        </button> -->
       </div>
 
-      <div class="flex items-center auth-divider-wrap">
-        <div class="flex-grow border-t border-slate-200"></div>
+      <div class="flex items-center gap-3 auth-divider auth-divider-wrap mb-4">
+        <div class="flex-grow border-t border-slate-200 auth-divider-line"></div>
         <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Or email</span>
-        <div class="flex-grow border-t border-slate-200"></div>
+        <div class="flex-grow border-t border-slate-200 auth-divider-line"></div>
       </div>
 
       <form id="login-form">
@@ -532,6 +576,7 @@
     </div>
   </div>
 
+  <script src="js/employer.js"></script>
   <script src="js/main.js" defer></script>
 </body>
 </html>

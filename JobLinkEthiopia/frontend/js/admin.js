@@ -2,26 +2,86 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Check if we are on the admin dashboard
     if (!document.querySelector('.admin-sections')) return;
 
-    // --- AUTH GUARD ---
+    // --- AUTH GUARD WITH SILENT REFRESH ---
+    let isAuthenticated = false;
+    let storedToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token') ||
+                      localStorage.getItem('accessToken') || localStorage.getItem('token');
+
     try {
+        const verifyHeaders = { 'Content-Type': 'application/json' };
+        if (storedToken && storedToken !== 'secure_cookie_auth') {
+            verifyHeaders['Authorization'] = `Bearer ${storedToken}`;
+        }
         const res = await fetch('/api/admin/verify', {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
+            headers: verifyHeaders,
             credentials: 'include'
         });
-        if (!res.ok) {
-            window.location.href = '/';
-            return;
+        if (res.ok) {
+            isAuthenticated = true;
         }
     } catch (e) {
-        window.location.href = '/';
+        isAuthenticated = false;
+    }
+
+    if (!isAuthenticated) {
+        // Attempt Silent Refresh before kicking user out
+        try {
+            if (typeof window.silentRefreshAuth === 'function') {
+                const s = await window.silentRefreshAuth('admin');
+                if (s.success && (s.role === 'admin' || s.role === 'super_admin')) {
+                    isAuthenticated = true;
+                }
+            } else {
+                const refreshRes = await fetch('/api/admin/refresh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+                if (refreshRes.ok) {
+                    const data = await refreshRes.json();
+                    if (data && data.user && (data.user.role === 'admin' || data.user.role === 'super_admin')) {
+                        const newToken = data.accessToken || data.token || 'secure_cookie_auth';
+                        localStorage.setItem('token', newToken);
+                        localStorage.setItem('accessToken', newToken);
+                        sessionStorage.setItem('token', newToken);
+                        sessionStorage.setItem('accessToken', newToken);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        sessionStorage.setItem('user', JSON.stringify(data.user));
+                        isAuthenticated = true;
+                    }
+                }
+            }
+        } catch (err) {
+            console.warn('Silent refresh error on admin.html:', err);
+        }
+    }
+
+    if (!isAuthenticated) {
+        window.location.href = 'admin-login.html';
         return;
     }
-    // ------------------
+    // -------------------------------------
 
     const API_URL = '/api/admin';
     let currentSearchTerm = '';
     let currentTab = 'pending-employers';
+    let allReportedJobs = [];
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function escapeAttr(str) {
+        if (!str) return '';
+        return String(str).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
 
     // Logout logic
     const logoutLink = document.querySelector('.logout-link');
@@ -67,7 +127,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         searchInputs.forEach(input => {
             input.addEventListener('input', (e) => {
                 currentSearchTerm = e.target.value;
-                // Debounce search slightly
+                if (currentTab === 'reported-jobs' || input.id === 'reported-jobs-search-input') {
+                    // Real-time instant filtering for Reported Jobs
+                    filterReportedJobs(e.target.value);
+                    return;
+                }
+                // Debounce search slightly for employers and job seekers
                 clearTimeout(input.searchTimeout);
                 input.searchTimeout = setTimeout(() => {
                     refreshCurrentTab();
@@ -80,6 +145,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (globalSearch) {
             globalSearch.addEventListener('input', (e) => {
                 currentSearchTerm = e.target.value;
+                if (currentTab === 'reported-jobs') {
+                    filterReportedJobs(e.target.value);
+                    return;
+                }
                 clearTimeout(globalSearch.searchTimeout);
                 globalSearch.searchTimeout = setTimeout(() => {
                     refreshCurrentTab();
@@ -103,7 +172,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function refreshCurrentTab() {
         if (currentTab === 'pending-employers') fetchEmployers(currentSearchTerm);
-        else if (currentTab === 'reported-jobs') fetchReportedJobs(currentSearchTerm);
+        else if (currentTab === 'reported-jobs') {
+            const searchVal = document.getElementById('reported-jobs-search-input')?.value || currentSearchTerm;
+            filterReportedJobs(searchVal);
+        }
         else if (currentTab === 'job-seekers') fetchJobSeekers(currentSearchTerm);
     }
 
@@ -250,45 +322,88 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const res = await fetch(`${API_URL}/jobs/reported${search ? `?search=${encodeURIComponent(search)}` : ''}`);
             if (res.ok) {
-                const jobs = await res.json();
-                renderReportedJobs(jobs);
+                allReportedJobs = await res.json();
+                const searchVal = document.getElementById('reported-jobs-search-input')?.value || '';
+                if (searchVal) {
+                    filterReportedJobs(searchVal);
+                } else {
+                    renderReportedJobs(allReportedJobs);
+                }
             }
         } catch (error) {
             console.error('Error fetching reported jobs:', error);
         }
     }
 
-    function renderReportedJobs(jobs) {
+    // Real-time client-side filter for Reported Jobs
+    function filterReportedJobs(searchTerm = '') {
+        const term = (searchTerm || '').trim().toLowerCase();
+        if (!term) {
+            renderReportedJobs(allReportedJobs);
+            return;
+        }
+        const filtered = allReportedJobs.filter(job => {
+            const title = (job.title || '').toLowerCase();
+            const company = (job.company_name || '').toLowerCase();
+            return title.includes(term) || company.includes(term);
+        });
+        renderReportedJobs(filtered, term);
+    }
+
+    function renderReportedJobs(jobs, activeSearchTerm = '') {
         const container = document.querySelector('#reported-jobs .main-column');
         if (!container) return;
         
         container.innerHTML = '';
         if (jobs.length === 0) {
-            container.innerHTML = '<div class="text-center py-8 text-slate-500">No reported jobs found.</div>';
+            if (activeSearchTerm) {
+                container.innerHTML = `<div class="text-center py-8 text-slate-500">No reported jobs matching "<strong>${escapeHtml(activeSearchTerm)}</strong>".</div>`;
+            } else {
+                container.innerHTML = '<div class="text-center py-8 text-slate-500">No reported jobs found.</div>';
+            }
             return;
         }
 
         jobs.forEach(job => {
             const div = document.createElement('div');
             div.className = 'card card-border-red mb-4';
+            div.id = `reported-job-card-${job.id}`;
+            div.setAttribute('data-job-id', job.id);
+            div.setAttribute('data-report-id', job.report_id || job.id);
+            
+            const reportId = job.report_id || job.id;
+            const employerId = job.employer_id || 0;
+            const companyName = job.company_name || 'Unknown Company';
+            const title = job.title || 'Untitled Post';
+            const reason = job.report_reason ? job.report_reason : 'No reason provided';
+            const desc = (job.description && job.description.length > 150) ? job.description.substring(0, 150) + '...' : (job.description || '');
+
             div.innerHTML = `
                 <div class="flagged-job-layout">
                   <div class="flagged-job-content">
                     <div class="flagged-job-header">
-                      <h3 class="flagged-job-title">${job.title}</h3>
+                      <h3 class="flagged-job-title">${escapeHtml(title)}</h3>
                       <span class="badge badge-red badge-sm">Reported</span>
                     </div>
-                    <p class="flagged-job-meta">Company: <span class="fw-medium text-slate-800">${job.company_name}</span> • Employer ID #${job.employer_id}</p>
-                    <div class="applicant-message text-sm mt-2" style="background-color: #fee2e2; color: #991b1b; padding: 0.5rem; border-radius: 0.25rem;">
-                      <strong>Reason for reporting:</strong> ${job.report_reason ? job.report_reason : 'No reason provided'}
+                    <p class="flagged-job-meta">Company: <span class="fw-medium text-slate-800">${escapeHtml(companyName)}</span> • Employer ID #${employerId}</p>
+                    <div class="applicant-message text-sm mt-2 text-slate-700">
+                      <strong>Description:</strong> ${escapeHtml(desc)}
                     </div>
-                    <div class="applicant-message text-sm mt-2">
-                      ${job.description.length > 150 ? job.description.substring(0, 150) + '...' : job.description}
+                    <div class="applicant-message text-sm mt-2" style="background-color: #fee2e2; color: #991b1b; padding: 0.5rem; border-radius: 0.25rem;">
+                      <strong>Reason for reporting:</strong> ${escapeHtml(reason)}
                     </div>
                   </div>
                   <div class="flagged-job-actions min-w-150 flex flex-col gap-2 justify-center">
-                    <button class="btn btn-danger btn-block py-2" onclick="handleJobAction(${job.id}, 'delete')">Delete Post</button>
-                    <button class="btn btn-outline btn-block py-2" onclick="handleJobAction(${job.id}, 'dismiss')">Dismiss Flag</button>
+                    <button type="button" class="btn btn-primary btn-block py-2 text-xs flex items-center justify-center gap-1" onclick="openMessageEmployerModal(${job.id}, ${employerId}, '${escapeAttr(companyName)}', '${escapeAttr(title)}')">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                      Message Employer
+                    </button>
+                    <button type="button" class="btn btn-outline btn-block py-2 text-xs" onclick="handleDismissFlag(${reportId}, ${job.id})">
+                      Dismiss Flag
+                    </button>
+                    <button type="button" class="btn btn-danger btn-block py-2 text-xs" onclick="handleJobAction(${job.id}, 'delete')">
+                      Delete Post
+                    </button>
                   </div>
                 </div>
             `;
@@ -419,6 +534,63 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
+    // Dismiss Flag handler: calls DELETE /api/admin/reports/:reportId and dynamically removes card from DOM instantly
+    window.handleDismissFlag = async function(reportId, jobId) {
+        if (!confirm('Are you sure you want to dismiss this report flag?')) return;
+
+        try {
+            const res = await fetch(`${API_URL}/reports/${reportId || jobId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if (res.ok) {
+                // Dynamically remove that specific job card from the DOM instantly without requiring a page reload
+                const card = document.getElementById(`reported-job-card-${jobId}`);
+                if (card) {
+                    card.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.96)';
+                    setTimeout(() => {
+                        card.remove();
+                        // If no more cards in DOM, show empty message
+                        const remaining = document.querySelectorAll('#reported-jobs .main-column .card');
+                        if (remaining.length === 0) {
+                            const container = document.querySelector('#reported-jobs .main-column');
+                            if (container) {
+                                container.innerHTML = '<div class="text-center py-8 text-slate-500">No reported jobs found.</div>';
+                            }
+                        }
+                    }, 200);
+                }
+
+                // Update in-memory reported jobs list
+                allReportedJobs = allReportedJobs.filter(j => j.id !== jobId && j.report_id !== reportId);
+
+                // Decrement reported jobs stat badge
+                const statReported = document.getElementById('stat-reported');
+                if (statReported) {
+                    const currentCount = parseInt(statReported.textContent, 10);
+                    if (!isNaN(currentCount) && currentCount > 0) {
+                        statReported.textContent = currentCount - 1;
+                    }
+                }
+                fetchStats();
+
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Flag dismissed successfully.', 'success');
+                }
+            } else {
+                const err = await res.json().catch(() => ({}));
+                alert(err.message || 'Failed to dismiss flag');
+            }
+        } catch (error) {
+            console.error('Error dismissing flag:', error);
+            alert('Network error while dismissing flag');
+        }
+    };
+
     window.handleJobAction = async function(id, action) {
         if (!confirm(`Are you sure you want to ${action} this job?`)) return;
 
@@ -427,16 +599,42 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (action === 'delete') {
                 res = await fetch(`${API_URL}/jobs/${id}`, { method: 'DELETE' });
             } else if (action === 'dismiss') {
-                res = await fetch(`${API_URL}/jobs/${id}/status`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: 'active' }) // restore to active
-                });
+                res = await fetch(`${API_URL}/reports/${id}`, { method: 'DELETE' });
             }
 
             if (res && res.ok) {
-                fetchReportedJobs(currentSearchTerm);
+                // Dynamically remove card from DOM instantly
+                const card = document.getElementById(`reported-job-card-${id}`);
+                if (card) {
+                    card.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.96)';
+                    setTimeout(() => {
+                        card.remove();
+                        const remaining = document.querySelectorAll('#reported-jobs .main-column .card');
+                        if (remaining.length === 0) {
+                            const container = document.querySelector('#reported-jobs .main-column');
+                            if (container) {
+                                container.innerHTML = '<div class="text-center py-8 text-slate-500">No reported jobs found.</div>';
+                            }
+                        }
+                    }, 200);
+                }
+
+                allReportedJobs = allReportedJobs.filter(j => j.id !== id);
+
+                const statReported = document.getElementById('stat-reported');
+                if (statReported) {
+                    const currentCount = parseInt(statReported.textContent, 10);
+                    if (!isNaN(currentCount) && currentCount > 0) {
+                        statReported.textContent = currentCount - 1;
+                    }
+                }
                 fetchStats();
+
+                if (typeof window.showToast === 'function') {
+                    window.showToast(`Job ${action === 'delete' ? 'deleted' : 'flag dismissed'} successfully.`, 'success');
+                }
             } else {
                 alert('Action failed');
             }
@@ -444,6 +642,101 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Error performing action:', error);
         }
     };
+
+    // Message Employer Modal functions
+    window.openMessageEmployerModal = function(jobId, employerId, companyName, jobTitle) {
+        const modal = document.getElementById('message-employer-modal');
+        if (!modal) return;
+
+        document.getElementById('msg-employer-id').value = employerId || '';
+        document.getElementById('msg-job-id').value = jobId || '';
+        document.getElementById('msg-modal-company').textContent = companyName || 'Employer';
+        document.getElementById('msg-modal-job-title').textContent = jobTitle || 'Job Post';
+        document.getElementById('msg-subject').value = `Warning: Regarding reported job "${jobTitle}"`;
+        document.getElementById('msg-body').value = `Hello ${companyName},\n\nWe have received reports from community members regarding your job listing "${jobTitle}". Please review your listing details and ensure compliance with our platform policies.\n\nBest regards,\nJobLink Ethiopia Administration`;
+
+        modal.classList.remove('hidden');
+        requestAnimationFrame(() => modal.classList.add('active'));
+        const bodyInput = document.getElementById('msg-body');
+        if (bodyInput) bodyInput.focus();
+    };
+
+    window.closeMessageEmployerModal = function() {
+        const modal = document.getElementById('message-employer-modal');
+        if (modal) {
+            modal.classList.remove('active');
+            setTimeout(() => modal.classList.add('hidden'), 250);
+        }
+    };
+
+    // Hook up modal close listeners and form submission
+    const closeMsgModalBtn = document.getElementById('btn-close-msg-modal');
+    if (closeMsgModalBtn) closeMsgModalBtn.addEventListener('click', window.closeMessageEmployerModal);
+
+    const cancelMsgModalBtn = document.getElementById('btn-cancel-msg-modal');
+    if (cancelMsgModalBtn) cancelMsgModalBtn.addEventListener('click', window.closeMessageEmployerModal);
+
+    const msgModal = document.getElementById('message-employer-modal');
+    if (msgModal) {
+        msgModal.addEventListener('click', (e) => {
+            if (e.target === msgModal) {
+                window.closeMessageEmployerModal();
+            }
+        });
+    }
+
+    const msgForm = document.getElementById('message-employer-form');
+    if (msgForm) {
+        msgForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const employerId = document.getElementById('msg-employer-id').value;
+            const jobId = document.getElementById('msg-job-id').value;
+            const subject = document.getElementById('msg-subject').value;
+            const message = document.getElementById('msg-body').value;
+            const btn = document.getElementById('btn-send-employer-msg');
+
+            if (!message || message.trim().length === 0) {
+                alert('Please enter a message to send.');
+                return;
+            }
+
+            const originalBtnHtml = btn ? btn.innerHTML : 'Send Message';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = 'Sending...';
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ employerId, jobId, subject, message })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    window.closeMessageEmployerModal();
+                    if (typeof window.showToast === 'function') {
+                        window.showToast(data.message || 'Message sent to employer successfully', 'success');
+                    } else {
+                        alert(data.message || 'Message sent to employer successfully');
+                    }
+                    msgForm.reset();
+                } else {
+                    alert(data.message || 'Failed to send message');
+                }
+            } catch (error) {
+                console.error('Error sending message to employer:', error);
+                alert('Network error while sending message');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalBtnHtml;
+                }
+            }
+        });
+    }
 
     window.handleSeekerAction = async function(id, action) {
         if (!confirm(`Are you sure you want to ${action} this job seeker?`)) return;

@@ -20,6 +20,7 @@ router.get('/recommended/:seekerId', jobController.getRecommendedJobs);
 router.get('/:id', jobController.getJobById);
 router.post('/:id/view', jobController.incrementJobView);
 router.post('/:id/report', jobController.reportJob);
+router.delete('/:id/report', jobController.withdrawJobReport);
 router.put('/:id', verifyEmployer, jobController.updateJob);
 router.delete('/:id', verifyEmployer, jobController.deleteJob);
 

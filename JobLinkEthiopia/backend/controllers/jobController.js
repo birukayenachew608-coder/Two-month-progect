@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const jwt = require('jsonwebtoken');
+const reportController = require('./reportController');
 
 // Ensure 'views' column exists in jobs table
 pool.query(`
@@ -428,19 +429,11 @@ exports.incrementJobView = async (req, res) => {
 };
 
 exports.reportJob = async (req, res) => {
-    const { id } = req.params;
-    const { reason } = req.body;
-    try {
-        const [result] = await pool.query('UPDATE jobs SET status = "flagged", report_reason = ? WHERE id = ?', [reason || 'No reason provided', id]);
+    return reportController.createReport(req, res);
+};
 
-        
-        // If the ID isn't in the DB (for hardcoded jobs in HTML), it's fine for demo purposes.
-        // We'll still return 200 so the frontend updates.
-        res.status(200).json({ message: 'Job reported successfully' });
-    } catch (error) {
-        console.error('Error reporting job:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
+exports.withdrawJobReport = async (req, res) => {
+    return reportController.deleteReport(req, res);
 };
 
 exports.getEmployerJobs = async (req, res) => {

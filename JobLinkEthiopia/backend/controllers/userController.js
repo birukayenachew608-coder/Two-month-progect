@@ -39,47 +39,47 @@ exports.uploadProfilePhoto = async (req, res) => {
         if (userRole === 'employer') {
             // 1. Update ONLY employers table
             await pool.query(
-                'UPDATE employers SET profile_photo = ?, profile_photo_url = ? WHERE id = ?',
-                [relativeFilePath, relativeFilePath, userId]
+                'UPDATE employers SET profile_picture = ?, profile_photo = ?, profile_photo_url = ? WHERE id = ?',
+                [relativeFilePath, relativeFilePath, relativeFilePath, userId]
             ).catch(async () => {
                 await pool.query(
-                    'UPDATE employers SET profile_photo_url = ? WHERE id = ?',
-                    [relativeFilePath, userId]
+                    'UPDATE employers SET profile_photo_url = ?, profile_picture = ? WHERE id = ?',
+                    [relativeFilePath, relativeFilePath, userId]
                 ).catch(() => {});
             });
 
             // 2. In users table, strictly include AND role = 'employer'
             await pool.query(
-                'UPDATE users SET profile_photo = ? WHERE id = ? AND role = ?',
-                [relativeFilePath, userId, 'employer']
+                'UPDATE users SET profile_picture = ?, profile_photo = ? WHERE id = ? AND role = ?',
+                [relativeFilePath, relativeFilePath, userId, 'employer']
             ).catch(() => {});
             if (userEmail) {
                 await pool.query(
-                    'UPDATE users SET profile_photo = ? WHERE email = ? AND role = ?',
-                    [relativeFilePath, userEmail, 'employer']
+                    'UPDATE users SET profile_picture = ?, profile_photo = ? WHERE email = ? AND role = ?',
+                    [relativeFilePath, relativeFilePath, userEmail, 'employer']
                 ).catch(() => {});
             }
         } else if (userRole === 'job_seeker') {
             // 1. Update ONLY job_seekers table
             await pool.query(
-                'UPDATE job_seekers SET profile_photo = ?, profile_photo_url = ? WHERE id = ?',
-                [relativeFilePath, relativeFilePath, userId]
+                'UPDATE job_seekers SET profile_picture = ?, profile_photo = ?, profile_photo_url = ? WHERE id = ?',
+                [relativeFilePath, relativeFilePath, relativeFilePath, userId]
             ).catch(async () => {
                 await pool.query(
-                    'UPDATE job_seekers SET profile_photo_url = ? WHERE id = ?',
-                    [relativeFilePath, userId]
+                    'UPDATE job_seekers SET profile_photo_url = ?, profile_picture = ? WHERE id = ?',
+                    [relativeFilePath, relativeFilePath, userId]
                 ).catch(() => {});
             });
 
             // 2. In users table, strictly include AND role = 'job_seeker'
             await pool.query(
-                'UPDATE users SET profile_photo = ? WHERE id = ? AND role = ?',
-                [relativeFilePath, userId, 'job_seeker']
+                'UPDATE users SET profile_picture = ?, profile_photo = ? WHERE id = ? AND role = ?',
+                [relativeFilePath, relativeFilePath, userId, 'job_seeker']
             ).catch(() => {});
             if (userEmail) {
                 await pool.query(
-                    'UPDATE users SET profile_photo = ? WHERE email = ? AND role = ?',
-                    [relativeFilePath, userEmail, 'job_seeker']
+                    'UPDATE users SET profile_picture = ?, profile_photo = ? WHERE email = ? AND role = ?',
+                    [relativeFilePath, relativeFilePath, userEmail, 'job_seeker']
                 ).catch(() => {});
             }
         } else if (userRole === 'admin' || userRole === 'super_admin') {
@@ -89,8 +89,8 @@ exports.uploadProfilePhoto = async (req, res) => {
                 [relativeFilePath, userId]
             ).catch(() => {});
             await pool.query(
-                'UPDATE users SET profile_photo = ? WHERE id = ? AND role = ?',
-                [relativeFilePath, userId, userRole]
+                'UPDATE users SET profile_picture = ?, profile_photo = ? WHERE id = ? AND role = ?',
+                [relativeFilePath, relativeFilePath, userId, userRole]
             ).catch(() => {});
         }
 
@@ -112,10 +112,13 @@ exports.uploadProfilePhoto = async (req, res) => {
         }
 
         res.status(200).json({
+            success: true,
             message: 'Profile photo uploaded successfully',
+            profile_picture: relativeFilePath,
             profile_photo: relativeFilePath,
             profile_photo_url: relativeFilePath,
             photoUrl: relativeFilePath,
+            url: relativeFilePath,
             user: updatedUser
         });
     } catch (error) {
@@ -217,24 +220,26 @@ exports.removeProfilePhoto = async (req, res) => {
         const defaultAvatar = '/uploads/default-avatar.png';
 
         if (userRole === 'employer') {
-            await pool.query('UPDATE employers SET profile_photo = ?, profile_photo_url = ? WHERE id = ?', [defaultAvatar, defaultAvatar, userId]).catch(() => {});
-            await pool.query('UPDATE users SET profile_photo = ? WHERE id = ? AND role = ?', [defaultAvatar, userId, 'employer']).catch(() => {});
+            await pool.query('UPDATE employers SET profile_picture = NULL, profile_photo = ?, profile_photo_url = ? WHERE id = ?', [defaultAvatar, defaultAvatar, userId]).catch(() => {});
+            await pool.query('UPDATE users SET profile_picture = NULL, profile_photo = ? WHERE id = ? AND role = ?', [defaultAvatar, userId, 'employer']).catch(() => {});
             if (userEmail) {
-                await pool.query('UPDATE users SET profile_photo = ? WHERE email = ? AND role = ?', [defaultAvatar, userEmail, 'employer']).catch(() => {});
+                await pool.query('UPDATE users SET profile_picture = NULL, profile_photo = ? WHERE email = ? AND role = ?', [defaultAvatar, userEmail, 'employer']).catch(() => {});
             }
         } else if (userRole === 'job_seeker') {
-            await pool.query('UPDATE job_seekers SET profile_photo = ?, profile_photo_url = ? WHERE id = ?', [defaultAvatar, defaultAvatar, userId]).catch(() => {});
-            await pool.query('UPDATE users SET profile_photo = ? WHERE id = ? AND role = ?', [defaultAvatar, userId, 'job_seeker']).catch(() => {});
+            await pool.query('UPDATE job_seekers SET profile_picture = NULL, profile_photo = ?, profile_photo_url = ? WHERE id = ?', [defaultAvatar, defaultAvatar, userId]).catch(() => {});
+            await pool.query('UPDATE users SET profile_picture = NULL, profile_photo = ? WHERE id = ? AND role = ?', [defaultAvatar, userId, 'job_seeker']).catch(() => {});
             if (userEmail) {
-                await pool.query('UPDATE users SET profile_photo = ? WHERE email = ? AND role = ?', [defaultAvatar, userEmail, 'job_seeker']).catch(() => {});
+                await pool.query('UPDATE users SET profile_picture = NULL, profile_photo = ? WHERE email = ? AND role = ?', [defaultAvatar, userEmail, 'job_seeker']).catch(() => {});
             }
         } else if (userRole === 'admin' || userRole === 'super_admin') {
             await pool.query('UPDATE admins SET profile_photo = ? WHERE id = ?', [defaultAvatar, userId]).catch(() => {});
-            await pool.query('UPDATE users SET profile_photo = ? WHERE id = ? AND role = ?', [defaultAvatar, userId, userRole]).catch(() => {});
+            await pool.query('UPDATE users SET profile_picture = NULL, profile_photo = ? WHERE id = ? AND role = ?', [defaultAvatar, userId, userRole]).catch(() => {});
         }
 
         res.status(200).json({
+            success: true,
             message: 'Profile photo removed successfully',
+            profile_picture: null,
             profile_photo: defaultAvatar,
             profile_photo_url: defaultAvatar
         });
@@ -267,7 +272,10 @@ exports.updateProfile = async (req, res) => {
             headquarters_location,
             bio,
             about_company,
-            company_name
+            company_name,
+            github_url,
+            linkedin_url,
+            portfolio_url
         } = req.body;
 
         // Ensure location accepts any generic string (up to 255 chars)
@@ -292,6 +300,21 @@ exports.updateProfile = async (req, res) => {
         const cleanBio = rawBio !== undefined && rawBio !== null ? String(rawBio).trim().slice(0, 5000) : null;
         const cleanCompany = company_name ? String(company_name).trim().slice(0, 255) : null;
 
+        // Social profile links (for job seekers)
+        const rawGithub = github_url !== undefined ? github_url : req.body.github;
+        const rawLinkedin = linkedin_url !== undefined ? linkedin_url : req.body.linkedin;
+        const rawPortfolio = portfolio_url !== undefined ? portfolio_url : (req.body.portfolio || req.body.portfolio_website || req.body.website);
+
+        const cleanGithub = rawGithub !== undefined
+            ? (rawGithub ? String(rawGithub).trim().slice(0, 255) : null)
+            : undefined;
+        const cleanLinkedin = rawLinkedin !== undefined
+            ? (rawLinkedin ? String(rawLinkedin).trim().slice(0, 255) : null)
+            : undefined;
+        const cleanPortfolio = rawPortfolio !== undefined
+            ? (rawPortfolio ? String(rawPortfolio).trim().slice(0, 255) : null)
+            : undefined;
+
         if (userRole === 'job_seeker') {
             await pool.query(
                 `UPDATE job_seekers SET
@@ -299,9 +322,22 @@ exports.updateProfile = async (req, res) => {
                     professional_title = COALESCE(?, professional_title),
                     phone_number = COALESCE(?, phone_number),
                     location = ?,
-                    bio = COALESCE(?, bio)
+                    bio = COALESCE(?, bio),
+                    github_url = CASE WHEN ? = 1 THEN ? ELSE github_url END,
+                    linkedin_url = CASE WHEN ? = 1 THEN ? ELSE linkedin_url END,
+                    portfolio_url = CASE WHEN ? = 1 THEN ? ELSE portfolio_url END
                  WHERE id = ?`,
-                [cleanName, cleanTitle, cleanPhone, cleanLocation, cleanBio, userId]
+                [
+                    cleanName,
+                    cleanTitle,
+                    cleanPhone,
+                    cleanLocation,
+                    cleanBio,
+                    cleanGithub !== undefined ? 1 : 0, cleanGithub !== undefined ? cleanGithub : null,
+                    cleanLinkedin !== undefined ? 1 : 0, cleanLinkedin !== undefined ? cleanLinkedin : null,
+                    cleanPortfolio !== undefined ? 1 : 0, cleanPortfolio !== undefined ? cleanPortfolio : null,
+                    userId
+                ]
             );
 
             await pool.query(
@@ -349,7 +385,7 @@ exports.updateProfile = async (req, res) => {
         let updatedProfile = { id: userId, role: userRole, location: cleanLocation };
         if (userRole === 'job_seeker') {
             const [rows] = await pool.query(
-                'SELECT id, name, email, phone_number as phone, location, profile_photo, profile_photo_url, professional_title, bio FROM job_seekers WHERE id = ?',
+                'SELECT id, name, email, phone_number as phone, location, profile_photo, profile_photo_url, professional_title, bio, github_url, linkedin_url, portfolio_url FROM job_seekers WHERE id = ?',
                 [userId]
             );
             if (rows.length > 0) updatedProfile = { ...rows[0], role: 'job_seeker' };

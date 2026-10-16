@@ -133,31 +133,32 @@ exports.verify2FA = async (req, res) => {
             email: admin.email
         };
 
-        const token = jwt.sign(payload, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '30m' });
-        const refreshToken = crypto.randomBytes(64).toString('hex');
+        const token = jwt.sign(payload, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production', { expiresIn: '15m' });
+        const refreshToken = jwt.sign({ id: admin.id, email: admin.email, role: admin.role, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') }, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production', { expiresIn: '7d' });
         
         await pool.query('UPDATE admins SET refresh_token = ? WHERE id = ?', [refreshToken, admin.id]);
 
-        // Set httpOnly secure cookie for access token (30m)
+        // Set httpOnly secure cookie for access token (15m)
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             path: '/',
-            maxAge: 30 * 60 * 1000 // 30 minutes
+            maxAge: 15 * 60 * 1000 // 15 minutes
         });
 
-        // Set httpOnly secure cookie for refresh token (12h)
+        // Set httpOnly secure cookie for refresh token (7d)
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            path: '/',
-            maxAge: 12 * 60 * 60 * 1000 // 12 hours
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
         res.status(200).json({
             message: 'Login successful',
+            token,
+            accessToken: token,
             user: {
                 id: admin.id,
                 email: admin.email,
@@ -190,21 +191,36 @@ exports.refresh = async (req, res) => {
         const admin = admins[0];
         const payload = {
             id: admin.id,
-            role: admin.role
+            role: admin.role,
+            email: admin.email
         };
         
-        const token = jwt.sign(payload, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '30m' });
+        const token = jwt.sign(payload, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production', { expiresIn: '15m' });
+        const newRefreshToken = jwt.sign({ id: admin.id, email: admin.email, role: admin.role, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') }, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production', { expiresIn: '7d' });
         
+        // Invalidate old token and save new token in DB to prevent reuse
+        await pool.query('UPDATE admins SET refresh_token = ? WHERE id = ?', [newRefreshToken, admin.id]);
+
+        // Overwrite cookies
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             path: '/',
-            maxAge: 30 * 60 * 1000 // 30 minutes
+            maxAge: 15 * 60 * 1000 // 15 minutes
+        });
+
+        res.cookie('refreshToken', newRefreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000
         });
         
         res.status(200).json({ 
             message: 'Token refreshed successfully',
+            token,
+            accessToken: token,
             user: {
                 id: admin.id,
                 email: admin.email,
@@ -221,7 +237,7 @@ exports.refresh = async (req, res) => {
 exports.getDashboardStats = async (req, res) => {
     try {
         const [[{ registeredEmployers }]] = await pool.query("SELECT COUNT(*) as registeredEmployers FROM employers WHERE account_status = 'pending_verification'");
-        const [[{ reportedJobs }]] = await pool.query("SELECT COUNT(*) as reportedJobs FROM jobs WHERE status = 'flagged'");
+        const [[{ reportedJobs }]] = await pool.query("SELECT COUNT(DISTINCT id) as reportedJobs FROM (SELECT id FROM jobs WHERE status = 'flagged' OR (report_reason IS NOT NULL AND report_reason != '') UNION SELECT job_id as id FROM reports) as r");
         const [[{ activeJobs }]] = await pool.query("SELECT COUNT(*) as activeJobs FROM jobs WHERE status = 'active'");
         const [[{ verifiedEmployers }]] = await pool.query("SELECT COUNT(*) as verifiedEmployers FROM employers WHERE account_status = 'active'");
 
@@ -362,21 +378,171 @@ exports.deleteJobSeeker = async (req, res) => {
 exports.getReportedJobs = async (req, res) => {
     try {
         const { search } = req.query;
-        let query = 'SELECT * FROM jobs WHERE status = "flagged"';
+        let query = `
+            SELECT 
+                j.*, 
+                COALESCE(r.id, j.id) AS report_id,
+                COALESCE(r.reason, j.report_reason, 'Reported by user') AS report_reason 
+            FROM jobs j
+            LEFT JOIN (
+                SELECT job_id, MAX(id) AS id, MAX(reason) AS reason
+                FROM reports
+                GROUP BY job_id
+            ) r ON j.id = r.job_id
+            WHERE (j.status = 'flagged' OR (j.report_reason IS NOT NULL AND j.report_reason != '') OR r.id IS NOT NULL)
+        `;
         const queryParams = [];
 
         if (search) {
-            query += ' AND (title LIKE ? OR company_name LIKE ? OR description LIKE ?)';
+            query += ' AND (j.title LIKE ? OR j.company_name LIKE ? OR j.description LIKE ?)';
             const searchTerm = `%${search}%`;
             queryParams.push(searchTerm, searchTerm, searchTerm);
         }
 
-        query += ' ORDER BY created_at DESC';
+        query += ' ORDER BY j.created_at DESC';
 
         const [jobs] = await pool.query(query, queryParams);
         res.status(200).json(jobs);
     } catch (error) {
         console.error('Error fetching reported jobs:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+exports.dismissReport = async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Ensure reports table exists
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS reports (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                job_id INT NOT NULL,
+                user_id INT NULL,
+                reason TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_job_id (job_id),
+                INDEX idx_user_id (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `).catch(() => {});
+
+        // Check if id matches a report directly
+        const [reports] = await pool.query('SELECT * FROM reports WHERE id = ?', [id]);
+        let jobId = null;
+        if (reports.length > 0) {
+            jobId = reports[0].job_id;
+            await pool.query('DELETE FROM reports WHERE id = ?', [id]);
+        } else {
+            // Assume id is job_id
+            jobId = id;
+            await pool.query('DELETE FROM reports WHERE job_id = ?', [id]);
+        }
+
+        // Unflag job and reset report_reason
+        if (jobId) {
+            await pool.query("UPDATE jobs SET report_reason = NULL, status = CASE WHEN status = 'flagged' THEN 'active' ELSE status END WHERE id = ?", [jobId]);
+            await pool.query('DELETE FROM reports WHERE job_id = ?', [jobId]);
+        }
+        await pool.query("UPDATE jobs SET report_reason = NULL, status = CASE WHEN status = 'flagged' THEN 'active' ELSE status END WHERE id = ?", [id]);
+
+        res.status(200).json({ success: true, message: 'Report dismissed successfully' });
+    } catch (error) {
+        console.error('Error dismissing report:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+exports.sendMessageToEmployer = async (req, res) => {
+    const { employerId, employer_id, jobId, job_id, subject, message } = req.body;
+    let targetEmployerId = employerId || employer_id;
+    const targetJobId = jobId || job_id || null;
+
+    if (!message || message.trim().length === 0) {
+        return res.status(400).json({ message: 'Message content is required.' });
+    }
+
+    try {
+        // Ensure employer_messages table exists
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS employer_messages (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                employer_id INT NOT NULL,
+                job_id INT NULL,
+                admin_id INT NULL,
+                sender VARCHAR(100) DEFAULT 'System Admin',
+                subject VARCHAR(255) DEFAULT 'Notice Regarding Job Listing',
+                message TEXT NOT NULL,
+                status ENUM('sent', 'read') DEFAULT 'sent',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_emp (employer_id),
+                INDEX idx_job (job_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `).catch(() => {});
+
+        let companyName = '';
+        let contactEmail = '';
+
+        if (!targetEmployerId && targetJobId) {
+            const [jobRows] = await pool.query('SELECT employer_id, company_name, contact_email FROM jobs WHERE id = ?', [targetJobId]);
+            if (jobRows.length > 0) {
+                targetEmployerId = jobRows[0].employer_id;
+                companyName = jobRows[0].company_name;
+                contactEmail = jobRows[0].contact_email;
+            }
+        }
+
+        if (targetEmployerId && (!companyName || !contactEmail)) {
+            const [empRows] = await pool.query('SELECT company_name, email FROM employers WHERE id = ?', [targetEmployerId]);
+            if (empRows.length > 0) {
+                companyName = companyName || empRows[0].company_name;
+                contactEmail = contactEmail || empRows[0].email;
+            }
+        }
+
+        if (!targetEmployerId) {
+            return res.status(400).json({ message: 'Target employer could not be identified.' });
+        }
+
+        const adminId = (req.user && req.user.id) ? req.user.id : null;
+        const msgSubject = subject && subject.trim() ? subject.trim() : 'Warning / Notice regarding reported job post';
+
+        const [insertResult] = await pool.query(
+            'INSERT INTO employer_messages (employer_id, job_id, admin_id, subject, message) VALUES (?, ?, ?, ?, ?)',
+            [targetEmployerId, targetJobId, adminId, msgSubject, message.trim()]
+        );
+
+        // Also insert into notifications table linked to employer_id
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS notifications (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                employer_id INT NULL,
+                user_id INT NULL,
+                job_id INT NULL,
+                type VARCHAR(50) DEFAULT 'admin_warning',
+                title VARCHAR(255) NOT NULL,
+                message TEXT NOT NULL,
+                is_read BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_emp_notif (employer_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `).catch(() => {});
+
+        await pool.query(
+            'INSERT INTO notifications (employer_id, job_id, type, title, message) VALUES (?, ?, ?, ?, ?)',
+            [targetEmployerId, targetJobId, 'admin_warning', msgSubject, message.trim()]
+        ).catch((err) => {
+            console.warn('Note: insertion to notifications table skipped:', err.message);
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Message sent to employer successfully',
+            messageId: insertResult.insertId,
+            employerId: targetEmployerId,
+            companyName,
+            contactEmail
+        });
+    } catch (error) {
+        console.error('Error sending message to employer:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
@@ -429,7 +595,7 @@ exports.logout = (req, res) => {
     res.clearCookie('refreshToken', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: 'lax',
         path: '/'
     });
     res.status(200).json({ message: 'Logged out successfully' });

@@ -39,13 +39,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 1. Auth Guard & Fetch Profile
+    // 1. Auth Guard & Fetch Profile with Silent Refresh
     try {
-        const verifyRes = await fetch(`${API_URL}/profile`, {
+        let verifyRes = await fetch(`${API_URL}/profile`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include'
         });
+
+        if (!verifyRes.ok) {
+            // Attempt silent refresh
+            if (typeof window.silentRefreshAuth === 'function') {
+                await window.silentRefreshAuth('admin');
+            } else {
+                await fetch('/api/admin/refresh', { method: 'POST', credentials: 'include' });
+            }
+
+            verifyRes = await fetch(`${API_URL}/profile`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+        }
 
         if (!verifyRes.ok) {
             window.location.href = '/admin-login.html';

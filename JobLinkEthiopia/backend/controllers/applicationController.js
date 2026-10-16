@@ -27,6 +27,7 @@ exports.getEmployerApplications = async (req, res) => {
         const [applications] = await pool.query(
             `SELECT a.id, a.job_id, a.seeker_id, a.status, a.applied_at, 
                     u.name AS seeker_name, u.email AS seeker_email, u.resume_file_url,
+                    u.github_url, u.linkedin_url, u.portfolio_url,
                     COALESCE(u.profile_photo, u.profile_photo_url, us.profile_photo) AS profile_photo,
                     COALESCE(u.profile_photo_url, u.profile_photo, us.profile_photo) AS profile_photo_url,
                     j.title AS job_title

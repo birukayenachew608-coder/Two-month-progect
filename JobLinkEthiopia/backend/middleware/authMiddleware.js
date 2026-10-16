@@ -35,7 +35,7 @@ exports.verifySeeker = (req, res, next) => {
 
     if (req.cookies) {
         if (token === 'seeker_secure_cookie' || !token) {
-            token = req.cookies.seeker_accessToken || token;
+            token = req.cookies.seeker_accessToken || (!authHeader ? req.cookies.token : null) || token;
         }
     }
 
@@ -61,7 +61,7 @@ exports.verifyEmployer = (req, res, next) => {
 
     if (req.cookies) {
         if (token === 'employer_secure_cookie' || !token) {
-            token = req.cookies.employer_accessToken || token;
+            token = req.cookies.employer_accessToken || (!authHeader ? req.cookies.token : null) || token;
         }
     }
 
@@ -80,6 +80,52 @@ exports.verifyEmployer = (req, res, next) => {
         return res.status(403).json({ message: 'Invalid or expired token.' });
     }
 };
+
+exports.authorizeRole = (...allowedRoles) => {
+    return (req, res, next) => {
+        // If req.user is not yet populated, extract and verify access token from headers or cookies
+        if (!req.user || !req.user.role) {
+            let authHeader = req.headers && req.headers['authorization'];
+            let token = authHeader && authHeader.split(' ')[1];
+
+            if (req.cookies && (!token || token.includes('cookie'))) {
+                if ((allowedRoles.includes('admin') || allowedRoles.includes('super_admin')) && req.cookies.token) {
+                    token = req.cookies.token;
+                } else if (allowedRoles.includes('job_seeker') && req.cookies.seeker_accessToken) {
+                    token = req.cookies.seeker_accessToken;
+                } else if (allowedRoles.includes('employer') && req.cookies.employer_accessToken) {
+                    token = req.cookies.employer_accessToken;
+                } else {
+                    token = req.cookies.token || req.cookies.employer_accessToken || req.cookies.seeker_accessToken;
+                }
+            }
+
+            if (token && token !== 'seeker_secure_cookie' && token !== 'employer_secure_cookie' && token !== 'secure_cookie_auth') {
+                try {
+                    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production');
+                    req.user = decoded;
+                } catch (error) {
+                    return res.status(403).json({ message: 'Invalid or expired token.' });
+                }
+            }
+        }
+
+        // Check the req.user.role property (extracted from verified access token)
+        if (!req.user || !req.user.role) {
+            return res.status(401).json({ message: 'Unauthorized: Authentication required.' });
+        }
+
+        if (!allowedRoles.includes(req.user.role)) {
+            return res.status(403).json({ 
+                message: `Forbidden: Access requires role ${allowedRoles.join(' or ')}.` 
+            });
+        }
+
+        next();
+    };
+};
+
+exports.requireRole = exports.authorizeRole;
 
 exports.verifySuperAdmin = (req, res, next) => {
     // Requires authenticateToken to be run first, which sets req.user

@@ -18,11 +18,25 @@ exports.uploadCV = async (req, res) => {
 };
 
 exports.getCV = async (req, res) => {
-    const { seekerId } = req.params;
+    const seekerId = req.params.seekerId || req.params.id || (req.user && req.user.id);
     try {
         const [rows] = await pool.query('SELECT resume_file_url FROM job_seekers WHERE id = ?', [seekerId]);
         res.status(200).json(rows[0] || {});
     } catch (error) {
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+exports.deleteCV = async (req, res) => {
+    const seekerId = req.params.seekerId || req.params.id || (req.user && req.user.id) || req.body.seekerId;
+    if (!seekerId) {
+        return res.status(400).json({ message: 'Seeker ID is required' });
+    }
+    try {
+        await pool.query('UPDATE job_seekers SET resume_file_url = NULL WHERE id = ?', [seekerId]);
+        res.status(200).json({ success: true, message: 'CV deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting CV:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
@@ -62,21 +76,23 @@ exports.deleteAlert = async (req, res) => {
 };
 
 exports.getProfile = async (req, res) => {
-    const seekerId = req.params.id || req.params.seekerId;
-    if (!seekerId) {
-        return res.status(400).json({ message: 'Seeker ID is required' });
+    const rawId = req.params.id || req.params.seekerId;
+    const seekerId = Number(rawId);
+    if (!rawId || isNaN(seekerId) || seekerId <= 0) {
+        return res.status(400).json({ message: 'Invalid or missing candidate ID.' });
     }
 
     try {
         const [rows] = await pool.query(
             `SELECT js.id, js.name, js.email, js.phone_number, js.location, 
                     js.professional_title, js.bio, js.resume_file_url, js.created_at,
+                    js.github_url, js.linkedin_url, js.portfolio_url,
                     COALESCE(js.profile_photo, js.profile_photo_url, us.profile_photo) AS profile_photo,
                     COALESCE(js.profile_photo_url, js.profile_photo, us.profile_photo) AS profile_photo_url
              FROM job_seekers js
              LEFT JOIN users us ON (js.email = us.email AND us.role = 'job_seeker')
-             WHERE js.id = ?`, 
-            [seekerId]
+             WHERE js.id = ? OR us.id = ?`, 
+            [seekerId, seekerId]
         );
 
         let seeker = null;
@@ -87,6 +103,7 @@ exports.getProfile = async (req, res) => {
             const [userRows] = await pool.query(
                 `SELECT id, name, email, NULL as phone_number, NULL as location,
                         NULL as professional_title, NULL as bio, NULL as resume_file_url, created_at,
+                        NULL as github_url, NULL as linkedin_url, NULL as portfolio_url,
                         profile_photo, profile_photo as profile_photo_url
                  FROM users 
                  WHERE id = ?`,
@@ -98,7 +115,7 @@ exports.getProfile = async (req, res) => {
         }
 
         if (!seeker) {
-            return res.status(404).json({ message: 'Seeker not found' });
+            return res.status(404).json({ message: 'Candidate profile not found.' });
         }
 
         // Format profile photo URL
@@ -142,6 +159,10 @@ exports.getProfile = async (req, res) => {
             about_me: seeker.bio || null,
             bio: seeker.bio || null,
             about: seeker.bio || null,
+            // Social Links
+            github_url: seeker.github_url || null,
+            linkedin_url: seeker.linkedin_url || null,
+            portfolio_url: seeker.portfolio_url || null,
             // Profile photo
             profile_photo: finalPhoto,
             profile_photo_url: finalPhoto,
@@ -155,6 +176,6 @@ exports.getProfile = async (req, res) => {
         res.status(200).json(profileData);
     } catch (error) {
         console.error('Error fetching profile:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({ message: `Database error while fetching profile: ${error.message}` });
     }
 };
