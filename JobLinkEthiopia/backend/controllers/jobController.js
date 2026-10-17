@@ -260,10 +260,25 @@ exports.getJobs = async (req, res) => {
                 COALESCE(NULLIF(e.company_name, ''), j.company_name) AS company_name
             FROM jobs j
             LEFT JOIN employers e ON j.employer_id = e.id
-            WHERE j.status = "active" AND (j.payment_status = "free" OR j.payment_status = "paid")
-            ORDER BY j.created_at DESC
+            WHERE (j.status = "active" OR j.status = "open") AND (j.payment_status = "free" OR j.payment_status = "paid")
         `;
         const params = [];
+
+        const searchKeyword = req.query.search || req.query.keyword || req.query.title;
+        if (searchKeyword && searchKeyword.trim()) {
+            query += ' AND (j.title LIKE ? OR j.company_name LIKE ? OR j.description LIKE ?)';
+            const term = `%${searchKeyword.trim()}%`;
+            params.push(term, term, term);
+        }
+
+        const searchLocation = req.query.location;
+        if (searchLocation && searchLocation.trim() && searchLocation.toLowerCase() !== 'any location' && searchLocation.toLowerCase() !== 'all') {
+            query += ' AND j.location LIKE ?';
+            params.push(`%${searchLocation.trim()}%`);
+        }
+
+        query += ' ORDER BY j.created_at DESC';
+
         if (req.query.limit) {
             const limit = parseInt(req.query.limit, 10);
             if (!isNaN(limit) && limit > 0) {
@@ -575,7 +590,17 @@ exports.withdrawJobReport = async (req, res) => {
 };
 
 exports.getEmployerJobs = async (req, res) => {
-    const employerId = req.user.id;
+    let employerId = req.user?.id || req.user?.employer_id;
+    if (!employerId && req.params.employerId) {
+        employerId = req.params.employerId;
+    }
+    if (!employerId && req.query.employer_id) {
+        employerId = req.query.employer_id;
+    }
+    if (!employerId) {
+        return res.status(401).json({ message: 'Unauthorized. Employer ID missing.' });
+    }
+
     try {
         const [jobs] = await pool.query('SELECT * FROM jobs WHERE employer_id = ? ORDER BY created_at DESC', [employerId]);
         res.status(200).json(jobs);
@@ -585,10 +610,10 @@ exports.getEmployerJobs = async (req, res) => {
     }
 };
 
-exports.updateJob = async (req, res) => {
+exports.closeJob = async (req, res) => {
     const { id } = req.params;
-    const employerId = req.user.id;
-    const { title, company_name, location, deadline, description, job_type, salary, apply_email, apply_link, contact_email } = req.body;
+    let employerId = req.user?.id || req.user?.employer_id;
+    if (!employerId && req.body.employer_id) employerId = req.body.employer_id;
 
     try {
         const [jobCheck] = await pool.query('SELECT * FROM jobs WHERE id = ? AND employer_id = ?', [id, employerId]);
@@ -596,11 +621,52 @@ exports.updateJob = async (req, res) => {
             return res.status(403).json({ message: 'Forbidden or job not found' });
         }
 
+        // FR-7: Update status to 'closed'
+        await pool.query("UPDATE jobs SET status = 'closed' WHERE id = ?", [id]);
+        res.status(200).json({ message: 'Job posting closed successfully', status: 'closed', id: Number(id) });
+    } catch (error) {
+        console.error('Error closing job:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+exports.updateJob = async (req, res) => {
+    const { id } = req.params;
+    let employerId = req.user?.id || req.user?.employer_id;
+    if (!employerId && req.body.employer_id) employerId = req.body.employer_id;
+
+    try {
+        const [jobCheck] = await pool.query('SELECT * FROM jobs WHERE id = ? AND employer_id = ?', [id, employerId]);
+        if (jobCheck.length === 0) {
+            return res.status(403).json({ message: 'Forbidden or job not found' });
+        }
+
+        const existingJob = jobCheck[0];
+
+        // Handle quick status update (e.g. closing or reopening a job)
+        if (req.body.status && Object.keys(req.body).length <= 2) {
+            const newStatus = req.body.status;
+            await pool.query('UPDATE jobs SET status = ? WHERE id = ?', [newStatus, id]);
+            return res.status(200).json({ message: 'Job status updated successfully', status: newStatus });
+        }
+
+        const title = req.body.title !== undefined ? req.body.title : existingJob.title;
+        const company_name = req.body.company_name !== undefined ? req.body.company_name : existingJob.company_name;
+        const location = req.body.location !== undefined ? req.body.location : existingJob.location;
+        const deadline = req.body.deadline !== undefined ? req.body.deadline : existingJob.deadline;
+        const description = req.body.description !== undefined ? req.body.description : existingJob.description;
+        const job_type = req.body.job_type !== undefined ? req.body.job_type : existingJob.job_type;
+        const salary = req.body.salary !== undefined ? req.body.salary : existingJob.salary;
+        const apply_email = req.body.apply_email !== undefined ? req.body.apply_email : existingJob.apply_email;
+        const apply_link = req.body.apply_link !== undefined ? req.body.apply_link : existingJob.apply_link;
+        const contact_email = req.body.contact_email !== undefined ? req.body.contact_email : (existingJob.contact_email || apply_email);
+        const status = req.body.status !== undefined ? req.body.status : existingJob.status;
+
         await pool.query(
-            'UPDATE jobs SET title = ?, company_name = ?, location = ?, deadline = ?, description = ?, job_type = ?, salary = ?, apply_email = ?, apply_link = ?, contact_email = ? WHERE id = ?',
-            [title, company_name, location, deadline, description, job_type || 'Full-time', salary || null, apply_email || null, apply_link || null, contact_email || apply_email || '', id]
+            'UPDATE jobs SET title = ?, company_name = ?, location = ?, deadline = ?, description = ?, job_type = ?, salary = ?, apply_email = ?, apply_link = ?, contact_email = ?, status = ? WHERE id = ?',
+            [title, company_name, location, deadline, description, job_type || 'Full-time', salary || null, apply_email || null, apply_link || null, contact_email || '', status, id]
         );
-        res.status(200).json({ message: 'Job updated successfully' });
+        res.status(200).json({ message: 'Job updated successfully', status });
     } catch (error) {
         console.error('Error updating job:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -609,14 +675,21 @@ exports.updateJob = async (req, res) => {
 
 exports.deleteJob = async (req, res) => {
     const { id } = req.params;
-    const employerId = req.user.id;
+    let employerId = req.user?.id || req.user?.employer_id;
+    if (!employerId && req.body.employer_id) employerId = req.body.employer_id;
+
     try {
         const [jobCheck] = await pool.query('SELECT * FROM jobs WHERE id = ? AND employer_id = ?', [id, employerId]);
         if (jobCheck.length === 0) {
             return res.status(403).json({ message: 'Forbidden or job not found' });
         }
 
+        // Clean up linked tables
+        await pool.query('DELETE FROM reports WHERE job_id = ?', [id]).catch(() => {});
+        await pool.query('DELETE FROM applications WHERE job_id = ?', [id]).catch(() => {});
+        await pool.query('DELETE FROM saved_jobs WHERE job_id = ?', [id]).catch(() => {});
         await pool.query('DELETE FROM jobs WHERE id = ?', [id]);
+
         res.status(200).json({ message: 'Job deleted successfully' });
     } catch (error) {
         console.error('Error deleting job:', error);

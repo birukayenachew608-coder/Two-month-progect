@@ -1,19 +1,35 @@
 const pool = require('../config/db');
 
 exports.applyForJob = async (req, res) => {
-    const { job_id, seeker_id } = req.body;
+    const { job_id, seeker_id, message, cover_letter } = req.body;
 
     if (!job_id || !seeker_id) {
         return res.status(400).json({ message: 'job_id and seeker_id are required' });
     }
 
+    const applicationMessage = (message || cover_letter || '').trim() || null;
+
     try {
-        // Insert application with default status 'Pending'
-        const [result] = await pool.query(
-            "INSERT INTO applications (job_id, seeker_id, status) VALUES (?, ?, 'Pending')",
+        // Prevent duplicate applications
+        const [existing] = await pool.query(
+            "SELECT id FROM applications WHERE job_id = ? AND seeker_id = ?",
             [job_id, seeker_id]
         );
-        res.status(201).json({ message: 'Application submitted successfully', applicationId: result.insertId, status: 'Pending' });
+        if (existing.length > 0) {
+            return res.status(400).json({ message: 'You have already applied for this job' });
+        }
+
+        // Insert application with message and default status 'pending'
+        const [result] = await pool.query(
+            "INSERT INTO applications (job_id, seeker_id, message, status) VALUES (?, ?, ?, 'pending')",
+            [job_id, seeker_id, applicationMessage]
+        );
+        res.status(201).json({ 
+            message: 'Application submitted successfully', 
+            applicationId: result.insertId, 
+            status: 'pending',
+            messageContent: applicationMessage
+        });
     } catch (error) {
         console.error('Error applying for job:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -25,7 +41,7 @@ exports.getEmployerApplications = async (req, res) => {
 
     try {
         const [applications] = await pool.query(
-            `SELECT a.id, a.job_id, a.seeker_id, a.status, a.applied_at, 
+            `SELECT a.id, a.job_id, a.seeker_id, a.status, a.applied_at, a.message,
                     u.name AS seeker_name, u.email AS seeker_email, u.resume_file_url,
                     u.github_url, u.linkedin_url, u.portfolio_url,
                     COALESCE(u.profile_photo, u.profile_photo_url, us.profile_photo) AS profile_photo,
@@ -51,7 +67,7 @@ exports.getSeekerApplications = async (req, res) => {
 
     try {
         const [applications] = await pool.query(
-            `SELECT a.id, a.job_id, a.seeker_id, a.status, a.applied_at, 
+            `SELECT a.id, a.job_id, a.seeker_id, a.status, a.applied_at, a.message,
                     j.title AS job_title, j.company_name, j.location
              FROM applications a
              JOIN jobs j ON a.job_id = j.id

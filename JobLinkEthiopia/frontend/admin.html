@@ -12,7 +12,7 @@
 <body>
   <!-- Header Navigation -->
   <header class="header">
-    <div class="container header-inner flex-between">
+    <div class="container header-inner flex-between admin-wide-container">
       <a href="index.html" class="logo-link">
         <img src="logo.png" alt="JobLink Ethiopia Logo" class="nav-logo" />
         <span class="logo-text">JobLink <span class="text-primary">Ethiopia</span></span>
@@ -35,7 +35,7 @@
     </div>
   </header>
 
-  <main class="container page-content">
+  <main class="container page-content admin-wide-container">
     
     <div class="page-header">
       <div class="header-content">
@@ -188,7 +188,7 @@
 
   <!-- Message Employer Modal -->
   <div id="message-employer-modal" class="modal-overlay hidden">
-    <div class="modal-content card" style="max-width: 32rem; padding: 2rem;">
+    <div class="modal-content card admin-message-modal-content" style="max-width: 44rem; width: 95%; padding: 2.25rem;">
       <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-200">
         <div class="flex items-center gap-2">
           <div class="card-icon-bg card-icon-sm icon-amber">
@@ -221,7 +221,7 @@
 
         <div class="form-group mb-4">
           <label for="msg-body" class="form-label text-slate-700 font-semibold text-sm">Warning / Message to Company</label>
-          <textarea id="msg-body" class="form-input text-sm w-full" rows="5" placeholder="Explain the policy violation or request clarification from the employer..." required></textarea>
+          <textarea id="msg-body" class="form-input text-sm w-full admin-message-textarea" rows="7" style="min-height: 165px; resize: vertical; line-height: 1.6; font-size: 0.9375rem;" placeholder="Explain the policy violation or request clarification from the employer..." required></textarea>
         </div>
 
         <div class="flex justify-end gap-3 pt-2">

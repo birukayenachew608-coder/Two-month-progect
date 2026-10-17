@@ -289,14 +289,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const date = new Date(emp.created_at).toLocaleDateString();
             const time = new Date(emp.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             
-            // Determine badge based on status
+            const isApproved = Boolean(emp.is_approved) || emp.account_status === 'active';
             let statusBadge = '';
-            if (emp.account_status === 'active') {
-                statusBadge = '<span class="badge badge-green">Active</span>';
-            } else if (emp.account_status === 'pending_verification') {
-                statusBadge = '<span class="badge badge-yellow">Pending</span>';
+            if (isApproved && emp.account_status !== 'banned') {
+                statusBadge = '<span class="badge badge-green font-semibold">Approved</span>';
             } else if (emp.account_status === 'banned') {
-                statusBadge = '<span class="badge badge-red">Banned</span>';
+                statusBadge = '<span class="badge badge-red font-semibold">Rejected</span>';
+            } else {
+                statusBadge = '<span class="badge badge-yellow font-semibold">Pending Review</span>';
             }
 
             let initials = 'CO';
@@ -345,8 +345,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${statusBadge}</td>
                 <td class="text-right">
                   <div class="flex items-center justify-end" style="gap: 0.5rem;">
-                    ${emp.account_status !== 'banned' ? `<button class="btn btn-outline-danger text-xs py-2" onclick="handleEmployerAction(${emp.id}, 'ban')">Reject & Ban</button>` : `<button class="btn btn-outline text-xs py-2" onclick="handleEmployerAction(${emp.id}, 'unban')">Unban</button>`}
-                    <button class="btn btn-outline-danger text-xs py-2" onclick="handleEmployerAction(${emp.id}, 'remove')">Remove</button>
+                    ${(!isApproved || emp.account_status === 'banned') ? `
+                      <button class="btn btn-outline text-xs py-2 px-3 text-emerald-700 border-emerald-300 hover:bg-emerald-50" onclick="handleEmployerAction(${emp.id}, 'approve')" title="Approve Employer Account">
+                        Approve
+                      </button>
+                    ` : `
+                      <button class="btn btn-outline-danger text-xs py-2 px-3" onclick="handleEmployerAction(${emp.id}, 'reject')" title="Reject Employer Account">
+                        Reject
+                      </button>
+                    `}
+                    <button class="btn btn-outline-danger text-xs py-2 px-3" onclick="handleEmployerAction(${emp.id}, 'remove')" title="Remove Employer Account">Remove</button>
                   </div>
                 </td>
             `;
@@ -542,32 +550,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         try {
             let res;
-            if (action === 'ban' || action === 'reject') {
-                res = await fetch(`${API_URL}/employers/${id}/status`, {
+            if (action === 'approve') {
+                res = await fetch(`${API_URL}/employers/${id}/approve`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: 'banned' })
+                    credentials: 'include'
+                });
+            } else if (action === 'reject' || action === 'ban') {
+                res = await fetch(`${API_URL}/employers/${id}/reject`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
                 });
             } else if (action === 'unban') {
-                res = await fetch(`${API_URL}/employers/${id}/status`, {
+                res = await fetch(`${API_URL}/employers/${id}/approve`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: 'active' })
+                    credentials: 'include'
                 });
             } else if (action === 'remove') {
                 res = await fetch(`${API_URL}/employers/${id}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    credentials: 'include'
                 });
             }
 
             if (res && res.ok) {
+                if (typeof window.showToast === 'function') {
+                    window.showToast(`Employer ${action === 'approve' ? 'approved' : (action === 'reject' ? 'rejected' : action + 'd')} successfully.`, 'success');
+                }
                 fetchEmployers(currentSearchTerm);
                 fetchStats();
             } else {
-                alert('Action failed');
+                const err = await res.json().catch(() => ({}));
+                alert(err.message || 'Action failed');
             }
         } catch (error) {
             console.error('Error performing action:', error);
+            alert('Network error while processing request');
         }
     };
 

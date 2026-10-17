@@ -62,6 +62,9 @@
           if (typeof window.loadEmployerApplications === 'function') {
             window.loadEmployerApplications();
           }
+          if (typeof window.loadEmployerJobs === 'function') {
+            window.loadEmployerJobs();
+          }
         }
       })
       .catch(() => {

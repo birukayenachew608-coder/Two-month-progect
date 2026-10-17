@@ -717,7 +717,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         sessionStorage.setItem('pendingApplyJobId', String(applyJobId));
       }
       const targetRoleParam = urlParams.get('login');
-      loginRedirectUrl = targetRoleParam === 'employer' ? 'employer.html' : 'seeker.html';
+      const customRedirect = urlParams.get('redirect') || sessionStorage.getItem('loginRedirectUrl');
+      loginRedirectUrl = customRedirect || (targetRoleParam === 'employer' ? 'employer.html' : 'seeker.html');
+      if (sessionStorage.getItem('loginRedirectUrl')) {
+        sessionStorage.removeItem('loginRedirectUrl');
+      }
       isRegisterMode = false;
       registerStep = 1;
       setTimeout(() => {
@@ -734,6 +738,32 @@ document.addEventListener('DOMContentLoaded', async () => {
       }, 100);
       const cleanUrl = window.location.pathname;
       window.history.replaceState({}, document.title, cleanUrl);
+    }
+
+    // Display pending authorization toast notification if set prior to redirect
+    try {
+      const pendingToast = sessionStorage.getItem('pendingAuthToast');
+      if (pendingToast) {
+        sessionStorage.removeItem('pendingAuthToast');
+        setTimeout(() => {
+          if (typeof showToast === 'function') {
+            showToast(pendingToast, 'warning');
+          }
+        }, 150);
+      }
+    } catch (e) {}
+
+    // Hash-based automatic tab activation for seeker dashboard (e.g. #cv, #alerts, #saved-jobs)
+    if (currentPage === 'seeker.html' || window.location.pathname.includes('seeker.html')) {
+      const targetHash = (window.location.hash || '').replace('#', '');
+      const validTabs = ['applications', 'saved-jobs', 'cv', 'alerts', 'profile'];
+      if (targetHash && validTabs.includes(targetHash)) {
+        setTimeout(() => {
+          if (typeof switchTab === 'function') {
+            switchTab(targetHash);
+          }
+        }, 120);
+      }
     }
   } catch (err) {
     console.error('Error parsing URL parameters:', err);
@@ -1045,22 +1075,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const profileName = document.getElementById('profile-name');
-    if (profileName && usr.name) profileName.value = usr.name;
+    if (profileName) profileName.value = usr.name || '';
 
     const profileEmail = document.getElementById('profile-email');
-    if (profileEmail && usr.email) profileEmail.value = usr.email;
+    if (profileEmail) profileEmail.value = usr.email || '';
 
     const profileTitle = document.getElementById('profile-title');
-    if (profileTitle && usr.professional_title) profileTitle.value = usr.professional_title;
+    if (profileTitle) profileTitle.value = usr.professional_title || usr.title || '';
 
     const profilePhone = document.getElementById('profile-phone');
-    if (profilePhone && (usr.phone_number || usr.phone)) profilePhone.value = usr.phone_number || usr.phone;
+    if (profilePhone) profilePhone.value = usr.phone_number || usr.phone || '';
 
     const profileLocation = document.getElementById('profile-location');
-    if (profileLocation && usr.location) profileLocation.value = usr.location;
+    if (profileLocation) profileLocation.value = usr.location || '';
 
     const profileBio = document.getElementById('profile-bio');
-    if (profileBio && usr.bio) profileBio.value = usr.bio;
+    if (profileBio) profileBio.value = usr.bio || '';
 
     const profileGithub = document.getElementById('profile-github');
     if (profileGithub) profileGithub.value = usr.github_url || '';
@@ -1226,6 +1256,19 @@ document.addEventListener('DOMContentLoaded', async () => {
           role: 'employer',
           name: 'TechSolutions PLC',
           company_name: 'TechSolutions PLC'
+        };
+      }
+    }
+
+    if (!currentUser && (currentPage === 'seeker.html' || window.location.pathname.includes('seeker.html'))) {
+      const seekerAuth = getSeekerAuth();
+      if (seekerAuth && seekerAuth.user) {
+        currentUser = seekerAuth.user;
+      } else {
+        currentUser = {
+          id: 67,
+          role: 'job_seeker',
+          name: 'Abebe'
         };
       }
     }
@@ -1835,9 +1878,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         case 'delete-alert':
           showToast('Alert removed', 'error');
           break;
-        case 'close-posting':
-          showToast('Posting Closed', 'error');
+        case 'close-posting': {
+          const btn = e.target.closest('[data-job-id], [data-id]');
+          const jId = btn ? (btn.getAttribute('data-job-id') || btn.getAttribute('data-id')) : null;
+          if (jId && typeof window.closeEmployerJob === 'function') {
+            window.closeEmployerJob(jId);
+          } else {
+            showToast('Posting Closed', 'info');
+          }
           break;
+        }
         case 'mark-reviewed':
           showToast('Marked as reviewed', 'success');
           break;
@@ -1914,10 +1964,16 @@ document.addEventListener('DOMContentLoaded', async () => {
               setSeekerAuth(sAuth.token, { ...su, ...data.user });
             }
             showToast('Profile updated successfully!', 'success');
+            if (typeof window.loadRecommendedJobs === 'function') {
+              window.loadRecommendedJobs();
+            }
           })
           .catch(err => {
             console.warn('Profile save offline/network fallback:', err);
             showToast('Profile updated successfully!', 'success');
+            if (typeof window.loadRecommendedJobs === 'function') {
+              window.loadRecommendedJobs();
+            }
           })
           .finally(() => {
             if (saveBtn) {
@@ -2557,12 +2613,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       const locationInput = document.getElementById('profile-location');
       const bioInput = document.getElementById('profile-bio');
 
-      if (nameInput && u.name) nameInput.value = u.name;
-      if (emailInput && u.email) emailInput.value = u.email;
-      if (titleInput && u.professional_title) titleInput.value = u.professional_title;
-      if (phoneInput && u.phone) phoneInput.value = u.phone;
-      if (locationInput && u.location) locationInput.value = u.location;
-      if (bioInput && u.bio) bioInput.value = u.bio;
+      if (nameInput) nameInput.value = u.name || '';
+      if (emailInput) emailInput.value = u.email || '';
+      if (titleInput) titleInput.value = u.professional_title || u.title || '';
+      if (phoneInput) phoneInput.value = u.phone_number || u.phone || '';
+      if (locationInput) locationInput.value = u.location || '';
+      if (bioInput) bioInput.value = u.bio || '';
+      const githubInput = document.getElementById('profile-github');
+      if (githubInput) githubInput.value = u.github_url || '';
+      const linkedinInput = document.getElementById('profile-linkedin');
+      if (linkedinInput) linkedinInput.value = u.linkedin_url || '';
+      const portfolioInput = document.getElementById('profile-portfolio');
+      if (portfolioInput) portfolioInput.value = u.portfolio_url || '';
     } catch (e) { }
   }
 
@@ -3306,6 +3368,81 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateBrowseButtonUI(true);
       });
     }
+
+    // Homepage Job Search (FR-8: Search jobs by title/keyword & location)
+    const searchForm = document.getElementById('search-form');
+    const searchKeywordInput = document.getElementById('search-keyword');
+    const searchLocationInput = document.getElementById('search-location');
+
+    const handleJobSearch = (e) => {
+      if (e) e.preventDefault();
+      const keyword = (searchKeywordInput?.value || '').trim().toLowerCase();
+      const location = (searchLocationInput?.value || '').trim().toLowerCase();
+
+      if (!keyword && (!location || location === 'any location')) {
+        renderHomepageJobs(allHomepageJobs.slice(0, isJobsExpanded ? allHomepageJobs.length : HOMEPAGE_JOB_LIMIT));
+        if (browseWrapper) browseWrapper.style.display = allHomepageJobs.length > HOMEPAGE_JOB_LIMIT ? 'flex' : 'none';
+        return;
+      }
+
+      const filtered = allHomepageJobs.filter(job => {
+        const titleMatch = !keyword || 
+          (job.title && job.title.toLowerCase().includes(keyword)) ||
+          (job.company_name && job.company_name.toLowerCase().includes(keyword)) ||
+          (job.description && job.description.toLowerCase().includes(keyword));
+
+        const locMatch = !location || location === 'any location' ||
+          (job.location && job.location.toLowerCase().includes(location));
+
+        return titleMatch && locMatch;
+      });
+
+      if (filtered.length === 0) {
+        jobGrid.innerHTML = `
+          <div class="col-span-full text-center py-12" style="grid-column: 1 / -1;">
+            <svg class="icon-lg mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <h3 class="text-lg font-bold text-slate-800 mb-1">No Jobs Found</h3>
+            <p class="text-sm text-slate-500 mb-4">We couldn't find any job openings matching your search criteria.</p>
+            <button type="button" class="btn btn-outline" id="btn-clear-job-search">Clear Search</button>
+          </div>
+        `;
+        document.getElementById('btn-clear-job-search')?.addEventListener('click', () => {
+          if (searchKeywordInput) searchKeywordInput.value = '';
+          if (searchLocationInput) searchLocationInput.value = '';
+          handleJobSearch();
+        });
+        if (browseWrapper) browseWrapper.style.display = 'none';
+      } else {
+        renderHomepageJobs(filtered);
+        if (browseWrapper) browseWrapper.style.display = 'none';
+      }
+
+      if (e && e.type === 'submit') {
+        const sectionHeader = document.querySelector('.section-header') || jobGrid;
+        if (sectionHeader) {
+          sectionHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    };
+
+    if (searchForm) {
+      searchForm.addEventListener('submit', handleJobSearch);
+    }
+    if (searchKeywordInput) {
+      searchKeywordInput.addEventListener('input', () => {
+        clearTimeout(searchKeywordInput._searchTimeout);
+        searchKeywordInput._searchTimeout = setTimeout(handleJobSearch, 200);
+      });
+    }
+    if (searchLocationInput) {
+      searchLocationInput.addEventListener('input', () => {
+        clearTimeout(searchLocationInput._searchTimeout);
+        searchLocationInput._searchTimeout = setTimeout(handleJobSearch, 200);
+      });
+      searchLocationInput.addEventListener('change', handleJobSearch);
+    }
   }
 
   // Employer Dashboard Applicant Pipeline
@@ -3392,7 +3529,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           const cvBtnText = app.resume_file_url ? 'Download CV' : 'No CV';
           const cvBtnClass = app.resume_file_url ? 'btn-outline' : 'btn-outline opacity-60';
 
-          const isHired = String(app.status || '').toLowerCase() === 'hired';
+          const statusLower = String(app.status || '').toLowerCase();
+          // Do not render rejected or withdrawn applications in the active pipeline
+          if (statusLower === 'rejected' || statusLower === 'withdrawn') {
+            return;
+          }
+
+          const isHired = statusLower === 'hired';
 
           if (isHired) {
             hiredCount++;
@@ -3402,23 +3545,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                    <div class="flex items-center gap-3">
                      ${avatarHtml}
                      <div>
-                       <h4 class="font-bold text-slate-900 text-sm m-0">${app.seeker_name || 'Applicant'}</h4>
-                       <p class="text-xs text-slate-500 mt-0.5 mb-0 font-medium">Hired for: <span class="text-slate-800 font-semibold">${app.job_title || 'Position'}</span></p>
-                       <p class="text-xs text-green-700 mt-0.5 mb-0 font-medium">Hired: ${appliedDate}</p>
+                       <h4 class="font-bold text-slate-900 kanban-applicant-name m-0">${app.seeker_name || 'Applicant'}</h4>
+                       <p class="kanban-applied-for text-slate-500 mt-1 mb-0 font-medium">Hired for: <span class="text-slate-800 font-semibold">${app.job_title || 'Position'}</span></p>
+                       <p class="kanban-applied-date text-green-700 mt-0.5 mb-0 font-medium">Hired: ${appliedDate}</p>
                      </div>
                    </div>
-                   <span class="badge badge-green text-xs font-semibold">Hired</span>
+                   <span class="badge badge-green kanban-badge font-semibold">Hired</span>
                  </div>
+                 ${app.message ? `<div class="applicant-cover-note p-2 rounded bg-slate-50 border border-slate-100 text-xs text-slate-700 mt-2 mb-1"><strong>Cover Note:</strong> "${(typeof safeEscapeText==='function'?safeEscapeText(app.message):app.message)}"</div>` : ''}
                  <div class="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100 flex-wrap">
-                   <button type="button" class="btn ${cvBtnClass} flex-grow btn-sm text-xs flex items-center justify-center gap-1" onclick="${cvAction}">
-                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                   <button type="button" class="btn ${cvBtnClass} flex-grow btn-sm kanban-btn flex items-center justify-center gap-1.5" onclick="${cvAction}">
+                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 15px; height: 15px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                      <span>${cvBtnText}</span>
                    </button>
-                   <button type="button" class="btn btn-outline flex-grow btn-sm text-xs flex items-center justify-center gap-1" onclick="viewProfile(${app.seeker_id})">
-                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                     <span>View Profile</span>
+                   <button type="button" class="btn btn-outline flex-grow btn-sm kanban-btn flex items-center justify-center gap-1.5" onclick="viewProfile(${app.seeker_id})">
+                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 15px; height: 15px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                   <span>View Profile</span>
                    </button>
-                   <button type="button" class="btn btn-outline flex-grow btn-sm text-xs text-red-600 hover:bg-red-50" style="border-color: rgba(220, 38, 38, 0.3);" onclick="rejectApplication(${app.id}, this)">
+                   <button type="button" class="btn btn-outline flex-grow btn-sm kanban-btn text-red-600 hover:bg-red-50" style="border-color: rgba(220, 38, 38, 0.3);" onclick="rejectApplication(${app.id}, this)">
                      <span>Remove</span>
                    </button>
                  </div>
@@ -3427,9 +3571,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (hiredColumn) hiredColumn.insertAdjacentHTML('beforeend', cardHtml);
           } else {
             pendingCount++;
-            const statusBadge = app.status === 'rejected'
-              ? `<span class="badge badge-red text-xs font-semibold">Rejected</span>`
-              : `<span class="badge badge-amber text-xs font-semibold">Pending Review</span>`;
+            const statusBadge = `<span class="badge badge-amber kanban-badge font-semibold">Pending Review</span>`;
 
             const cardHtml = `
               <div class="kanban-card" draggable="true" data-id="${app.id}">
@@ -3437,29 +3579,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                    <div class="flex items-center gap-3">
                      ${avatarHtml}
                      <div>
-                       <h4 class="font-bold text-slate-900 text-sm m-0">${app.seeker_name || 'Applicant'}</h4>
-                       <p class="text-xs text-slate-500 mt-0.5 mb-0 font-medium">Applied for: <span class="text-slate-800 font-semibold">${app.job_title || 'Position'}</span></p>
-                       <p class="text-xs text-slate-400 mt-0.5 mb-0">Applied: ${appliedDate}</p>
+                       <h4 class="font-bold text-slate-900 kanban-applicant-name m-0">${app.seeker_name || 'Applicant'}</h4>
+                       <p class="kanban-applied-for text-slate-500 mt-1 mb-0 font-medium">Applied for: <span class="text-slate-800 font-semibold">${app.job_title || 'Position'}</span></p>
+                       <p class="kanban-applied-date text-slate-400 mt-0.5 mb-0">Applied: ${appliedDate}</p>
                      </div>
                    </div>
                    ${statusBadge}
                  </div>
+                 ${app.message ? `<div class="applicant-cover-note p-2 rounded bg-slate-50 border border-slate-100 text-xs text-slate-700 mt-2 mb-1"><strong>Cover Note:</strong> "${(typeof safeEscapeText==='function'?safeEscapeText(app.message):app.message)}"</div>` : ''}
                  
                  <div class="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100 flex-wrap">
-                   <button type="button" class="btn ${cvBtnClass} btn-sm flex-grow text-xs flex items-center justify-center gap-1" onclick="${cvAction}">
-                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                   <button type="button" class="btn ${cvBtnClass} btn-sm flex-grow kanban-btn flex items-center justify-center gap-1.5" onclick="${cvAction}">
+                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 15px; height: 15px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                      <span>${cvBtnText}</span>
                    </button>
-                   <button type="button" class="btn btn-outline btn-sm flex-grow text-xs flex items-center justify-center gap-1" onclick="viewProfile(${app.seeker_id})">
-                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                   <button type="button" class="btn btn-outline btn-sm flex-grow kanban-btn flex items-center justify-center gap-1.5" onclick="viewProfile(${app.seeker_id})">
+                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 15px; height: 15px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                      <span>View Profile</span>
                    </button>
-                   <button type="button" class="btn btn-primary btn-sm flex-grow text-xs flex items-center justify-center gap-1" style="background-color: var(--green-600, #16a34a); border-color: var(--green-600, #16a34a);" onclick="hireApplication(${app.id}, this)">
-                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                   <button type="button" class="btn btn-primary btn-sm flex-grow kanban-btn flex items-center justify-center gap-1.5" style="background-color: var(--green-600, #16a34a); border-color: var(--green-600, #16a34a);" onclick="hireApplication(${app.id}, this)">
+                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 15px; height: 15px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                      <span>Hire</span>
                    </button>
-                   <button type="button" class="btn btn-outline btn-sm flex-grow text-xs flex items-center justify-center gap-1" style="color: var(--danger, #dc2626); border-color: rgba(220, 38, 38, 0.3);" onclick="rejectApplication(${app.id}, this)">
-                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                   <button type="button" class="btn btn-outline btn-sm flex-grow kanban-btn flex items-center justify-center gap-1.5" style="color: var(--danger, #dc2626); border-color: rgba(220, 38, 38, 0.3);" onclick="rejectApplication(${app.id}, this)">
+                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 15px; height: 15px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                      <span>Reject</span>
                    </button>
                  </div>
@@ -3479,7 +3622,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Update badge counts
       const totalBadge = document.getElementById('pipeline-total-badge');
-      if (totalBadge) totalBadge.textContent = `${(applications && applications.length) || 0} Candidates`;
+      if (totalBadge) totalBadge.textContent = `${pendingCount + hiredCount} Candidates`;
 
       const pendingBadge = document.getElementById('pipeline-pending-badge') || 
                            document.querySelector('.kanban-cards[data-column="pending"]')?.closest('.kanban-col')?.querySelector('.badge');
@@ -3599,12 +3742,101 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Fetch Seeker Dashboard Data
   const seekerAppsTable = document.querySelector('#applications .table tbody');
   const savedJobsGrid = document.querySelector('#saved-jobs .dashboard-grid');
-  const recommendedJobsGrid = document.querySelector('#applications .dashboard-grid');
+  const recommendedJobsGrid = document.querySelector('.seeker-recommended-jobs-card .dashboard-grid') || document.querySelector('#applications .dashboard-grid');
+
+  const safeEscapeText = (str) => {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  };
+
+  const renderRecommendedJobsEmpty = (msg) => {
+    if (!recommendedJobsGrid) return;
+    const message = msg || 'Complete your profile to get personalized job recommendations!';
+    recommendedJobsGrid.innerHTML = `
+      <div class="empty-recommended-state">
+        <div class="empty-icon-circle">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+        </div>
+        <h4 class="empty-title">${safeEscapeText(message)}</h4>
+        <p class="empty-desc">
+          Add your professional title, skills, and summary to help our matching engine find the best opportunities for you.
+        </p>
+        <button type="button" class="btn btn-primary btn-sm font-semibold" data-action="switch-tab" data-target="profile" onclick="if(typeof switchTab==='function'){switchTab('profile');}">
+          <i class="fa-solid fa-user-pen mr-1.5"></i> Complete Profile
+        </button>
+      </div>
+    `;
+  };
+
+  let userApplicationsCount = 0;
+
+  const loadRecommendedJobs = async (appsCount) => {
+    if (!recommendedJobsGrid) return;
+
+    const seekerAuth = getSeekerAuth();
+    const currentUser = seekerAuth.user;
+    if (!currentUser || currentUser.role !== 'job_seeker') {
+      renderRecommendedJobsEmpty('Complete your profile to get personalized job recommendations!');
+      return;
+    }
+
+    // Check if the user is new (empty profile or 0 applications)
+    const hasTitle = Boolean(currentUser.professional_title && currentUser.professional_title.trim());
+    const hasBio = Boolean(currentUser.bio && currentUser.bio.trim());
+    const isProfileEmpty = !hasTitle && !hasBio;
+    const countToCheck = typeof appsCount === 'number' ? appsCount : userApplicationsCount;
+    const isNew = isProfileEmpty || countToCheck === 0;
+
+    if (isNew) {
+      renderRecommendedJobsEmpty('Complete your profile to get personalized job recommendations!');
+      return;
+    }
+
+    // Fetch real recommendations from MySQL database
+    try {
+      const res = await fetch(`/api/jobs/recommended/${currentUser.id}`);
+      if (!res.ok) throw new Error('Failed to fetch recommendations');
+      const jobs = await res.json();
+
+      if (!Array.isArray(jobs) || jobs.length === 0) {
+        renderRecommendedJobsEmpty('Complete your profile to get personalized job recommendations!');
+        return;
+      }
+
+      recommendedJobsGrid.innerHTML = '';
+      jobs.forEach(job => {
+        recommendedJobsGrid.innerHTML += `
+          <div class="card p-4 border border-slate-200 shadow-none">
+            <div class="flex justify-between items-start mb-2">
+              <h4 class="font-semibold text-slate-900 rec-job-title">${safeEscapeText(job.title)}</h4>
+              <span class="badge ${getJobTypeBadgeClass(job.job_type)} rec-job-badge">${safeEscapeText(job.job_type || 'Full-time')}</span>
+            </div>
+            <p class="rec-job-meta text-slate-500 mb-3">${safeEscapeText(job.company_name)} • ${safeEscapeText(job.location)}</p>
+            <div class="flex gap-2">
+               <button class="btn btn-outline btn-sm flex-grow font-medium" onclick="window.location.href='job-details.html?id=${job.id}'">View Details</button>
+               <button class="btn btn-primary btn-sm flex-grow font-semibold" onclick="applyForJob(${job.id})">Apply</button>
+            </div>
+          </div>
+        `;
+      });
+    } catch (err) {
+      console.warn('Could not load recommended jobs from MySQL:', err);
+      renderRecommendedJobsEmpty('Complete your profile to get personalized job recommendations!');
+    }
+  };
+
+  window.loadRecommendedJobs = loadRecommendedJobs;
 
   if (seekerAppsTable || savedJobsGrid || recommendedJobsGrid) {
     const seekerAuth = getSeekerAuth();
-    if (seekerAuth.user && seekerAuth.user.role === 'job_seeker') {
-      const user = seekerAuth.user;
+    const user = seekerAuth.user;
+
+    if (user && user.role === 'job_seeker') {
       const seekerHeaders = {};
       if (seekerAuth.token && !seekerAuth.token.includes('cookie')) {
         seekerHeaders['Authorization'] = `Bearer ${seekerAuth.token}`;
@@ -3613,37 +3845,76 @@ document.addEventListener('DOMContentLoaded', async () => {
       // 1. Load Applications
       if (seekerAppsTable) {
         fetch(`/api/applications/seeker/${user.id}`, { headers: seekerHeaders, credentials: 'include' })
-          .then(res => res.json())
+          .then(async res => {
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(err.message || `Status ${res.status}`);
+            }
+            return res.json();
+          })
           .then(apps => {
+            if (!Array.isArray(apps)) {
+              console.warn('Applications response is not an array:', apps);
+              loadRecommendedJobs(0);
+              return;
+            }
+            userApplicationsCount = apps.length;
             seekerAppsTable.innerHTML = '';
-            const titleEl = document.querySelector('.card-title');
+            const titleEl = document.querySelector('#applications .card-title') || document.querySelector('.card-title');
             if (titleEl) {
               titleEl.textContent = `My Applications (${apps.length})`;
             }
             if (apps.length === 0) {
-              seekerAppsTable.innerHTML = '<tr><td colspan="5" class="text-center py-4">No applications found.</td></tr>';
+              seekerAppsTable.innerHTML = `
+                <tr>
+                  <td colspan="5" class="text-center py-8 text-slate-500">
+                    <p class="font-medium text-slate-600 mb-1">No applications found.</p>
+                    <p class="text-xs text-slate-400">Explore jobs and apply to track your applications here!</p>
+                  </td>
+                </tr>
+              `;
             } else {
               apps.forEach(app => {
                 let badgeClass = 'badge-yellow';
-                if (app.status === 'reviewed' || app.status === 'Reviewed') badgeClass = 'badge-blue';
-                if (app.status === 'rejected' || app.status === 'Rejected') badgeClass = 'badge-slate';
-                if (app.status === 'hired' || app.status === 'Hired') badgeClass = 'badge-green';
+                const st = (app.status || '').toLowerCase();
+                if (st === 'reviewed') badgeClass = 'badge-blue';
+                if (st === 'rejected') badgeClass = 'badge-slate';
+                if (st === 'hired') badgeClass = 'badge-green';
 
                 seekerAppsTable.innerHTML += `
                   <tr>
-                    <td class="font-medium text-slate-900">${app.job_title}</td>
-                    <td>${app.company_name}<br><span class="text-xs text-slate-400">${app.location}</span></td>
-                    <td>${new Date(app.applied_at).toLocaleDateString()}</td>
-                    <td><span class="badge ${badgeClass}">${app.status}</span></td>
+                    <td class="font-semibold text-slate-900 app-job-title">${safeEscapeText(app.job_title)}</td>
+                    <td class="app-company-cell"><span class="app-company-name">${safeEscapeText(app.company_name)}</span><br><span class="app-company-location text-slate-400">${safeEscapeText(app.location)}</span></td>
+                    <td class="app-applied-date">${new Date(app.applied_at).toLocaleDateString()}</td>
+                    <td><span class="badge ${badgeClass}">${safeEscapeText(app.status)}</span></td>
                     <td class="text-right">
                       <button onclick="window.location.href='job-details.html?id=${app.job_id}'" class="btn-text-link">View Job</button>
-                      <button onclick="withdrawApplication(${app.id}, this)" class="btn-text-link text-red-500 ml-2" style="font-size: 0.8rem;">Withdraw</button>
+                      <button onclick="withdrawApplication(${app.id}, this)" class="btn-text-link text-red-500 ml-2 btn-withdraw">Withdraw</button>
                     </td>
                   </tr>
                 `;
               });
             }
-          }).catch(console.error);
+            loadRecommendedJobs(apps.length);
+          })
+          .catch(err => {
+            console.warn('Could not load live applications:', err.message);
+            const titleEl = document.querySelector('#applications .card-title') || document.querySelector('.card-title');
+            if (titleEl) {
+              titleEl.textContent = 'My Applications (0)';
+            }
+            seekerAppsTable.innerHTML = `
+              <tr>
+                <td colspan="5" class="text-center py-8 text-slate-500">
+                  <p class="font-medium text-slate-600 mb-1">No applications found.</p>
+                  <p class="text-xs text-slate-400">Explore jobs and apply to track your applications here!</p>
+                </td>
+              </tr>
+            `;
+            loadRecommendedJobs(0);
+          });
+      } else {
+        loadRecommendedJobs(0);
       }
 
       // 2. Load Saved Jobs
@@ -3657,7 +3928,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 applySavedJobIconsState();
               }
               if (!Array.isArray(jobs) || jobs.length === 0) {
-                savedJobsGrid.innerHTML = '<p class="text-slate-500 py-4">No saved jobs.</p>';
+                savedJobsGrid.innerHTML = `
+                  <div class="col-span-full py-8 text-center text-slate-500">
+                    <p class="font-medium text-slate-600 mb-1">No saved jobs yet.</p>
+                    <p class="text-xs text-slate-400">Save jobs while browsing to review and apply to them later.</p>
+                  </div>
+                `;
               } else {
                 jobs.forEach(job => {
                   const jobId = job.job_id || job.id;
@@ -3667,15 +3943,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="card" id="saved-job-${jobId}">
                       <div class="flex justify-between items-start mb-3">
                         <div>
-                          <h3 class="font-bold text-slate-900">${job.title}</h3>
-                          <p class="text-sm text-slate-500">${job.company_name} • ${job.location}</p>
+                          <h3 class="font-bold text-slate-900">${safeEscapeText(job.title)}</h3>
+                          <p class="text-sm text-slate-500">${safeEscapeText(job.company_name)} • ${safeEscapeText(job.location)}</p>
                         </div>
                         <button class="btn btn-outline btn-icon-small btn-save-job saved" title="Remove from saved" onclick="unsaveJob(${jobId}, this)">
                           <i class="fa-solid fa-bookmark bookmark-icon" style="color: ${bookmarkColor}; font-size: 1.15rem;"></i>
                         </button>
                       </div>
                       <div class="flex gap-2 mb-4">
-                        <span class="badge ${getJobTypeBadgeClass(job.job_type)} text-xs" style="font-size: 0.7rem;">${job.job_type || 'Full-time'}</span>
+                        <span class="badge ${getJobTypeBadgeClass(job.job_type)} text-xs" style="font-size: 0.7rem;">${safeEscapeText(job.job_type || 'Full-time')}</span>
                         <span class="text-xs text-slate-400 self-center">Saved ${job.saved_at ? new Date(job.saved_at).toLocaleDateString() : 'Recently'}</span>
                       </div>
                       <div class="flex gap-2">
@@ -3684,34 +3960,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <button class="btn btn-danger btn-sm text-xs px-3 btn-remove-saved" onclick="unsaveJob(${jobId}, this)" title="Remove from saved jobs">
                           <i class="fa-solid fa-trash-can mr-1"></i> Remove
                         </button>
-                      </div>
-                    </div>
-                  `;
-                });
-              }
-            }).catch(console.error);
-        }
-
-        // 3. Load Recommended Jobs
-        if (recommendedJobsGrid) {
-          fetch(`/api/jobs/recommended/${user.id}`)
-            .then(res => res.json())
-            .then(jobs => {
-              recommendedJobsGrid.innerHTML = '';
-              if (jobs.length === 0) {
-                recommendedJobsGrid.innerHTML = '<p class="text-slate-500 py-4">No recommendations at this time.</p>';
-              } else {
-                jobs.forEach(job => {
-                  recommendedJobsGrid.innerHTML += `
-                    <div class="card p-4 border border-slate-200 shadow-none">
-                      <div class="flex justify-between items-start mb-2">
-                        <h4 class="font-bold text-slate-900 text-sm">${job.title}</h4>
-                        <span class="badge ${getJobTypeBadgeClass(job.job_type)} text-xs" style="font-size: 0.65rem;">${job.job_type || 'Full-time'}</span>
-                      </div>
-                      <p class="text-xs text-slate-500 mb-3">${job.company_name} • ${job.location}</p>
-                      <div class="flex gap-2">
-                         <button class="btn btn-outline btn-sm flex-grow text-xs" onclick="window.location.href='job-details.html?id=${job.id}'">View Details</button>
-                         <button class="btn btn-primary btn-sm flex-grow text-xs" onclick="applyForJob(${job.id})">Apply</button>
                       </div>
                     </div>
                   `;
@@ -3878,10 +4126,32 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
         }
 
+    } else {
+      // Unauthenticated or not job_seeker: show clean empty state instead of dummy content
+      if (recommendedJobsGrid) {
+        renderRecommendedJobsEmpty('Complete your profile to get personalized job recommendations!');
+      }
+      if (seekerAppsTable) {
+        seekerAppsTable.innerHTML = `
+          <tr>
+            <td colspan="5" class="text-center py-8 text-slate-500">
+              <p class="font-medium text-slate-600 mb-1">No applications found.</p>
+              <p class="text-xs text-slate-400">Explore jobs and apply to track your applications here!</p>
+            </td>
+          </tr>
+        `;
+      }
+      if (savedJobsGrid) {
+        savedJobsGrid.innerHTML = `
+          <div class="col-span-full py-8 text-center text-slate-500">
+            <p class="font-medium text-slate-600 mb-1">No saved jobs yet.</p>
+            <p class="text-xs text-slate-400">Save jobs while browsing to review and apply to them later.</p>
+          </div>
+        `;
       }
     }
   }
-);
+});
 
 // Global functions for dynamic elements
 window.rejectApplication = function(appId, btnElement) {
@@ -3893,22 +4163,69 @@ window.rejectApplication = function(appId, btnElement) {
       headers['Authorization'] = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
     }
 
+    const card = btnElement ? btnElement.closest('.kanban-card') : document.querySelector(`.kanban-card[data-id="${appId}"]`);
+
     fetch(`/api/applications/${appId}/status`, {
       method: 'PUT',
       headers: headers,
       credentials: 'include',
-      body: JSON.stringify({ status: 'Rejected' })
+      body: JSON.stringify({ status: 'rejected' })
     })
     .then(res => res.json())
     .then(data => {
       if (data.message === 'Application status updated successfully') {
         showToast('Application rejected', 'info');
-        if (typeof window.loadEmployerApplications === 'function') {
+
+        // Smooth fade-out and complete removal from the DOM
+        if (card) {
+          card.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+          card.style.opacity = '0';
+          card.style.transform = 'scale(0.92) translateY(-8px)';
+          card.style.maxHeight = `${card.offsetHeight}px`;
+
+          setTimeout(() => {
+            card.style.maxHeight = '0px';
+            card.style.paddingTop = '0px';
+            card.style.paddingBottom = '0px';
+            card.style.marginTop = '0px';
+            card.style.marginBottom = '0px';
+            card.style.overflow = 'hidden';
+
+            setTimeout(() => {
+              card.remove();
+
+              // Check if pending column is now empty
+              const pendingColumn = document.getElementById('kanban-pending-col') || document.querySelector('.kanban-cards[data-column="pending"]');
+              if (pendingColumn && pendingColumn.querySelectorAll('.kanban-card').length === 0) {
+                pendingColumn.innerHTML = '<div class="text-center py-8 text-slate-400 text-xs italic">No candidates pending review.</div>';
+              }
+
+              // Check if hired column is now empty
+              const hiredColumn = document.getElementById('kanban-hired-col') || document.querySelector('.kanban-cards[data-column="hired"]');
+              if (hiredColumn && hiredColumn.querySelectorAll('.kanban-card').length === 0) {
+                hiredColumn.innerHTML = '<div class="text-center py-8 text-slate-400 text-xs italic">No candidates marked as hired yet.</div>';
+              }
+
+              // Update badge counts dynamically
+              const pCount = pendingColumn ? pendingColumn.querySelectorAll('.kanban-card').length : 0;
+              const hCount = hiredColumn ? hiredColumn.querySelectorAll('.kanban-card').length : 0;
+
+              const totalBadge = document.getElementById('pipeline-total-badge');
+              if (totalBadge) totalBadge.textContent = `${pCount + hCount} Candidates`;
+
+              const pendingBadge = document.getElementById('pipeline-pending-badge') || 
+                                   pendingColumn?.closest('.kanban-col')?.querySelector('.badge');
+              if (pendingBadge) pendingBadge.textContent = pCount;
+
+              const hiredBadge = document.getElementById('pipeline-hired-badge') || 
+                                 hiredColumn?.closest('.kanban-col')?.querySelector('.badge');
+              if (hiredBadge) hiredBadge.textContent = hCount;
+            }, 300);
+          }, 150);
+        } else if (typeof window.loadEmployerApplications === 'function') {
           window.loadEmployerApplications();
-        } else {
-          const card = btnElement ? btnElement.closest('.kanban-card') : null;
-          if (card) card.remove();
         }
+
         if (typeof window.loadEmployerStats === 'function') {
           window.loadEmployerStats();
         }
@@ -3916,7 +4233,10 @@ window.rejectApplication = function(appId, btnElement) {
         showToast(data.message || 'Error updating status', 'error');
       }
     })
-    .catch(err => showToast('Network error', 'error'));
+    .catch(err => {
+      console.error('Error rejecting application:', err);
+      showToast('Network error', 'error');
+    });
   }
 };
 
@@ -4127,12 +4447,23 @@ window.applyForJob = function (jId) {
         applyModal.id = 'apply-modal';
         applyModal.className = 'modal-overlay hidden';
         applyModal.innerHTML = `
-          <div class="modal-content" style="max-width: 440px; text-align: center;">
-            <h3 class="text-xl font-bold mb-3" style="color: inherit;">Confirm Application</h3>
-            <p class="mb-6 text-base" style="color: inherit; opacity: 0.85;">Are you sure you want to apply for this job?</p>
-            <div class="flex gap-4 justify-center">
-              <button id="apply-cancel-btn" class="btn btn-outline px-6 text-base">Cancel</button>
-              <button id="apply-confirm-btn" class="btn btn-primary px-8 text-base">Yes</button>
+          <div class="modal-content" style="max-width: 480px; text-align: left; padding: 1.75rem;">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-xl font-bold text-slate-900" style="margin: 0;">Submit Application</h3>
+              <button type="button" class="btn-clear text-slate-400 hover:text-slate-700" id="apply-modal-close-x" style="font-size: 1.5rem; line-height: 1; cursor: pointer;">&times;</button>
+            </div>
+            <p class="text-xs text-slate-500 mb-4">Your saved resume and profile information will be delivered directly to the employer's applicant pipeline.</p>
+            
+            <div class="form-group mb-4">
+              <label for="apply-message-input" class="form-label text-xs font-semibold text-slate-700 mb-1.5 block">
+                Short Message / Cover Note <span class="text-slate-400 font-normal">(Optional)</span>:
+              </label>
+              <textarea id="apply-message-input" class="form-input text-sm w-full" rows="3" placeholder="Introduce yourself or highlight relevant experience for this role..."></textarea>
+            </div>
+
+            <div class="flex gap-3 justify-end items-center pt-3 border-t border-slate-100">
+              <button id="apply-cancel-btn" class="btn btn-outline px-5 text-sm">Cancel</button>
+              <button id="apply-confirm-btn" class="btn btn-primary px-6 text-sm">Submit Application</button>
             </div>
           </div>
         `;
@@ -4147,11 +4478,22 @@ window.applyForJob = function (jId) {
         });
       }
       
+      const msgInput = document.getElementById('apply-message-input');
+      if (msgInput) msgInput.value = '';
+
       applyModal.classList.remove('hidden');
       applyModal.classList.add('active');
       
       const cancelBtn = document.getElementById('apply-cancel-btn');
       const confirmBtn = document.getElementById('apply-confirm-btn');
+      const closeXBtn = document.getElementById('apply-modal-close-x');
+      
+      if (closeXBtn) {
+        closeXBtn.onclick = () => {
+          applyModal.classList.remove('active');
+          applyModal.classList.add('hidden');
+        };
+      }
       
       if (cancelBtn && confirmBtn) {
         // Clone to remove old event listeners
@@ -4167,18 +4509,20 @@ window.applyForJob = function (jId) {
         
         newConfirmBtn.addEventListener('click', () => {
           newConfirmBtn.disabled = true;
-          newConfirmBtn.textContent = 'Applying...';
+          newConfirmBtn.textContent = 'Submitting...';
           
+          const messageVal = (document.getElementById('apply-message-input')?.value || '').trim();
+
           fetch('/api/applications/apply', {
             method: 'POST',
             headers: authHeaders,
             credentials: 'include',
-            body: JSON.stringify({ job_id: jId, seeker_id: usr.id })
+            body: JSON.stringify({ job_id: jId, seeker_id: usr.id, message: messageVal })
           }).then(res => res.json()).then(data => {
             applyModal.classList.remove('active');
             applyModal.classList.add('hidden');
             newConfirmBtn.disabled = false;
-            newConfirmBtn.textContent = 'Yes';
+            newConfirmBtn.textContent = 'Submit Application';
             
             if (data.message === 'Application submitted successfully') {
               showToast('Successfully applied!', 'success');
@@ -4190,7 +4534,7 @@ window.applyForJob = function (jId) {
             applyModal.classList.remove('active');
             applyModal.classList.add('hidden');
             newConfirmBtn.disabled = false;
-            newConfirmBtn.textContent = 'Yes';
+            newConfirmBtn.textContent = 'Submit Application';
             showToast('Network error', 'error');
           });
         });
@@ -4912,6 +5256,120 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// --- Footer Resources Authorization Guard ---
+// Protects 'Create CV', 'Job Alerts', and 'Saved Jobs' links in the footer
+function handleFooterProtectedResourceClick(e) {
+  const link = e.target.closest('#footer-create-cv, #footer-job-alerts, #footer-saved-jobs, .footer-protected-link, .footer-links a[data-auth-required="true"]');
+  let isProtected = false;
+  let resourceType = '';
+
+  if (link) {
+    isProtected = true;
+    resourceType = link.getAttribute('data-target') || (link.textContent || '').trim().toLowerCase();
+  } else {
+    const footerLink = e.target.closest('.footer-links a, footer a');
+    if (footerLink) {
+      const txt = (footerLink.textContent || '').trim().toLowerCase();
+      if (txt.includes('create cv') || txt.includes('job alert') || txt.includes('saved job')) {
+        isProtected = true;
+        resourceType = txt;
+      }
+    }
+  }
+
+  if (!isProtected) return;
+
+  const targetLink = link || e.target.closest('.footer-links a, footer a');
+  const text = (targetLink.textContent || '').trim().toLowerCase();
+
+  // Check authentication
+  const seekerAuth = typeof getSeekerAuth === 'function' ? getSeekerAuth() : null;
+  const activeSess = typeof resolveActiveUserAndRole === 'function' ? resolveActiveUserAndRole() : null;
+  const token = (seekerAuth && seekerAuth.token) || (activeSess && activeSess.token);
+  const user = (seekerAuth && seekerAuth.user) || (activeSess && activeSess.user);
+  const isAuthenticated = !!(token && user);
+  const isSeekerRole = !user || !user.role || user.role === 'job_seeker';
+
+  if (!isAuthenticated || !isSeekerRole) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const toastMessage = !isAuthenticated 
+      ? 'Please log in to access this feature' 
+      : 'Please log in as a job seeker to access this feature';
+
+    if (typeof showToast === 'function') {
+      showToast(toastMessage, 'warning');
+    }
+
+    let tab = 'applications';
+    if (text.includes('cv')) tab = 'cv';
+    else if (text.includes('alert')) tab = 'alerts';
+    else if (text.includes('saved')) tab = 'saved-jobs';
+
+    const targetUrl = `seeker.html#${tab}`;
+
+    const loginModal = document.getElementById('login-modal');
+    if (loginModal) {
+      if (typeof updateAuthModalUI === 'function') {
+        try {
+          isRegisterMode = false;
+          registerStep = 1;
+          loginRedirectUrl = targetUrl;
+          updateAuthModalUI();
+        } catch (err) {}
+      }
+      if (typeof window.openModal === 'function') {
+        window.openModal('login-modal');
+      } else {
+        loginModal.classList.add('active');
+        loginModal.classList.remove('hidden');
+      }
+    } else {
+      try {
+        sessionStorage.setItem('pendingAuthToast', toastMessage);
+        sessionStorage.setItem('loginRedirectUrl', targetUrl);
+      } catch (err) {}
+      setTimeout(() => {
+        window.location.href = `index.html?login=seeker&redirect=${encodeURIComponent(targetUrl)}`;
+      }, 100);
+    }
+    return false;
+  } else {
+    // Authenticated job seeker: if already on seeker.html, smooth tab switch
+    if (window.location.pathname.includes('seeker.html') || (typeof currentPage !== 'undefined' && currentPage === 'seeker.html')) {
+      let tab = 'applications';
+      if (text.includes('cv')) tab = 'cv';
+      else if (text.includes('alert')) tab = 'alerts';
+      else if (text.includes('saved')) tab = 'saved-jobs';
+
+      if (typeof switchTab === 'function') {
+        e.preventDefault();
+        switchTab(tab);
+        window.location.hash = tab;
+      }
+    }
+  }
+}
+
+// Global delegated listener for footer protected links (capturing phase for instant intercept)
+document.addEventListener('click', handleFooterProtectedResourceClick, true);
+
+// Expose and bind direct listeners on DOMContentLoaded
+window.initFooterAuthGuards = function() {
+  const links = document.querySelectorAll('#footer-create-cv, #footer-job-alerts, #footer-saved-jobs, .footer-protected-link, .footer-links a[data-auth-required="true"]');
+  links.forEach(l => {
+    l.removeEventListener('click', handleFooterProtectedResourceClick);
+    l.addEventListener('click', handleFooterProtectedResourceClick);
+  });
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', window.initFooterAuthGuards);
+} else {
+  window.initFooterAuthGuards();
+}
+
 // Function to update job card button to 'Undo Report'
 function updateJobCardToReported(jobId) {
     const buttons = document.querySelectorAll(`[data-job-id="${jobId}"]`);
@@ -5286,7 +5744,20 @@ const loadManageJobs = async () => {
         ? '<span class="badge badge-amber text-xs ml-2">Pending Payment (300 ETB)</span>' 
         : (job.payment_status === 'paid' ? '<span class="badge badge-primary text-xs ml-2">Paid Listing</span>' : '');
 
+      const isClosed = String(job.status || '').toLowerCase() === 'closed';
+      const statusBadge = isClosed 
+        ? '<span class="badge badge-red text-xs font-semibold ml-2"><i class="fa-solid fa-lock mr-1"></i>Closed</span>' 
+        : '<span class="badge badge-green text-xs font-semibold ml-2"><i class="fa-solid fa-circle-check mr-1"></i>Active</span>';
+
       const badgeType = typeof getJobTypeBadgeClass === 'function' ? getJobTypeBadgeClass(job.job_type) : 'badge-green';
+
+      const closeOrReopenBtn = isClosed
+        ? `<button type="button" class="btn btn-outline btn-sm btn-job-action" data-action="reopen-job" data-job-id="${job.id}" onclick="window.reopenEmployerJob(${job.id})" title="Reopen this job posting to receive applications">
+             <svg class="icon-sm inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Reopen
+           </button>`
+        : `<button type="button" class="btn btn-outline btn-sm btn-job-action text-amber-600 hover:text-amber-700 border-amber-300" data-action="close-posting" data-job-id="${job.id}" onclick="window.closeEmployerJob(${job.id})" title="Close job posting when filled (FR-7)">
+             <svg class="icon-sm inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> Close Posting
+           </button>`;
 
       html += `
         <div class="card job-manage-card" style="text-align: left;">
@@ -5294,6 +5765,7 @@ const loadManageJobs = async () => {
           <div class="job-manage-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
               <h3 class="job-manage-title text-lg font-bold text-slate-900 m-0" style="margin: 0; text-align: left;">${job.title}</h3>
+              ${statusBadge}
               ${editedBadge}
               ${paymentBadge}
             </div>
@@ -5313,12 +5785,16 @@ const loadManageJobs = async () => {
           </div>
 
           <!-- Button Container: Edit & Remove buttons in flex container justified right with border-top -->
-          <div class="job-manage-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; width: 100%;">
+          <div class="job-manage-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; width: 100%; flex-wrap: wrap;">
             ${isPendingPayment ? `
             <button type="button" class="btn btn-primary btn-sm btn-job-action btn-pay-pending-job" data-job-id="${job.id}" data-job-title="${encodeURIComponent(job.title || 'Job Listing')}">
               <svg class="icon-sm inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> Complete Payment (300 ETB)
             </button>
             ` : ''}
+            <a href="job-details.html?id=${job.id}" target="_blank" class="btn btn-outline btn-sm btn-job-action">
+              <svg class="icon-sm inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> View
+            </a>
+            ${closeOrReopenBtn}
             <button class="btn btn-outline btn-sm btn-job-action" data-action="open-edit-job" data-job-id="${job.id}">
               <svg class="icon-sm inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg> Edit
             </button>
@@ -5414,6 +5890,64 @@ if (manageJobsTab || editJobModal || manageJobsContainer) {
       }
     }
   };
+  window.deleteEmployerJob = window.deleteJob;
+
+  // FR-7: Employer Job Management - Close a job posting when filled (updating status to 'closed')
+  window.closeEmployerJob = async (id) => {
+    if (!confirm('Are you sure you want to close this job posting? It will be marked as closed and no longer accept applications.')) return;
+    try {
+      const empAuth = getEmployerAuth();
+      const headers = { 'Content-Type': 'application/json' };
+      if (empAuth.token && !empAuth.token.includes('cookie')) {
+        headers['Authorization'] = `Bearer ${empAuth.token}`;
+      }
+      const response = await fetch(`/api/jobs/${id}/close`, {
+        method: 'PUT',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({ employer_id: empAuth.user?.id })
+      });
+      if (response.ok) {
+        showToast('Job posting closed successfully', 'success');
+        if (typeof loadManageJobs === 'function') loadManageJobs();
+        if (typeof window.loadEmployerStats === 'function') window.loadEmployerStats();
+      } else {
+        const err = await response.json().catch(() => ({}));
+        showToast(err.message || 'Failed to close job posting', 'error');
+      }
+    } catch (e) {
+      showToast('Network error while closing job', 'error');
+    }
+  };
+
+  // Reopen a closed job posting
+  window.reopenEmployerJob = async (id) => {
+    try {
+      const empAuth = getEmployerAuth();
+      const headers = { 'Content-Type': 'application/json' };
+      if (empAuth.token && !empAuth.token.includes('cookie')) {
+        headers['Authorization'] = `Bearer ${empAuth.token}`;
+      }
+      const response = await fetch(`/api/jobs/${id}`, {
+        method: 'PUT',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({ status: 'active', employer_id: empAuth.user?.id })
+      });
+      if (response.ok) {
+        showToast('Job posting reopened successfully', 'success');
+        if (typeof loadManageJobs === 'function') loadManageJobs();
+        if (typeof window.loadEmployerStats === 'function') window.loadEmployerStats();
+      } else {
+        const err = await response.json().catch(() => ({}));
+        showToast(err.message || 'Failed to reopen job posting', 'error');
+      }
+    } catch (e) {
+      showToast('Network error while reopening job', 'error');
+    }
+  };
+
+  window.loadEmployerJobs = loadManageJobs;
 
   // Expose close edit modal to window
   const closeEditModal = () => {
@@ -5631,6 +6165,26 @@ if (manageJobsTab || editJobModal || manageJobsContainer) {
       const jobId = deleteBtn.getAttribute('data-job-id');
       if (jobId && typeof window.deleteJob === 'function') {
         window.deleteJob(jobId);
+      }
+    }
+
+    // Close Job Posting (FR-7)
+    const closeBtn = e.target.closest('[data-action="close-posting"], [data-action="close-job"]');
+    if (closeBtn) {
+      e.preventDefault();
+      const jobId = closeBtn.getAttribute('data-job-id');
+      if (jobId && typeof window.closeEmployerJob === 'function') {
+        window.closeEmployerJob(jobId);
+      }
+    }
+
+    // Reopen Job Posting
+    const reopenBtn = e.target.closest('[data-action="reopen-job"]');
+    if (reopenBtn) {
+      e.preventDefault();
+      const jobId = reopenBtn.getAttribute('data-job-id');
+      if (jobId && typeof window.reopenEmployerJob === 'function') {
+        window.reopenEmployerJob(jobId);
       }
     }
 

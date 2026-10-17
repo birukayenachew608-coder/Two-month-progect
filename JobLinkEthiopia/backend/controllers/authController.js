@@ -941,6 +941,12 @@ exports.seekerRegister = async (req, res) => {
             'INSERT INTO job_seekers (name, email, password, is_email_verified) VALUES (?, ?, ?, true)',
             [name, email, hashedPassword]
         );
+
+        // Section 6 Sync: Keep users table in sync
+        await pool.query(
+            'INSERT INTO users (name, full_name, email, password, password_hash, role, is_approved) VALUES (?, ?, ?, ?, ?, "job_seeker", TRUE) ON DUPLICATE KEY UPDATE full_name = VALUES(full_name), password_hash = VALUES(password_hash)',
+            [name, name, email, hashedPassword, hashedPassword]
+        ).catch(err => console.warn('Sync to users table on seeker register:', err.message));
         
         const user = { id: result.insertId, name, email, role: 'job_seeker', account_status: 'active' };
         const { accessToken } = await issueAuthTokens(res, user, 'job_seeker');
@@ -1121,6 +1127,12 @@ exports.employerRegister = async (req, res) => {
             'INSERT INTO employers (name, email, password, is_email_verified) VALUES (?, ?, ?, true)',
             [name, email, hashedPassword]
         );
+
+        // Section 6 & FR-12 Sync: Keep users table in sync with is_approved = FALSE by default
+        await pool.query(
+            'INSERT INTO users (name, full_name, email, password, password_hash, role, is_approved) VALUES (?, ?, ?, ?, ?, "employer", FALSE) ON DUPLICATE KEY UPDATE full_name = VALUES(full_name), password_hash = VALUES(password_hash)',
+            [name, name, email, hashedPassword, hashedPassword]
+        ).catch(err => console.warn('Sync to users table on employer register:', err.message));
         
         const user = { id: result.insertId, name, email, role: 'employer', account_status: 'active' };
         const { accessToken } = await issueAuthTokens(res, user, 'employer');

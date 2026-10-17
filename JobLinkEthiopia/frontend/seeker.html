@@ -6,14 +6,14 @@
   <title>JobLink Ethiopia - Seeker Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <!-- Header Navigation -->
   <header class="header">
-    <div class="container header-inner flex-between">
+    <div class="container header-inner flex-between seeker-wide-container">
       <a href="index.html" class="logo-link">
         <img src="logo.png" alt="JobLink Ethiopia Logo" class="nav-logo" />
         <span class="logo-text">JobLink <span class="text-primary">Ethiopia</span></span>
@@ -32,14 +32,14 @@
         </button>
         <div class="nav-user-badge">
           <img id="nav-user-avatar" class="nav-avatar-img" src="/uploads/default-avatar.png" alt="Profile" onerror="this.src='/uploads/default-avatar.png'" />
-          <span class="user-company-name">Welcome, Abebe!</span>
+          <span class="user-company-name">Welcome!</span>
         </div>
         <a href="index.html" class="logout-link" data-action="logout-seeker">Logout</a>
       </div>
     </div>
   </header>
 
-  <main class="container page-content">
+  <main class="container page-content seeker-wide-container">
     
     <div class="page-header">
       <div class="header-content">
@@ -53,7 +53,7 @@
     </div>
 
     <!-- Main Dashboard Content Column (Full Width) -->
-    <div class="dashboard-main-content">
+    <div class="dashboard-main-content seeker-dashboard-wrapper">
       <!-- Tabs -->
       <div class="tabs">
         <div class="tab active" data-target="applications" data-action="switch-tab">My Applications</div>
@@ -66,9 +66,9 @@
     <!-- Tab 1: Applications -->
     <div id="applications" class="tab-content active space-y-6">
 
-      <div class="card card-flush">
+      <div class="card card-flush seeker-applications-card mb-10">
         <div class="card-header">
-          <h2 class="card-title">My Applications (2)</h2>
+          <h2 class="card-title" id="seeker-apps-title">My Applications</h2>
           <span class="badge badge-primary-light">Updated Today</span>
         </div>
         <div class="table-container border-none">
@@ -84,21 +84,10 @@
             </thead>
             <tbody>
               <tr>
-                <td class="font-medium text-slate-900">Junior Web Developer</td>
-                <td>TechSolutions PLC<br><span class="text-xs text-slate-400">Addis Ababa</span></td>
-                <td>Sept 10, 2026</td>
-                <td><span class="badge badge-yellow">Pending</span></td>
-                <td class="text-right">
-                  <button data-action="view-job" class="btn-text-link">View Job</button>
-                  <button data-action="withdraw-app" class="btn-text-link text-red-500 ml-2 btn-withdraw">Withdraw</button>
+                <td colspan="5" class="text-center py-8 text-slate-500">
+                  <p class="font-medium text-slate-600 mb-1">No applications found.</p>
+                  <p class="text-xs text-slate-400">Explore jobs and apply to track your applications here!</p>
                 </td>
-              </tr>
-              <tr>
-                <td class="font-medium text-slate-900">Sales Representative</td>
-                <td>Ethio Traders<br><span class="text-xs text-slate-400">Dire Dawa</span></td>
-                <td>Sept 05, 2026</td>
-                <td><span class="badge badge-blue">Reviewed</span></td>
-                <td class="text-right"><button data-action="view-job" class="btn-text-link">View Job</button></td>
               </tr>
             </tbody>
           </table>
@@ -106,20 +95,20 @@
       </div> <!-- Close card-flush -->
 
       <!-- Similar Jobs Recommendations -->
-      <div class="card bg-slate-50 border-none mt-6">
-        <h3 class="font-bold text-slate-800 mb-4">Recommended Jobs based on your applications</h3>
+      <div class="card bg-slate-50 border-none mt-6 seeker-recommended-jobs-card">
+        <h3 class="font-bold text-slate-800 mb-4">Recommended Jobs</h3>
         <div class="dashboard-grid">
-          <!-- Recommended Job 1 -->
-          <div class="card p-4 border border-slate-200 shadow-none">
-            <h4 class="font-bold text-slate-900 text-sm">Senior Web Developer</h4>
-            <p class="text-xs text-slate-500 mb-3">Safaricom Ethiopia • Addis Ababa</p>
-            <button class="btn btn-primary btn-sm btn-block text-xs">View & Apply</button>
-          </div>
-          <!-- Recommended Job 2 -->
-          <div class="card p-4 border border-slate-200 shadow-none">
-            <h4 class="font-bold text-slate-900 text-sm">React Specialist</h4>
-            <p class="text-xs text-slate-500 mb-3">Gebeya Inc • Remote</p>
-            <button class="btn btn-primary btn-sm btn-block text-xs">View & Apply</button>
+          <div class="empty-recommended-state">
+            <div class="empty-icon-circle">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            <h4 class="empty-title">Complete your profile to get personalized job recommendations!</h4>
+            <p class="empty-desc">
+              Add your professional title, skills, and summary to help our matching engine find the best opportunities for you.
+            </p>
+            <button type="button" class="btn btn-primary btn-sm font-semibold" data-action="switch-tab" data-target="profile" onclick="if(typeof switchTab==='function'){switchTab('profile');}">
+              <i class="fa-solid fa-user-pen mr-1.5"></i> Complete Profile
+            </button>
           </div>
         </div>
       </div>
@@ -130,27 +119,9 @@
     <!-- Tab: Saved Jobs -->
     <div id="saved-jobs" class="tab-content space-y-6">
       <div class="dashboard-grid">
-        <!-- Saved Job Card -->
-        <div class="card" id="saved-job-1">
-          <div class="flex justify-between items-start mb-3">
-            <div>
-              <h3 class="font-bold text-slate-900">Frontend React Developer</h3>
-              <p class="text-sm text-slate-500">Awash Bank • Addis Ababa</p>
-            </div>
-            <button class="btn btn-outline btn-icon-small btn-save-job saved" title="Remove from saved" data-action="unsave-job" data-job-id="1" onclick="unsaveJob(1, this)">
-              <i class="fa-solid fa-bookmark bookmark-icon" style="color: black; font-size: 1.15rem;"></i>
-            </button>
-          </div>
-          <div class="flex gap-2 mb-4">
-            <span class="badge badge-slate text-xs badge-xs-text">Full-time</span>
-            <span class="badge badge-slate text-xs badge-xs-text">Remote Options</span>
-          </div>
-          <div class="flex gap-2">
-            <button class="btn btn-primary btn-block btn-sm flex-grow">Apply Now</button>
-            <button class="btn btn-danger btn-sm text-xs px-3 btn-remove-saved" data-action="unsave-job" data-job-id="1" onclick="unsaveJob(1, this)" title="Remove job from saved list">
-              <i class="fa-solid fa-trash-can mr-1"></i> Remove
-            </button>
-          </div>
+        <div class="col-span-full py-8 text-center text-slate-500">
+          <p class="font-medium text-slate-600 mb-1">No saved jobs yet.</p>
+          <p class="text-xs text-slate-400">Save jobs while browsing to review and apply to them later.</p>
         </div>
       </div>
     </div>
@@ -178,7 +149,7 @@
             <p class="dropzone-subtitle">Attach your polished resume for fast 1-click job applications</p>
           </div>
           
-          <div class="active-resume-container">
+          <div class="active-resume-container" style="display: none;">
             <div class="active-resume-header">
               <span class="active-resume-badge-label">
                 <i class="fa-solid fa-circle-check text-emerald-500 mr-1.5"></i> Active Resume
@@ -193,9 +164,9 @@
                 </div>
                 <div class="resume-doc-text">
                   <p class="preview-filename font-bold text-slate-900" id="preview-filename">
-                    <span class="resume-name-text">Abebe_Kebede_Resume.pdf</span>
+                    <span class="resume-name-text"></span>
                   </p>
-                  <p class="preview-meta text-xs text-slate-500 mt-0.5" id="preview-meta">1.4 MB • Updated recently</p>
+                  <p class="preview-meta text-xs text-slate-500 mt-0.5" id="preview-meta"></p>
                 </div>
               </div>
               <div class="active-resume-actions">
@@ -268,9 +239,9 @@
             </label>
           </div>
 
-          <h3 class="profile-card-name" id="profile-card-name">abebe</h3>
+          <h3 class="profile-card-name" id="profile-card-name"></h3>
           <span class="profile-card-role-badge" id="profile-card-role">Job Seeker</span>
-          <p class="profile-card-email" id="profile-card-email">ayenachew608@gmail.com</p>
+          <p class="profile-card-email" id="profile-card-email"></p>
 
           <!-- Large Blue Change Photo Block -->
           <label class="profile-change-photo-btn" for="profile-upload" id="btn-change-photo-block" title="Change Profile Photo">
@@ -301,27 +272,27 @@
             <div class="dashboard-grid">
               <div class="dashboard-column">
                 <div class="form-group">
-                  <label class="form-label">Full Name</label>
-                  <input type="text" id="profile-name" class="form-input" value="Abebe Kebede">
+                  <label class="form-label" for="profile-name">Full Name</label>
+                  <input type="text" id="profile-name" class="form-input" placeholder="Enter your full name">
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Email Address</label>
-                  <input type="email" id="profile-email" class="form-input" value="abebe@example.com" disabled>
+                  <label class="form-label" for="profile-email">Email Address</label>
+                  <input type="email" id="profile-email" class="form-input" placeholder="your.email@example.com" disabled>
                   <p class="text-xs text-slate-500 mt-1">Email cannot be changed.</p>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Phone Number</label>
-                  <input type="tel" id="profile-phone" class="form-input" value="+251 91 123 4567">
+                  <label class="form-label" for="profile-phone">Phone Number</label>
+                  <input type="tel" id="profile-phone" class="form-input" placeholder="Enter your phone number">
                 </div>
               </div>
               
               <div class="dashboard-column">
                 <div class="form-group">
-                  <label class="form-label">Professional Title</label>
-                  <input type="text" id="profile-title" class="form-input" value="Junior Web Developer">
+                  <label class="form-label" for="profile-title">Professional Title</label>
+                  <input type="text" id="profile-title" class="form-input" placeholder="e.g. Junior Web Developer">
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Location</label>
+                  <label class="form-label" for="profile-location">Location</label>
                   <input type="text" id="profile-location" class="form-input" list="location-options" placeholder="Select or type your city..." autocomplete="off">
                   <datalist id="location-options">
                     <option value="Addis Ababa"></option>
@@ -346,8 +317,8 @@
                   </datalist>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Bio (Short Summary)</label>
-                  <textarea id="profile-bio" class="form-input" rows="3">Passionate frontend developer with experience in React and Node.js.</textarea>
+                  <label class="form-label" for="profile-bio">Bio (Short Summary)</label>
+                  <textarea id="profile-bio" class="form-input" rows="3" placeholder="Tell us about your skills..."></textarea>
                 </div>
               </div>
             </div>

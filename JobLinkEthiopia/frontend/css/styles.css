@@ -1,8 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
 
 /* Premium Modern CSS Reset & Variables */
 :root {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Poppins', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-serif: 'Playfair Display', Georgia, serif;
 
   /* Colors */
@@ -4838,7 +4838,9 @@ html[data-theme="dark"] #btn-save svg {
    EMPLOYER DASHBOARD: WIDE EDGE-TO-EDGE SAAS REDESIGN
    ======================================================== */
 
-.employer-wide-container {
+.employer-wide-container,
+.admin-wide-container,
+.seeker-wide-container {
   max-width: 1400px !important;
   width: 95% !important;
   margin-left: auto !important;
@@ -4846,7 +4848,9 @@ html[data-theme="dark"] #btn-save svg {
 }
 
 @media (min-width: 1600px) {
-  .employer-wide-container {
+  .employer-wide-container,
+  .admin-wide-container,
+  .seeker-wide-container {
     max-width: 1520px !important;
     width: 94% !important;
   }
@@ -4982,8 +4986,8 @@ html[data-theme="dark"] #btn-save svg {
 
 .employer-wide-container .stat-card {
   background: white;
-  border-radius: 1rem;
-  padding: 1.75rem 1.5rem;
+  border-radius: 1.15rem;
+  padding: 1.85rem 1.75rem;
   border: 1px solid var(--slate-200);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -5006,11 +5010,19 @@ html[data-theme="dark"] #btn-save svg {
   box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.5);
 }
 
+.employer-wide-container .stat-title {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--slate-500);
+  margin-bottom: 0.65rem;
+}
+
 .employer-wide-container .stat-value {
-  font-size: 2.25rem;
+  font-size: 2.5rem;
   font-weight: 800;
   letter-spacing: -0.03em;
-  line-height: 1.1;
+  line-height: 1.15;
   color: #0f172a;
 }
 
@@ -5030,9 +5042,9 @@ html[data-theme="dark"] #btn-save svg {
 
 /* Tabs styling in wide dashboard */
 .employer-wide-container .tabs {
-  gap: 2rem;
-  border-bottom: 1px solid var(--slate-200);
-  margin-bottom: 1.5rem;
+  gap: 2.25rem;
+  border-bottom: 2px solid var(--slate-200);
+  margin-bottom: 2rem;
 }
 
 [data-theme="dark"] .employer-wide-container .tabs {
@@ -5040,11 +5052,12 @@ html[data-theme="dark"] #btn-save svg {
 }
 
 .employer-wide-container .tab {
-  font-size: 0.95rem;
-  font-weight: 500;
-  padding: 0.75rem 0.5rem 1rem 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  padding: 0.85rem 0.5rem 1.15rem 0.5rem;
   border-bottom: 3px solid transparent;
   transition: all 0.2s ease;
+  letter-spacing: 0.01em;
 }
 
 .employer-wide-container .tab.active {
@@ -6847,4 +6860,941 @@ html[data-theme="dark"] #btn-company-profile * {
 [data-theme="dark"] .input-with-icon:focus {
   border-color: #38bdf8;
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+}
+
+/* ==========================================================================
+   Seeker Dashboard - Enhanced Wide Container & Section Spacing
+   ========================================================================== */
+
+/* Main Seeker Dashboard Wrapper - Wider Edge-to-Edge SaaS Layout */
+.seeker-wide-container {
+  max-width: 1300px !important;
+  width: 92% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+@media (min-width: 1400px) {
+  .seeker-wide-container {
+    max-width: 1360px !important;
+    width: 90% !important;
+  }
+}
+
+@media (min-width: 1600px) {
+  .seeker-wide-container {
+    max-width: 1440px !important;
+    width: 90% !important;
+  }
+}
+
+.seeker-dashboard-wrapper,
+.seeker-wide-container .dashboard-main-content {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Clear Visual Separation between My Applications and Recommended Jobs */
+#applications.tab-content {
+  gap: 2.5rem; /* 40px gap */
+}
+
+#applications.tab-content.active {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem; /* 40px clear separation between cards */
+}
+
+.seeker-applications-card,
+#applications > .card-flush {
+  margin-bottom: 2.5rem !important; /* 40px margin bottom to ensure separation */
+}
+
+.seeker-recommended-jobs-card,
+#applications > .card.bg-slate-50 {
+  margin-top: 0.5rem !important;
+}
+
+/* Spacing utilities fallback */
+.mb-10 {
+  margin-bottom: 2.5rem !important;
+}
+
+.space-y-6 > * + * {
+  margin-top: 2.5rem !important;
+}
+
+/* Dark Mode card styling enhancements for Seeker Recommended Jobs */
+[data-theme="dark"] .seeker-recommended-jobs-card,
+[data-theme="dark"] #applications .card.bg-slate-50 {
+  background-color: var(--bg-card) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Keep every seeker dashboard tab on the same wide, responsive canvas. */
+#saved-jobs .dashboard-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  align-items: stretch;
+  gap: 1.25rem;
+}
+
+#saved-jobs .dashboard-grid > .card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+#saved-jobs .dashboard-grid > .card > .flex:last-child {
+  margin-top: auto;
+}
+
+#cv .resume-section-container {
+  max-width: none;
+  padding: 0;
+}
+
+#cv .resume-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 1.5rem;
+}
+
+#cv .resume-card-header {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
+#cv .active-resume-container {
+  min-width: 0;
+  margin-top: 0;
+}
+
+#alerts .dashboard-grid {
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  align-items: start;
+  gap: 1.5rem;
+}
+
+#alerts .dashboard-grid > .card,
+#active-alerts-container {
+  min-width: 0;
+}
+
+#active-alerts-container .alert-card {
+  width: 100%;
+}
+
+.profile-management-grid {
+  grid-template-columns: minmax(250px, 0.72fr) minmax(0, 1.8fr);
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+#profile .profile-management-grid > .card {
+  min-width: 0;
+}
+
+#profile #profile-form > .dashboard-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+@media (max-width: 960px) {
+  .profile-management-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  #cv .resume-card {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1.25rem;
+  }
+
+  #alerts .dashboard-grid,
+  #profile #profile-form > .dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ==========================================================================
+   SEEKER DASHBOARD TYPOGRAPHY UPGRADE
+   - Modern, readable Google Fonts ('Plus Jakarta Sans', 'Poppins', 'Inter')
+   - Increased font sizes: 16px/1rem base for table data and readable cards
+   - Strategic font weights: 600 for headers & titles, 400/500 for meta info
+   ========================================================================== */
+
+/* Seeker Dashboard Container Font Enforcement */
+.seeker-wide-container,
+.seeker-dashboard-card,
+#applications {
+  font-family: var(--font-sans);
+}
+
+/* My Applications Table Typography */
+#applications .table-container {
+  border-radius: 0.875rem;
+  overflow: hidden;
+  border: 1px solid var(--slate-200);
+  background: var(--bg-card, #ffffff);
+}
+
+#applications .table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 1rem; /* Base 16px font size */
+  line-height: 1.5;
+  font-family: var(--font-sans);
+}
+
+/* Table Headers: Pop with 600 weight, crisp tracking, clear uppercase, 0.875rem / 14px */
+#applications .table th {
+  font-size: 0.875rem;
+  font-weight: 600; /* Font weight 600 for table headers */
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--slate-600);
+  background: var(--slate-50);
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--slate-200);
+}
+
+/* Table Rows: 1rem (16px) font size, spacious comfortable padding */
+#applications .table td {
+  font-size: 1rem; /* 16px base font size for table data */
+  padding: 1.15rem 1.5rem;
+  color: var(--slate-700);
+  border-bottom: 1px solid var(--slate-100);
+  vertical-align: middle;
+}
+
+#applications .table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Job Title in Table: Prominent font weight 600, ~1.05rem, easy to read */
+#applications .table .app-job-title,
+#applications .table td:first-child {
+  font-size: 1.05rem;
+  font-weight: 600; /* Font weight 600 for job titles */
+  color: var(--slate-900);
+  letter-spacing: -0.01em;
+}
+
+/* Company Cell: Medium weight company name, clean regular location */
+#applications .table .app-company-cell {
+  font-size: 1rem;
+}
+
+#applications .table .app-company-name {
+  font-size: 0.975rem;
+  font-weight: 500; /* Clean medium weight for company names */
+  color: var(--slate-800);
+  line-height: 1.35;
+  display: inline-block;
+}
+
+#applications .table .app-company-location {
+  font-size: 0.875rem;
+  font-weight: 400; /* Clean regular weight for company location */
+  color: var(--slate-400);
+  line-height: 1.3;
+  margin-top: 0.15rem;
+  display: inline-block;
+}
+
+/* Applied Date: Clean regular weight, easy to read */
+#applications .table .app-applied-date,
+#applications .table td:nth-child(3) {
+  font-size: 0.95rem;
+  font-weight: 400; /* Clean regular weight for dates */
+  color: var(--slate-600);
+}
+
+/* Status Badges in Table */
+#applications .table .badge {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.35rem 0.8rem;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+}
+
+/* Action Links / Buttons in Table */
+#applications .table .btn-text-link {
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+}
+
+#applications .table .btn-withdraw {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   RECOMMENDED JOBS CARDS TYPOGRAPHY
+   ========================================================================== */
+
+/* Section Heading */
+.seeker-recommended-jobs-card > h3,
+#applications .seeker-recommended-jobs-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700; /* Bold heading */
+  letter-spacing: -0.015em;
+  color: var(--slate-900);
+  margin-bottom: 1.25rem;
+}
+
+/* Recommended Job Cards */
+.seeker-recommended-jobs-card .dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.seeker-recommended-jobs-card .card {
+  padding: 1.5rem !important;
+  border-radius: 1rem;
+  background-color: var(--bg-card, #ffffff);
+  border: 1px solid var(--slate-200);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.seeker-recommended-jobs-card .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+  border-color: var(--primary-300);
+}
+
+/* Empty State for Recommended Jobs */
+.empty-recommended-state {
+  grid-column: 1 / -1;
+  width: 100%;
+  padding: 2.75rem 1.5rem;
+  text-align: center;
+  background-color: var(--bg-card, #ffffff);
+  border: 1.5px dashed var(--slate-300, #cbd5e1);
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .empty-recommended-state {
+  background-color: var(--bg-card, #1e293b);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.empty-recommended-state .empty-icon-circle {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background-color: rgba(37, 99, 235, 0.08);
+  color: var(--primary, #2563eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.1rem;
+  font-size: 1.5rem;
+}
+
+[data-theme="dark"] .empty-recommended-state .empty-icon-circle {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.empty-recommended-state .empty-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--slate-800, #1e293b);
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+[data-theme="dark"] .empty-recommended-state .empty-title {
+  color: #ffffff;
+}
+
+.empty-recommended-state .empty-desc {
+  font-size: 0.925rem;
+  color: var(--slate-500, #64748b);
+  max-width: 28rem;
+  margin: 0 auto 1.25rem;
+  line-height: 1.5;
+}
+
+[data-theme="dark"] .empty-recommended-state .empty-desc {
+  color: var(--slate-400, #94a3b8);
+}
+
+
+/* Job Title in Recommended Cards: font-weight 600, 1.1rem */
+.seeker-recommended-jobs-card .rec-job-title,
+.seeker-recommended-jobs-card h4 {
+  font-size: 1.1rem; /* Increased font size for readability */
+  font-weight: 600; /* Font weight 600 for job titles */
+  line-height: 1.4;
+  color: var(--slate-900);
+  letter-spacing: -0.01em;
+}
+
+/* Recommended Job Type Badge */
+.seeker-recommended-jobs-card .badge,
+.seeker-recommended-jobs-card .rec-job-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  line-height: 1.2;
+}
+
+/* Company and Location Meta: Regular weight, larger and readable */
+.seeker-recommended-jobs-card .rec-job-meta,
+.seeker-recommended-jobs-card p {
+  font-size: 0.95rem; /* Increased from 0.75rem */
+  font-weight: 400; /* Clean regular weight for company and location */
+  color: var(--slate-500);
+  line-height: 1.45;
+  margin-bottom: 1.1rem;
+}
+
+/* Action Buttons inside Recommended Job Cards */
+.seeker-recommended-jobs-card .btn {
+  font-size: 0.925rem;
+  font-weight: 600;
+  padding: 0.625rem 1rem;
+  border-radius: 0.625rem;
+}
+
+/* Dark Mode Typography Adjustments */
+[data-theme="dark"] #applications .table th {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--slate-300);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] #applications .table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--slate-200);
+}
+
+[data-theme="dark"] #applications .table .app-job-title,
+[data-theme="dark"] #applications .table td:first-child {
+  color: #ffffff;
+}
+
+[data-theme="dark"] #applications .table .app-company-name {
+  color: var(--slate-100);
+}
+
+[data-theme="dark"] #applications .table .app-company-location {
+  color: var(--slate-400);
+}
+
+[data-theme="dark"] #applications .table .app-applied-date {
+  color: var(--slate-300);
+}
+
+[data-theme="dark"] .seeker-recommended-jobs-card > h3,
+[data-theme="dark"] #applications .seeker-recommended-jobs-card h3 {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .seeker-recommended-jobs-card .rec-job-title,
+[data-theme="dark"] .seeker-recommended-jobs-card h4 {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .seeker-recommended-jobs-card .rec-job-meta,
+[data-theme="dark"] .seeker-recommended-jobs-card p {
+  color: var(--slate-400);
+}
+
+/* ==========================================================================
+   EMPLOYER DASHBOARD GLOBAL TYPOGRAPHY UPGRADE
+   - Increased base font size (16px / 1rem) for wrapper and body
+   - Scaled up headings, tab navigation links, buttons, and statistics cards
+   - Comprehensive Applicant Pipeline typography (names, applied-for, dates, badges, actions)
+   - Balanced padding and margins for clean, professional layout hierarchy
+   ========================================================================== */
+
+/* 1. Global Base Typography & Font Family */
+.employer-wide-container,
+.employer-wide-container * {
+  font-family: var(--font-sans);
+}
+
+.employer-wide-container {
+  font-size: 1rem; /* Increased base font size */
+  line-height: 1.6;
+}
+
+/* 2. Headings & Page Header Hierarchy */
+.employer-wide-container .page-header {
+  margin-bottom: 2rem;
+  padding-bottom: 0.5rem;
+}
+
+.employer-wide-container .page-title {
+  font-size: 2.1rem !important; /* Scaled up page title */
+  font-weight: 800 !important;
+  letter-spacing: -0.025em !important;
+  color: var(--slate-900);
+  line-height: 1.25 !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.employer-wide-container .page-description {
+  font-size: 1.05rem !important; /* Scaled up description */
+  color: var(--slate-500) !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+}
+
+.employer-wide-container .page-header .btn-primary {
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  padding: 0.75rem 1.6rem !important;
+  border-radius: 0.75rem !important;
+  letter-spacing: 0.01em;
+}
+
+/* 3. Overview Welcome Banner */
+.overview-banner-card {
+  padding: 1.75rem 2rem !important;
+  border-radius: 1.15rem !important;
+}
+
+.overview-banner-card h3 {
+  font-size: 1.3rem !important; /* Scaled up heading */
+  font-weight: 700 !important;
+  letter-spacing: -0.015em !important;
+  color: var(--slate-900);
+  line-height: 1.35 !important;
+}
+
+.overview-banner-card p {
+  font-size: 1rem !important; /* Scaled up subtext */
+  color: var(--slate-500) !important;
+  line-height: 1.55 !important;
+  margin-top: 0.4rem !important;
+}
+
+.overview-banner-card .btn {
+  font-size: 0.975rem !important;
+  font-weight: 600 !important;
+  padding: 0.65rem 1.35rem !important;
+  border-radius: 0.625rem !important;
+}
+
+/* 4. Tab Navigation Links */
+.employer-wide-container .tabs {
+  gap: 2.25rem !important;
+  border-bottom: 2px solid var(--slate-200) !important;
+  margin-bottom: 2rem !important;
+}
+
+.employer-wide-container .tab {
+  font-size: 1.05rem !important; /* Scaled up from 0.95rem */
+  font-weight: 600 !important;
+  padding: 0.85rem 0.5rem 1.15rem 0.5rem !important;
+  letter-spacing: 0.01em !important;
+}
+
+.employer-wide-container .tab.active {
+  font-weight: 700 !important;
+}
+
+.employer-wide-container .tab .badge {
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  padding: 0.25rem 0.6rem !important;
+}
+
+/* 5. Statistics Cards */
+.employer-wide-container .stat-card {
+  padding: 1.85rem 1.75rem !important;
+  border-radius: 1.15rem !important;
+}
+
+.employer-wide-container .stat-title {
+  font-size: 1rem !important; /* Scaled up label */
+  font-weight: 600 !important;
+  color: var(--slate-500) !important;
+  margin-bottom: 0.65rem !important;
+}
+
+.employer-wide-container .stat-value {
+  font-size: 2.5rem !important; /* Scaled up prominent stat value */
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+  letter-spacing: -0.03em !important;
+}
+
+/* 6. Applicant Pipeline Section */
+.applicant-pipeline-wrap {
+  padding: 1.75rem 2rem !important;
+  border-radius: 1.15rem !important;
+}
+
+.applicant-pipeline-wrap .pipeline-header-row {
+  margin-bottom: 1.75rem !important;
+  padding-bottom: 1.25rem !important;
+  border-bottom: 1px solid var(--slate-200) !important;
+}
+
+.applicant-pipeline-wrap h3 {
+  font-size: 1.35rem !important; /* Scaled up section title */
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--slate-900) !important;
+}
+
+.applicant-pipeline-wrap .pipeline-header-row p {
+  font-size: 0.95rem !important; /* Scaled up pipeline description */
+  color: var(--slate-500) !important;
+  margin-top: 0.35rem !important;
+}
+
+#pipeline-total-badge {
+  font-size: 0.875rem !important; /* Scaled up total candidates badge */
+  font-weight: 700 !important;
+  padding: 0.35rem 0.85rem !important;
+  border-radius: 9999px !important;
+}
+
+.admin-search-wrapper-compact {
+  min-width: 250px !important;
+}
+
+.admin-search-wrapper .admin-search-input {
+  font-size: 0.95rem !important; /* Scaled up search input text */
+  padding: 0.65rem 1rem 0.65rem 2.5rem !important;
+  border-radius: 0.625rem !important;
+}
+
+/* 7. Kanban Board Columns & Headers */
+.kanban-board-wide {
+  gap: 1.5rem !important;
+}
+
+.kanban-col {
+  padding: 1.5rem !important;
+  border-radius: 1rem !important;
+}
+
+.kanban-header {
+  margin-bottom: 1.25rem !important;
+  padding-bottom: 0.85rem !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.kanban-header h4 {
+  font-size: 1.05rem !important; /* Scaled up column header title */
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+  margin: 0 !important;
+}
+
+.kanban-header .badge {
+  font-size: 0.85rem !important; /* Scaled up column count badge */
+  font-weight: 700 !important;
+  padding: 0.3rem 0.75rem !important;
+  border-radius: 9999px !important;
+}
+
+.kanban-cards {
+  gap: 1.25rem !important;
+}
+
+/* 8. Kanban Candidate Cards Typography & Padding */
+.kanban-card {
+  padding: 1.45rem 1.5rem !important; /* Comfortable card padding */
+  border-radius: 0.875rem !important;
+  border: 1px solid #e2e8f0;
+}
+
+/* Candidate Avatar Circle */
+.kanban-card .card-icon-circle,
+.kanban-card .card-icon-sm {
+  width: 48px !important;
+  height: 48px !important;
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  border-radius: 50% !important;
+  flex-shrink: 0 !important;
+}
+
+/* Applicant Name */
+.kanban-card h4,
+.kanban-applicant-name {
+  font-size: 1.15rem !important; /* Scaled up from 0.875rem */
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  color: var(--slate-900) !important;
+  letter-spacing: -0.01em !important;
+  margin: 0 !important;
+}
+
+/* "Applied for:" / "Hired for:" line */
+.kanban-card p.kanban-applied-for,
+.kanban-card p:first-of-type {
+  font-size: 0.95rem !important; /* Scaled up from 0.75rem */
+  font-weight: 500 !important;
+  line-height: 1.45 !important;
+  color: var(--slate-600) !important;
+  margin-top: 0.3rem !important;
+  margin-bottom: 0.15rem !important;
+}
+
+.kanban-card p.kanban-applied-for span,
+.kanban-card p:first-of-type span {
+  font-size: 0.975rem !important;
+  font-weight: 600 !important;
+  color: var(--slate-800) !important;
+}
+
+/* Applied / Hired Date */
+.kanban-card p.kanban-applied-date,
+.kanban-card p:last-of-type {
+  font-size: 0.875rem !important; /* Scaled up from 0.75rem */
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+  margin-top: 0.2rem !important;
+  margin-bottom: 0 !important;
+}
+
+/* Kanban Status Badges */
+.kanban-card .badge,
+.kanban-card .kanban-badge {
+  font-size: 0.85rem !important; /* Scaled up from 0.75rem */
+  font-weight: 600 !important;
+  padding: 0.35rem 0.8rem !important;
+  border-radius: 9999px !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* Kanban Action Buttons (Download CV, View Profile, Hire, Reject, Remove) */
+.kanban-card .btn,
+.kanban-card .kanban-btn {
+  font-size: 0.9rem !important; /* Scaled up from text-xs 0.75rem */
+  font-weight: 600 !important;
+  padding: 0.55rem 0.85rem !important;
+  border-radius: 0.5rem !important;
+  min-height: 38px !important;
+}
+
+.kanban-card .btn svg,
+.kanban-card .kanban-btn svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+
+/* 9. Post a Job Tab & Form Typography */
+.post-job-card {
+  padding: 2.5rem 2.75rem !important;
+  border-radius: 1.15rem !important;
+}
+
+.post-job-heading {
+  font-size: 2.1rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.025em !important;
+}
+
+.post-job-card > p {
+  font-size: 1rem !important;
+  color: var(--slate-500) !important;
+  margin-bottom: 1.75rem !important;
+}
+
+.freemium-status-box {
+  padding: 1.25rem 1.5rem !important;
+  border-radius: 0.875rem !important;
+}
+
+.freemium-status-box .font-bold {
+  font-size: 1.05rem !important;
+}
+
+#freemium-count-badge {
+  font-size: 0.85rem !important;
+  padding: 0.25rem 0.65rem !important;
+}
+
+#freemium-description {
+  font-size: 0.925rem !important;
+  line-height: 1.45 !important;
+}
+
+#freemium-tier-pill {
+  font-size: 0.875rem !important;
+  padding: 0.35rem 0.85rem !important;
+}
+
+.post-job-form {
+  gap: 1.5rem !important;
+}
+
+.post-job-form .form-label,
+.post-job-form .form-label-sm {
+  font-size: 0.975rem !important;
+  font-weight: 600 !important;
+  color: var(--slate-700) !important;
+  margin-bottom: 0.5rem !important;
+  display: block;
+}
+
+.post-job-form .form-input {
+  font-size: 1rem !important; /* Standard comfortable 16px */
+  padding: 0.75rem 1rem !important;
+  border-radius: 0.625rem !important;
+  line-height: 1.5 !important;
+}
+
+.post-job-form textarea.form-input {
+  min-height: 140px !important;
+}
+
+.post-job-form .text-xs-help {
+  font-size: 0.875rem !important;
+  margin-top: 0.35rem !important;
+}
+
+.btn-post-submit {
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  padding: 1rem 2.5rem !important;
+  border-radius: 0.75rem !important;
+}
+
+/* 10. Manage Jobs Tab Typography */
+.job-manage-card {
+  padding: 1.75rem 2rem !important;
+  border-radius: 1rem !important;
+}
+
+.job-manage-title {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: var(--slate-900) !important;
+}
+
+.job-manage-meta {
+  font-size: 0.95rem !important;
+  gap: 1.25rem !important;
+  margin-top: 0.65rem !important;
+}
+
+.job-manage-meta-item svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.job-manage-header .badge {
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  padding: 0.3rem 0.75rem !important;
+}
+
+.job-manage-actions .btn {
+  font-size: 0.925rem !important;
+  font-weight: 600 !important;
+  padding: 0.55rem 1.1rem !important;
+}
+
+/* 11. Company Profile Tab Typography */
+#employer-profile-tab .form-label {
+  font-size: 0.975rem !important;
+  font-weight: 600 !important;
+  color: var(--slate-700) !important;
+}
+
+#employer-profile-tab .form-input {
+  font-size: 1rem !important;
+  padding: 0.75rem 1rem !important;
+}
+
+#employer-profile-tab h2,
+#employer-profile-tab h3 {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+}
+
+/* 12. Dark Mode Typography Polish */
+[data-theme="dark"] .employer-wide-container .page-title,
+[data-theme="dark"] .overview-banner-card h3,
+[data-theme="dark"] .applicant-pipeline-wrap h3,
+[data-theme="dark"] .post-job-heading,
+[data-theme="dark"] .job-manage-title,
+[data-theme="dark"] .kanban-card h4,
+[data-theme="dark"] .kanban-applicant-name {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .employer-wide-container .page-description,
+[data-theme="dark"] .overview-banner-card p,
+[data-theme="dark"] .applicant-pipeline-wrap .pipeline-header-row p,
+[data-theme="dark"] .post-job-card > p,
+[data-theme="dark"] .kanban-card p.kanban-applied-for,
+[data-theme="dark"] .kanban-card p:first-of-type {
+  color: var(--slate-400) !important;
+}
+
+[data-theme="dark"] .kanban-card p.kanban-applied-for span,
+[data-theme="dark"] .kanban-card p:first-of-type span {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .kanban-header h4 {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .kanban-header {
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .applicant-pipeline-wrap .pipeline-header-row {
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .post-job-form .form-label,
+[data-theme="dark"] #employer-profile-tab .form-label {
+  color: var(--slate-300) !important;
+}
+
+/* Admin Message Employer Modal Enhancements */
+#message-employer-modal .modal-content,
+.admin-message-modal-content {
+  max-width: 44rem !important;
+  width: 95% !important;
+  padding: 2.25rem !important;
+  border-radius: 1rem !important;
+}
+
+#msg-body,
+.admin-message-textarea {
+  min-height: 165px !important;
+  resize: vertical !important;
+  line-height: 1.6 !important;
+  font-size: 0.9375rem !important;
+  padding: 0.875rem 1rem !important;
+  box-sizing: border-box !important;
+  display: block !important;
+  width: 100% !important;
+}
+
+[data-theme="dark"] #message-employer-modal .modal-content {
+  background-color: var(--card-bg, #1e293b) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] #msg-body,
+[data-theme="dark"] .admin-message-textarea {
+  background-color: rgba(15, 23, 42, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #f8fafc !important;
 }

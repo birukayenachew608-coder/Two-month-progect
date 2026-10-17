@@ -273,7 +273,7 @@ exports.getEmployers = async (req, res) => {
         let query = `SELECT id, name, company_name, email, phone_number as phone, location, 
             COALESCE(NULLIF(profile_photo_url, ''), NULLIF(profile_photo, ''), NULL) AS profile_photo,
             COALESCE(NULLIF(profile_photo_url, ''), NULLIF(profile_photo, ''), NULL) AS profile_photo_url,
-            account_status, created_at FROM employers`;
+            account_status, is_approved, created_at FROM employers`;
         const queryParams = [];
 
         if (search) {
@@ -296,15 +296,42 @@ exports.updateEmployerStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
     try {
-        const [result] = await pool.query('UPDATE employers SET account_status = ? WHERE id = ?', [status, id]);
-        if (result.affectedRows === 0) {
+        const [empRows] = await pool.query('SELECT email FROM employers WHERE id = ?', [id]);
+        if (empRows.length === 0) {
             return res.status(404).json({ message: 'Employer not found' });
         }
-        res.status(200).json({ message: 'Employer status updated' });
+        const empEmail = empRows[0].email;
+
+        const isApproved = (status === 'active' || status === 'approved') ? 1 : 0;
+        const newStatus = (status === 'approved' || status === 'active') ? 'active' : (status === 'rejected' ? 'banned' : status);
+
+        // Update employers table
+        await pool.query('UPDATE employers SET account_status = ?, is_approved = ? WHERE id = ?', [newStatus, isApproved, id]);
+
+        // CRITICAL (FR-12 & Section 6): Update is_approved field in users table
+        await pool.query('UPDATE users SET is_approved = ? WHERE email = ?', [isApproved, empEmail]);
+
+        res.status(200).json({ 
+            message: `Employer ${isApproved ? 'approved' : 'rejected / banned'} successfully`,
+            is_approved: Boolean(isApproved),
+            account_status: newStatus
+        });
     } catch (error) {
         console.error('Error updating employer:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
+};
+
+exports.approveEmployer = async (req, res) => {
+    req.body = req.body || {};
+    req.body.status = 'active';
+    return exports.updateEmployerStatus(req, res);
+};
+
+exports.rejectEmployer = async (req, res) => {
+    req.body = req.body || {};
+    req.body.status = 'banned';
+    return exports.updateEmployerStatus(req, res);
 };
 
 exports.deleteEmployer = async (req, res) => {
@@ -571,6 +598,9 @@ exports.updateJobStatus = async (req, res) => {
 exports.deleteJob = async (req, res) => {
     const { id } = req.params;
     try {
+        await pool.query('DELETE FROM reports WHERE job_id = ?', [id]).catch(() => {});
+        await pool.query('DELETE FROM applications WHERE job_id = ?', [id]).catch(() => {});
+        await pool.query('DELETE FROM saved_jobs WHERE job_id = ?', [id]).catch(() => {});
         const [result] = await pool.query('DELETE FROM jobs WHERE id = ?', [id]);
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Job not found' });

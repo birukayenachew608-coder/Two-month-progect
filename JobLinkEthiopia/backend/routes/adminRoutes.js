@@ -125,6 +125,8 @@ router.get('/stats', adminController.getDashboardStats);
 // Employers
 router.get('/employers', adminController.getEmployers);
 router.put('/employers/:id/status', adminController.updateEmployerStatus);
+router.put('/employers/:id/approve', adminController.approveEmployer);
+router.put('/employers/:id/reject', adminController.rejectEmployer);
 router.delete('/employers/:id', adminController.deleteEmployer);
 
 // Job Seekers

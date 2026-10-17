@@ -17,11 +17,16 @@ router.delete('/saved/:seekerId/:jobId', verifySeeker, jobController.unsaveJob);
 // Recommended Jobs
 router.get('/recommended/:seekerId', jobController.getRecommendedJobs);
 
+router.get('/employer/my-jobs', verifyEmployer, jobController.getEmployerJobs);
+router.get('/employer/:employerId', verifyEmployer, jobController.getEmployerJobs);
+
 // Job by ID routes
 router.get('/:id', jobController.getJobById);
 router.post('/:id/view', jobController.incrementJobView);
 router.post('/:id/report', jobController.reportJob);
 router.delete('/:id/report', jobController.withdrawJobReport);
+router.put('/:id/close', verifyEmployer, jobController.closeJob);
+router.patch('/:id/status', verifyEmployer, jobController.updateJob);
 router.put('/:id', verifyEmployer, jobController.updateJob);
 router.delete('/:id', verifyEmployer, jobController.deleteJob);
 
