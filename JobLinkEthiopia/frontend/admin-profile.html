@@ -236,13 +236,18 @@
   <header class="header">
     <div class="container header-inner flex-between">
       <a href="index.html" class="logo-link">
-        <img src="logo.png" alt="JobLink Ethiopia Logo" class="nav-logo" />
-        <span class="logo-text">JobLink <span class="text-primary">Ethiopia</span></span>
+        <div class="logo-container">
+          <img src="logo.png" alt="JobLink Ethiopia Logo" class="nav-logo" />
+        </div>
+        <span class="logo-text brand-text">
+          <span class="brand-joblink">JobLink</span>
+          <span class="brand-ethiopia">Ethiopia</span>
+        </span>
       </a>
 
       <!-- Desktop Nav -->
       <nav class="nav-menu">
-        <a href="index.html" class="nav-btn">Home</a>
+        <a href="index.html" class="nav-link nav-home-link">Home</a>
         <a href="admin.html" class="nav-btn">Admin Dashboard</a>
         <a href="admin-profile.html" class="nav-btn active">Profile</a>
       </nav>
@@ -254,6 +259,13 @@
         </button>
         <span class="badge badge-super-admin" id="header-admin-badge">Admin</span>
         <a href="index.html" class="logout-link">Logout</a>
+        <button type="button" class="btn btn-icon-small btn-outline mobile-nav-toggle" data-action="toggle-mobile-nav" aria-label="Toggle Navigation Menu" aria-expanded="false" title="Toggle Navigation Menu">
+          <svg class="hamburger-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
       </div>
     </div>
   </header>
@@ -456,5 +468,6 @@
 
   <script src="js/main.js" defer></script>
   <script src="js/admin-profile.js" defer></script>
+  <script src="js/cursor.js" defer></script>
 </body>
 </html>

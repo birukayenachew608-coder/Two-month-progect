@@ -16,17 +16,29 @@
   <header class="header">
     <div class="container header-inner flex-between">
       <a href="index.html" class="logo-link">
-        <img src="logo.png" alt="JobLink Ethiopia Logo" class="nav-logo" />
-        <span class="logo-text">JobLink <span class="text-primary">Ethiopia</span></span>
+        <div class="logo-container">
+          <img src="logo.png" alt="JobLink Ethiopia Logo" class="nav-logo" />
+        </div>
+        <span class="logo-text brand-text">
+          <span class="brand-joblink">JobLink</span>
+          <span class="brand-ethiopia">Ethiopia</span>
+        </span>
       </a>
       <nav class="nav-menu">
-        <a href="index.html" class="nav-btn">Home</a>
+        <a href="index.html" class="nav-link nav-home-link">Home</a>
       </nav>
       <div class="auth-actions">
         <button class="btn btn-icon-small btn-outline btn-theme-toggle" data-action="toggle-theme" title="Toggle Dark Mode">
           <svg class="icon-theme-toggle" fill="none" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+        </button>
+        <button type="button" class="btn btn-icon-small btn-outline mobile-nav-toggle" data-action="toggle-mobile-nav" aria-label="Toggle Navigation Menu" aria-expanded="false" title="Toggle Navigation Menu">
+          <svg class="hamburger-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
         </button>
       </div>
@@ -105,7 +117,7 @@
               <div class="logo-box footer-logo-box">
                 JL
               </div>
-              <span class="logo-text text-white text-xl font-bold">JobLink <span class="text-primary-500">Ethiopia</span></span>
+              <span class="logo-text brand-text"><span class="brand-joblink">JobLink</span> <span class="brand-ethiopia">Ethiopia</span></span>
             </div>
           </a>
           <p class="text-slate-400 mb-6 text-sm leading-relaxed max-w-sm">
@@ -115,7 +127,7 @@
         </div>
 
         <!-- Resources -->
-        <div class="footer-links">
+        <div class="footer-links footer-resources">
           <h4 class="text-white font-semibold mb-6 text-base tracking-wide uppercase">Resources</h4>
           <ul class="flex flex-col gap-3 text-sm text-slate-400">
             <li><a href="index.html#search-keyword" id="footer-search-jobs" class="hover:text-primary-400 transition-colors">Search Jobs</a></li>
@@ -126,7 +138,7 @@
         </div>
 
         <!-- Company -->
-        <div class="footer-links">
+        <div class="footer-links footer-company">
           <h4 class="text-white font-semibold mb-6 text-base tracking-wide uppercase">Company</h4>
           <ul class="flex flex-col gap-3 text-sm text-slate-400">
             <li><a href="employer.html" id="footer-post-job" class="hover:text-primary-400 transition-colors">Post a Job</a></li>
@@ -229,6 +241,7 @@
 
   <script src="js/main.js" defer></script>
   <script src="js/job-details.js" defer></script>
+  <script src="js/cursor.js" defer></script>
 </body>
 
 </html>

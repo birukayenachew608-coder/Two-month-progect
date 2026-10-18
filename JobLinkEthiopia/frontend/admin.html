@@ -14,13 +14,18 @@
   <header class="header">
     <div class="container header-inner flex-between admin-wide-container">
       <a href="index.html" class="logo-link">
-        <img src="logo.png" alt="JobLink Ethiopia Logo" class="nav-logo" />
-        <span class="logo-text">JobLink <span class="text-primary">Ethiopia</span></span>
+        <div class="logo-container">
+          <img src="logo.png" alt="JobLink Ethiopia Logo" class="nav-logo" />
+        </div>
+        <span class="logo-text brand-text">
+          <span class="brand-joblink">JobLink</span>
+          <span class="brand-ethiopia">Ethiopia</span>
+        </span>
       </a>
 
       <!-- Desktop Nav -->
       <nav class="nav-menu">
-        <a href="index.html" class="nav-btn">Home</a>
+        <a href="index.html" class="nav-link nav-home-link">Home</a>
         <a href="admin.html" class="nav-btn active">Admin Dashboard</a>
       </nav>
 
@@ -31,6 +36,13 @@
         </button>
         <a href="admin-profile.html" class="user-company-name" style="text-decoration: none; cursor: pointer;" title="View Admin Profile">System Admin</a>
         <a href="index.html" class="logout-link">Logout</a>
+        <button type="button" class="btn btn-icon-small btn-outline mobile-nav-toggle" data-action="toggle-mobile-nav" aria-label="Toggle Navigation Menu" aria-expanded="false" title="Toggle Navigation Menu">
+          <svg class="hamburger-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
       </div>
     </div>
   </header>
@@ -131,14 +143,14 @@
 
       <!-- Section 2: Flagged Jobs -->
       <div id="reported-jobs" class="tab-content space-y-8">
-        <div class="section-header-row flex-wrap gap-4">
-          <div class="flex items-center gap-2">
+        <div class="section-header-row flex-wrap gap-4 reported-jobs-header">
+          <div class="flex items-center gap-2 reported-jobs-title-wrap">
             <h2 class="section-title icon-title mb-0">
               <svg class="icon-md text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>
               Reported & Flagged Job Listings
             </h2>
           </div>
-          <div class="admin-search-wrapper">
+          <div class="admin-search-wrapper reported-jobs-search-wrap">
             <svg class="admin-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             <input type="text" id="reported-jobs-search-input" class="admin-search-input" placeholder="Search reported jobs by title or company...">
           </div>
@@ -239,5 +251,6 @@
 
   <script src="js/main.js" defer></script>
   <script src="js/admin.js" defer></script>
+  <script src="js/cursor.js" defer></script>
 </body>
 </html>

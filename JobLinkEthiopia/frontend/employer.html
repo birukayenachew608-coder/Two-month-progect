@@ -15,13 +15,18 @@
   <header class="header">
     <div class="container header-inner flex-between employer-wide-container">
       <a href="index.html" class="logo-link">
-        <img src="logo.png" alt="JobLink Ethiopia Logo" class="nav-logo" />
-        <span class="logo-text">JobLink <span class="text-primary">Ethiopia</span></span>
+        <div class="logo-container">
+          <img src="logo.png" alt="JobLink Ethiopia Logo" class="nav-logo" />
+        </div>
+        <span class="logo-text brand-text">
+          <span class="brand-joblink">JobLink</span>
+          <span class="brand-ethiopia">Ethiopia</span>
+        </span>
       </a>
 
       <!-- Desktop Nav -->
       <nav class="nav-menu">
-        <a href="index.html" class="nav-btn">Home</a>
+        <a href="index.html" class="nav-link nav-home-link">Home</a>
         <a href="employer.html" class="nav-btn active">Employer Dashboard</a>
       </nav>
 
@@ -35,6 +40,13 @@
           <span class="user-company-name">TechSolutions PLC</span>
         </div>
         <a href="javascript:void(0)" class="logout-link" id="employer-logout-btn" data-action="logout-employer">Logout</a>
+        <button type="button" class="btn btn-icon-small btn-outline mobile-nav-toggle" data-action="toggle-mobile-nav" aria-label="Toggle Navigation Menu" aria-expanded="false" title="Toggle Navigation Menu">
+          <svg class="hamburger-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
       </div>
     </div>
   </header>
@@ -86,12 +98,12 @@
 
       <!-- Quick Actions & Overview Card -->
       <div class="card p-6 rounded-2xl border border-slate-200 shadow-xs overview-banner-card">
-        <div class="flex flex-wrap justify-between items-center gap-4">
-          <div>
+        <div class="flex flex-wrap justify-between items-center gap-4 overview-banner-inner">
+          <div class="overview-banner-text">
             <h3 class="text-lg font-bold text-slate-900 m-0">Welcome to your Employer Dashboard</h3>
             <p class="text-sm text-slate-500 mt-1 mb-0">Create new job opportunities, track applicants in real time, and manage your company presence.</p>
           </div>
-          <div class="flex items-center gap-3 flex-wrap">
+          <div class="flex items-center gap-3 flex-wrap overview-banner-actions">
             <button type="button" class="btn btn-primary" data-action="switch-tab" data-target="post-job-tab">
               <svg class="icon-sm inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
               Post a New Job
@@ -571,12 +583,9 @@
           Sign In
         </button>
       </form>
-      <p class="text-sm text-center text-slate-600 flex justify-center gap-1 auth-footer-text">
-        <span id="auth-toggle-text">Don't have an account?</span>
-        <button class="text-primary font-medium btn-clear" data-action="toggle-auth">
-          Register here
-        </button>
-      </p>
+      <!-- Switch to Register / Sign In links -->
+      <div class="auth-switch-text" id="auth-switch-signin" style="text-align: center; margin-top: 15px; font-size: 0.9rem;">Don't have an account? <a href="#" data-action="toggle-auth" onclick="openRegisterModal(event); return false;" style="color: #00c3ff;">Register</a></div>
+      <div class="auth-switch-text" id="auth-switch-register" style="text-align: center; margin-top: 15px; font-size: 0.9rem; display: none;">Already have an account? <a href="#" data-action="toggle-auth" onclick="openLoginModal(event); return false;" style="color: #00c3ff;">Sign In</a></div>
     </div>
   </div>
 
@@ -655,5 +664,6 @@
 
   <script src="js/employer.js"></script>
   <script src="js/main.js" defer></script>
+  <script src="js/cursor.js" defer></script>
 </body>
 </html>

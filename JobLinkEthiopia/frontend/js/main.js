@@ -1,111 +1,111 @@
 // --- Role-Isolated Storage Helpers ---
 function getSeekerAuth() {
-    let token = localStorage.getItem('seeker_token') || 
-                localStorage.getItem('accessToken') || 
-                sessionStorage.getItem('accessToken') || 
-                sessionStorage.getItem('seeker_token') || 
-                localStorage.getItem('token');
-    let userStr = localStorage.getItem('seeker_user') || 
-                  sessionStorage.getItem('seeker_user') || 
-                  localStorage.getItem('user') || 
-                  sessionStorage.getItem('user');
-    let user = null;
-    if (userStr) {
-        try { user = typeof userStr === 'string' ? JSON.parse(userStr) : userStr; } catch (e) {}
-    }
-    if ((!token || !user) && (localStorage.getItem('token') || localStorage.getItem('accessToken')) && (localStorage.getItem('user') || sessionStorage.getItem('user'))) {
-        try {
-            const raw = localStorage.getItem('user') || sessionStorage.getItem('user');
-            const legacyUser = typeof raw === 'string' ? JSON.parse(raw) : raw;
-            if (legacyUser && (legacyUser.role === 'job_seeker' || !legacyUser.role)) {
-                token = localStorage.getItem('seeker_token') || localStorage.getItem('accessToken') || localStorage.getItem('token');
-                user = legacyUser;
-            }
-        } catch (e) {}
-    }
-    return { token, user };
+  let token = localStorage.getItem('seeker_token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('accessToken') ||
+    sessionStorage.getItem('seeker_token') ||
+    localStorage.getItem('token');
+  let userStr = localStorage.getItem('seeker_user') ||
+    sessionStorage.getItem('seeker_user') ||
+    localStorage.getItem('user') ||
+    sessionStorage.getItem('user');
+  let user = null;
+  if (userStr) {
+    try { user = typeof userStr === 'string' ? JSON.parse(userStr) : userStr; } catch (e) { }
+  }
+  if ((!token || !user) && (localStorage.getItem('token') || localStorage.getItem('accessToken')) && (localStorage.getItem('user') || sessionStorage.getItem('user'))) {
+    try {
+      const raw = localStorage.getItem('user') || sessionStorage.getItem('user');
+      const legacyUser = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (legacyUser && (legacyUser.role === 'job_seeker' || !legacyUser.role)) {
+        token = localStorage.getItem('seeker_token') || localStorage.getItem('accessToken') || localStorage.getItem('token');
+        user = legacyUser;
+      }
+    } catch (e) { }
+  }
+  return { token, user };
 }
 
 function setSeekerAuth(token, user) {
-    if (token) {
-        localStorage.setItem('seeker_token', token);
-        localStorage.setItem('accessToken', token);
-    }
-    if (user) {
-        const str = typeof user === 'string' ? user : JSON.stringify(user);
-        localStorage.setItem('seeker_user', str);
-        localStorage.setItem('user', str);
-    }
+  if (token) {
+    localStorage.setItem('seeker_token', token);
+    localStorage.setItem('accessToken', token);
+  }
+  if (user) {
+    const str = typeof user === 'string' ? user : JSON.stringify(user);
+    localStorage.setItem('seeker_user', str);
+    localStorage.setItem('user', str);
+  }
 }
 
 function clearSeekerAuth() {
-    localStorage.removeItem('seeker_token');
-    localStorage.removeItem('seeker_user');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('seeker_token');
-    sessionStorage.removeItem('seeker_user');
-    sessionStorage.removeItem('accessToken');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
+  localStorage.removeItem('seeker_token');
+  localStorage.removeItem('seeker_user');
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  sessionStorage.removeItem('seeker_token');
+  sessionStorage.removeItem('seeker_user');
+  sessionStorage.removeItem('accessToken');
+  sessionStorage.removeItem('token');
+  sessionStorage.removeItem('user');
 }
 
 function getEmployerAuth() {
-    let token = localStorage.getItem('employer_token') || 
-                localStorage.getItem('accessToken') || 
-                sessionStorage.getItem('accessToken') || 
-                sessionStorage.getItem('employer_token') || 
-                localStorage.getItem('token');
-    let userStr = localStorage.getItem('employer_user') || 
-                  sessionStorage.getItem('employer_user') || 
-                  localStorage.getItem('user') || 
-                  sessionStorage.getItem('user');
-    let user = null;
-    if (userStr) {
-        try { 
-            const parsed = typeof userStr === 'string' ? JSON.parse(userStr) : userStr;
-            if (parsed) {
-                user = parsed;
-            }
-        } catch (e) {}
-    }
-    if ((!token || !user) && (localStorage.getItem('token') || localStorage.getItem('accessToken')) && (localStorage.getItem('user') || sessionStorage.getItem('user'))) {
-        try {
-            const raw = localStorage.getItem('user') || sessionStorage.getItem('user');
-            const legacyUser = typeof raw === 'string' ? JSON.parse(raw) : raw;
-            if (legacyUser && (legacyUser.role === 'employer' || !legacyUser.role)) {
-                token = localStorage.getItem('employer_token') || localStorage.getItem('accessToken') || localStorage.getItem('token');
-                user = legacyUser;
-            }
-        } catch (e) {}
-    }
-    return { token, user };
+  let token = localStorage.getItem('employer_token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('accessToken') ||
+    sessionStorage.getItem('employer_token') ||
+    localStorage.getItem('token');
+  let userStr = localStorage.getItem('employer_user') ||
+    sessionStorage.getItem('employer_user') ||
+    localStorage.getItem('user') ||
+    sessionStorage.getItem('user');
+  let user = null;
+  if (userStr) {
+    try {
+      const parsed = typeof userStr === 'string' ? JSON.parse(userStr) : userStr;
+      if (parsed) {
+        user = parsed;
+      }
+    } catch (e) { }
+  }
+  if ((!token || !user) && (localStorage.getItem('token') || localStorage.getItem('accessToken')) && (localStorage.getItem('user') || sessionStorage.getItem('user'))) {
+    try {
+      const raw = localStorage.getItem('user') || sessionStorage.getItem('user');
+      const legacyUser = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (legacyUser && (legacyUser.role === 'employer' || !legacyUser.role)) {
+        token = localStorage.getItem('employer_token') || localStorage.getItem('accessToken') || localStorage.getItem('token');
+        user = legacyUser;
+      }
+    } catch (e) { }
+  }
+  return { token, user };
 }
 
 function setEmployerAuth(token, user) {
-    if (token) {
-        localStorage.setItem('employer_token', token);
-        localStorage.setItem('accessToken', token);
-    }
-    if (user) {
-        const str = typeof user === 'string' ? user : JSON.stringify(user);
-        localStorage.setItem('employer_user', str);
-        localStorage.setItem('user', str);
-    }
+  if (token) {
+    localStorage.setItem('employer_token', token);
+    localStorage.setItem('accessToken', token);
+  }
+  if (user) {
+    const str = typeof user === 'string' ? user : JSON.stringify(user);
+    localStorage.setItem('employer_user', str);
+    localStorage.setItem('user', str);
+  }
 }
 
 function clearEmployerAuth() {
-    localStorage.removeItem('employer_token');
-    localStorage.removeItem('employer_user');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('employer_token');
-    sessionStorage.removeItem('employer_user');
-    sessionStorage.removeItem('accessToken');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
+  localStorage.removeItem('employer_token');
+  localStorage.removeItem('employer_user');
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  sessionStorage.removeItem('employer_token');
+  sessionStorage.removeItem('employer_user');
+  sessionStorage.removeItem('accessToken');
+  sessionStorage.removeItem('token');
+  sessionStorage.removeItem('user');
 }
 
 // Expose on window for direct access across modules/pages
@@ -117,166 +117,200 @@ window.setEmployerAuth = setEmployerAuth;
 window.clearEmployerAuth = clearEmployerAuth;
 
 // Helper: Open Modal by ID
-window.openModal = function(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.add('active');
-        modal.classList.remove('hidden');
-    }
+window.openModal = function (modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.add('active');
+    modal.classList.remove('hidden');
+  }
 };
 
 // Helper: Close Modal by ID
-window.closeModal = function(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('active');
-        setTimeout(() => modal.classList.add('hidden'), 300);
-    }
+window.closeModal = function (modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.remove('active');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+  }
+};
+
+// Helper: Open Register Modal directly
+window.openRegisterModal = function (e, role) {
+  if (e && e.preventDefault) e.preventDefault();
+  if (typeof window.setAuthModalMode === 'function') {
+    window.setAuthModalMode(null, true, role);
+  } else {
+    try {
+      isRegisterMode = true;
+      if (typeof updateAuthModalUI === 'function') updateAuthModalUI();
+    } catch (err) {}
+  }
+  if (typeof window.openModal === 'function') {
+    window.openModal('login-modal');
+  }
+  return false;
+};
+
+// Helper: Open Sign In / Login Modal directly
+window.openLoginModal = function (e, role) {
+  if (e && e.preventDefault) e.preventDefault();
+  if (typeof window.setAuthModalMode === 'function') {
+    window.setAuthModalMode(null, false, role);
+  } else {
+    try {
+      isRegisterMode = false;
+      if (typeof updateAuthModalUI === 'function') updateAuthModalUI();
+    } catch (err) {}
+  }
+  if (typeof window.openModal === 'function') {
+    window.openModal('login-modal');
+  }
+  return false;
 };
 
 // Helper: Prompt Seeker Login Modal / Redirection
-window.promptSeekerLogin = function(msg) {
-    if (msg) showToast(msg, 'warning');
-    const loginModal = document.getElementById('login-modal');
-    if (loginModal) {
-        if (typeof updateAuthModalUI === 'function') {
-            try {
-                isRegisterMode = false;
-                loginRedirectUrl = 'seeker.html';
-                updateAuthModalUI();
-            } catch (e) {}
-        }
-        window.openModal('login-modal');
-    } else {
-        setTimeout(() => {
-            window.location.href = 'index.html?login=seeker';
-        }, 800);
+window.promptSeekerLogin = function (msg) {
+  if (msg) showToast(msg, 'warning');
+  const loginModal = document.getElementById('login-modal');
+  if (loginModal) {
+    if (typeof updateAuthModalUI === 'function') {
+      try {
+        isRegisterMode = false;
+        loginRedirectUrl = 'seeker.html';
+        updateAuthModalUI();
+      } catch (e) { }
     }
+    window.openModal('login-modal');
+  } else {
+    setTimeout(() => {
+      window.location.href = 'index.html?login=seeker';
+    }, 800);
+  }
 };
 
 // Helper: Handle Seeker Session Expiration Gracefully
-window.handleSeekerSessionExpired = function(customMessage) {
-    clearSeekerAuth();
-    if (window.userSavedJobIds) {
-        window.userSavedJobIds.clear();
-    }
-    if (typeof window.applySavedJobIconsState === 'function') {
-        window.applySavedJobIconsState();
-    }
-    if (typeof window.updateHeaderAuthUI === 'function') {
-        window.updateHeaderAuthUI(null);
-    }
-    const message = customMessage || 'Your session has expired. Please log in again to save jobs.';
-    showToast(message, 'warning');
+window.handleSeekerSessionExpired = function (customMessage) {
+  clearSeekerAuth();
+  if (window.userSavedJobIds) {
+    window.userSavedJobIds.clear();
+  }
+  if (typeof window.applySavedJobIconsState === 'function') {
+    window.applySavedJobIconsState();
+  }
+  if (typeof window.updateHeaderAuthUI === 'function') {
+    window.updateHeaderAuthUI(null);
+  }
+  const message = customMessage || 'Your session has expired. Please log in again to save jobs.';
+  showToast(message, 'warning');
 
-    const loginModal = document.getElementById('login-modal');
-    if (loginModal) {
-        if (typeof updateAuthModalUI === 'function') {
-            try {
-                isRegisterMode = false;
-                loginRedirectUrl = 'seeker.html';
-                updateAuthModalUI();
-            } catch (e) {}
-        }
-        window.openModal('login-modal');
-    } else {
-        setTimeout(() => {
-            window.location.href = 'index.html?login=seeker';
-        }, 800);
+  const loginModal = document.getElementById('login-modal');
+  if (loginModal) {
+    if (typeof updateAuthModalUI === 'function') {
+      try {
+        isRegisterMode = false;
+        loginRedirectUrl = 'seeker.html';
+        updateAuthModalUI();
+      } catch (e) { }
     }
+    window.openModal('login-modal');
+  } else {
+    setTimeout(() => {
+      window.location.href = 'index.html?login=seeker';
+    }, 800);
+  }
 };
 
 // Helper: Get Badge Color Class by Job Type
 function getJobTypeBadgeClass(type) {
-    const t = (type || '').toLowerCase().trim();
-    if (t === 'full-time') return 'badge-green';
-    if (t === 'part-time') return 'badge-blue';
-    if (t === 'contract') return 'badge-purple';
-    if (t === 'internship') return 'badge-teal';
-    if (t === 'freelance') return 'badge-orange';
-    return 'badge-green';
+  const t = (type || '').toLowerCase().trim();
+  if (t === 'full-time') return 'badge-green';
+  if (t === 'part-time') return 'badge-blue';
+  if (t === 'contract') return 'badge-purple';
+  if (t === 'internship') return 'badge-teal';
+  if (t === 'freelance') return 'badge-orange';
+  return 'badge-green';
 }
 window.getJobTypeBadgeClass = getJobTypeBadgeClass;
 
 // Utility: Format relative time ("time ago") from a date or timestamp
 function timeSince(date) {
-    if (!date) return '';
-    const d = new Date(date);
-    if (isNaN(d.getTime())) return '';
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
 
-    const seconds = Math.floor((new Date() - d) / 1000);
+  const seconds = Math.floor((new Date() - d) / 1000);
 
-    // If timestamp is slightly in the future due to minor clock skew or very recent (< 10 seconds)
-    if (seconds < 10) {
-        return 'Just now';
-    }
+  // If timestamp is slightly in the future due to minor clock skew or very recent (< 10 seconds)
+  if (seconds < 10) {
+    return 'Just now';
+  }
 
-    if (seconds < 60) {
-        return `${seconds} second${seconds === 1 ? '' : 's'} ago`;
-    }
+  if (seconds < 60) {
+    return `${seconds} second${seconds === 1 ? '' : 's'} ago`;
+  }
 
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) {
-        return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
-    }
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) {
+    return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  }
 
-    const hours = Math.floor(seconds / 3600);
-    if (hours < 24) {
-        return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-    }
+  const hours = Math.floor(seconds / 3600);
+  if (hours < 24) {
+    return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  }
 
-    const days = Math.floor(seconds / 86400);
-    if (days < 30) {
-        return `${days} day${days === 1 ? '' : 's'} ago`;
-    }
+  const days = Math.floor(seconds / 86400);
+  if (days < 30) {
+    return `${days} day${days === 1 ? '' : 's'} ago`;
+  }
 
-    const months = Math.floor(seconds / 2592000); // ~30 days
-    if (months < 12) {
-        return `${months} month${months === 1 ? '' : 's'} ago`;
-    }
+  const months = Math.floor(seconds / 2592000); // ~30 days
+  if (months < 12) {
+    return `${months} month${months === 1 ? '' : 's'} ago`;
+  }
 
-    const years = Math.floor(seconds / 31536000); // ~365 days
-    return `${years} year${years === 1 ? '' : 's'} ago`;
+  const years = Math.floor(seconds / 31536000); // ~365 days
+  return `${years} year${years === 1 ? '' : 's'} ago`;
 }
 window.timeSince = timeSince;
 
 // Unified & Isolated Logout Functions
 async function logoutSeeker(e) {
-    if (e && e.preventDefault) e.preventDefault();
-    clearSeekerAuth();
-    try {
-        await fetch('/api/auth/seeker/logout', { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            keepalive: true
-        });
-    } catch(err) {
-        console.warn('Seeker logout API notice:', err);
-    }
-    if (typeof showToast === 'function') {
-        showToast('Job Seeker logged out successfully', 'info');
-    }
-    window.location.href = 'index.html';
+  if (e && e.preventDefault) e.preventDefault();
+  clearSeekerAuth();
+  try {
+    await fetch('/api/auth/seeker/logout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      keepalive: true
+    });
+  } catch (err) {
+    console.warn('Seeker logout API notice:', err);
+  }
+  if (typeof showToast === 'function') {
+    showToast('Job Seeker logged out successfully', 'info');
+  }
+  window.location.href = 'index.html';
 }
 
 async function logoutEmployer(e) {
-    if (e && e.preventDefault) e.preventDefault();
-    clearEmployerAuth();
-    try {
-        await fetch('/api/auth/employer/logout', { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            keepalive: true
-        });
-    } catch(err) {
-        console.warn('Employer logout API notice:', err);
-    }
-    if (typeof showToast === 'function') {
-        showToast('Employer logged out successfully', 'info');
-    }
-    window.location.href = 'index.html';
+  if (e && e.preventDefault) e.preventDefault();
+  clearEmployerAuth();
+  try {
+    await fetch('/api/auth/employer/logout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      keepalive: true
+    });
+  } catch (err) {
+    console.warn('Employer logout API notice:', err);
+  }
+  if (typeof showToast === 'function') {
+    showToast('Employer logged out successfully', 'info');
+  }
+  window.location.href = 'index.html';
 }
 
 window.logoutSeeker = logoutSeeker;
@@ -329,146 +363,146 @@ document.addEventListener('click', (e) => {
 
 // --- JWT Payload Helper ---
 function parseJwtPayload(token) {
-    if (!token || typeof token !== 'string') return null;
-    try {
-        const parts = token.split('.');
-        if (parts.length !== 3) return null;
-        const base64Url = parts[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        return JSON.parse(jsonPayload);
-    } catch (e) {
-        return null;
-    }
+  if (!token || typeof token !== 'string') return null;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
 }
 window.parseJwtPayload = parseJwtPayload;
 
 // Resolve active user and role with authoritative JWT payload inspection
 function resolveActiveUserAndRole() {
-    let token = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token') ||
-                localStorage.getItem('accessToken') || localStorage.getItem('token');
-    let userStr = sessionStorage.getItem('user') || localStorage.getItem('user');
-    let user = null;
-    try { user = typeof userStr === 'string' ? JSON.parse(userStr) : userStr; } catch (e) {}
+  let token = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token') ||
+    localStorage.getItem('accessToken') || localStorage.getItem('token');
+  let userStr = sessionStorage.getItem('user') || localStorage.getItem('user');
+  let user = null;
+  try { user = typeof userStr === 'string' ? JSON.parse(userStr) : userStr; } catch (e) { }
 
-    // Check JWT payload directly
-    const payload = parseJwtPayload(token);
-    const tokenRole = payload ? payload.role : null;
+  // Check JWT payload directly
+  const payload = parseJwtPayload(token);
+  const tokenRole = payload ? payload.role : null;
 
-    if (tokenRole === 'admin' || tokenRole === 'super_admin') {
-        if (!user) user = { id: payload.id, email: payload.email, role: tokenRole, name: 'System Admin' };
-        user.role = tokenRole;
-        return { user, token, role: tokenRole };
-    }
+  if (tokenRole === 'admin' || tokenRole === 'super_admin') {
+    if (!user) user = { id: payload.id, email: payload.email, role: tokenRole, name: 'System Admin' };
+    user.role = tokenRole;
+    return { user, token, role: tokenRole };
+  }
 
-    if (user && (user.role === 'admin' || user.role === 'super_admin')) {
-        return { user, token, role: user.role };
-    }
+  if (user && (user.role === 'admin' || user.role === 'super_admin')) {
+    return { user, token, role: user.role };
+  }
 
-    if (tokenRole === 'employer') {
-        if (!user) user = { id: payload.id, email: payload.email, role: 'employer' };
-        user.role = 'employer';
-        return { user, token, role: 'employer' };
-    }
+  if (tokenRole === 'employer') {
+    if (!user) user = { id: payload.id, email: payload.email, role: 'employer' };
+    user.role = 'employer';
+    return { user, token, role: 'employer' };
+  }
 
-    if (tokenRole === 'job_seeker') {
-        if (!user) user = { id: payload.id, email: payload.email, role: 'job_seeker' };
-        user.role = 'job_seeker';
-        return { user, token, role: 'job_seeker' };
-    }
+  if (tokenRole === 'job_seeker') {
+    if (!user) user = { id: payload.id, email: payload.email, role: 'job_seeker' };
+    user.role = 'job_seeker';
+    return { user, token, role: 'job_seeker' };
+  }
 
-    // Role-specific storage fallbacks
-    const empAuth = typeof getEmployerAuth === 'function' ? getEmployerAuth() : { token: null, user: null };
-    if (empAuth.user && empAuth.user.role === 'employer') {
-        return { user: empAuth.user, token: empAuth.token, role: 'employer' };
-    }
-    const seekerAuth = typeof getSeekerAuth === 'function' ? getSeekerAuth() : { token: null, user: null };
-    if (seekerAuth.user && seekerAuth.user.role === 'job_seeker') {
-        return { user: seekerAuth.user, token: seekerAuth.token, role: 'job_seeker' };
-    }
+  // Role-specific storage fallbacks
+  const empAuth = typeof getEmployerAuth === 'function' ? getEmployerAuth() : { token: null, user: null };
+  if (empAuth.user && empAuth.user.role === 'employer') {
+    return { user: empAuth.user, token: empAuth.token, role: 'employer' };
+  }
+  const seekerAuth = typeof getSeekerAuth === 'function' ? getSeekerAuth() : { token: null, user: null };
+  if (seekerAuth.user && seekerAuth.user.role === 'job_seeker') {
+    return { user: seekerAuth.user, token: seekerAuth.token, role: 'job_seeker' };
+  }
 
-    return { user, token, role: user ? user.role : null };
+  return { user, token, role: user ? user.role : null };
 }
 window.resolveActiveUserAndRole = resolveActiveUserAndRole;
 
 // --- Universal Silent Refresh Mechanism ---
 async function silentRefreshAuth(preferredContext = null) {
-    const pathParts = window.location.pathname.split('/');
-    const currentPage = pathParts[pathParts.length - 1] || 'index.html';
+  const pathParts = window.location.pathname.split('/');
+  const currentPage = pathParts[pathParts.length - 1] || 'index.html';
 
-    const isAdminPage = currentPage.startsWith('admin');
-    const isEmployerPage = currentPage === 'employer.html';
-    const isSeekerPage = currentPage === 'seeker.html';
+  const isAdminPage = currentPage.startsWith('admin');
+  const isEmployerPage = currentPage === 'employer.html';
+  const isSeekerPage = currentPage === 'seeker.html';
 
-    let endpoints = [];
-    if (isAdminPage || preferredContext === 'admin') {
-        endpoints = ['/api/admin/refresh', '/api/auth/refresh-token'];
-    } else if (isEmployerPage || preferredContext === 'employer') {
-        endpoints = ['/api/auth/employer/refresh', '/api/auth/refresh-token'];
-    } else if (isSeekerPage || preferredContext === 'job_seeker') {
-        endpoints = ['/api/auth/seeker/refresh', '/api/auth/refresh-token'];
+  let endpoints = [];
+  if (isAdminPage || preferredContext === 'admin') {
+    endpoints = ['/api/admin/refresh', '/api/auth/refresh-token'];
+  } else if (isEmployerPage || preferredContext === 'employer') {
+    endpoints = ['/api/auth/employer/refresh', '/api/auth/refresh-token'];
+  } else if (isSeekerPage || preferredContext === 'job_seeker') {
+    endpoints = ['/api/auth/seeker/refresh', '/api/auth/refresh-token'];
+  } else {
+    const active = resolveActiveUserAndRole();
+    if (active.role === 'admin' || active.role === 'super_admin') {
+      endpoints = ['/api/admin/refresh', '/api/auth/refresh-token'];
+    } else if (active.role === 'employer') {
+      endpoints = ['/api/auth/employer/refresh', '/api/auth/refresh-token'];
+    } else if (active.role === 'job_seeker') {
+      endpoints = ['/api/auth/seeker/refresh', '/api/auth/refresh-token'];
     } else {
-        const active = resolveActiveUserAndRole();
-        if (active.role === 'admin' || active.role === 'super_admin') {
-            endpoints = ['/api/admin/refresh', '/api/auth/refresh-token'];
-        } else if (active.role === 'employer') {
-            endpoints = ['/api/auth/employer/refresh', '/api/auth/refresh-token'];
-        } else if (active.role === 'job_seeker') {
-            endpoints = ['/api/auth/seeker/refresh', '/api/auth/refresh-token'];
-        } else {
-            endpoints = ['/api/auth/refresh-token', '/api/admin/refresh', '/api/auth/seeker/refresh', '/api/auth/employer/refresh'];
-        }
+      endpoints = ['/api/auth/refresh-token', '/api/admin/refresh', '/api/auth/seeker/refresh', '/api/auth/employer/refresh'];
     }
+  }
 
-    const fetchFn = window.originalFetch || fetch;
+  const fetchFn = window.originalFetch || fetch;
 
-    for (const endpoint of endpoints) {
-        try {
-            const res = await fetchFn(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                credentials: 'include'
-            });
+  for (const endpoint of endpoints) {
+    try {
+      const res = await fetchFn(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        credentials: 'include'
+      });
 
-            if (res.ok) {
-                const data = await res.json();
-                if (data && data.user) {
-                    const newToken = data.accessToken || data.token || 'secure_cookie_auth';
-                    const freshUser = data.user;
-                    const decodedPayload = parseJwtPayload(newToken);
-                    const role = freshUser.role || (decodedPayload && decodedPayload.role) || 'job_seeker';
-                    freshUser.role = role;
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.user) {
+          const newToken = data.accessToken || data.token || 'secure_cookie_auth';
+          const freshUser = data.user;
+          const decodedPayload = parseJwtPayload(newToken);
+          const role = freshUser.role || (decodedPayload && decodedPayload.role) || 'job_seeker';
+          freshUser.role = role;
 
-                    // Store accessToken in memory, sessionStorage, and localStorage
-                    sessionStorage.setItem('accessToken', newToken);
-                    sessionStorage.setItem('token', newToken);
-                    localStorage.setItem('accessToken', newToken);
-                    localStorage.setItem('token', newToken);
-                    sessionStorage.setItem('user', JSON.stringify(freshUser));
-                    localStorage.setItem('user', JSON.stringify(freshUser));
+          // Store accessToken in memory, sessionStorage, and localStorage
+          sessionStorage.setItem('accessToken', newToken);
+          sessionStorage.setItem('token', newToken);
+          localStorage.setItem('accessToken', newToken);
+          localStorage.setItem('token', newToken);
+          sessionStorage.setItem('user', JSON.stringify(freshUser));
+          localStorage.setItem('user', JSON.stringify(freshUser));
 
-                    if (role === 'admin' || role === 'super_admin') {
-                        sessionStorage.setItem('admin_token', newToken);
-                        localStorage.setItem('admin_token', newToken);
-                        sessionStorage.setItem('admin_user', JSON.stringify(freshUser));
-                        localStorage.setItem('admin_user', JSON.stringify(freshUser));
-                    } else if (role === 'employer') {
-                        if (typeof setEmployerAuth === 'function') setEmployerAuth(newToken, freshUser);
-                    } else if (role === 'job_seeker') {
-                        if (typeof setSeekerAuth === 'function') setSeekerAuth(newToken, freshUser);
-                    }
+          if (role === 'admin' || role === 'super_admin') {
+            sessionStorage.setItem('admin_token', newToken);
+            localStorage.setItem('admin_token', newToken);
+            sessionStorage.setItem('admin_user', JSON.stringify(freshUser));
+            localStorage.setItem('admin_user', JSON.stringify(freshUser));
+          } else if (role === 'employer') {
+            if (typeof setEmployerAuth === 'function') setEmployerAuth(newToken, freshUser);
+          } else if (role === 'job_seeker') {
+            if (typeof setSeekerAuth === 'function') setSeekerAuth(newToken, freshUser);
+          }
 
-                    return { success: true, token: newToken, user: freshUser, role };
-                }
-            }
-        } catch (e) {
-            // Try next candidate endpoint
+          return { success: true, token: newToken, user: freshUser, role };
         }
+      }
+    } catch (e) {
+      // Try next candidate endpoint
     }
+  }
 
-    return { success: false };
+  return { success: false };
 }
 window.silentRefreshAuth = silentRefreshAuth;
 
@@ -479,127 +513,127 @@ let isRefreshing = false;
 let refreshSubscribers = [];
 
 function onRefreshed() {
-    refreshSubscribers.forEach(cb => cb());
-    refreshSubscribers = [];
+  refreshSubscribers.forEach(cb => cb());
+  refreshSubscribers = [];
 }
 
 function addRefreshSubscriber(cb) {
-    refreshSubscribers.push(cb);
+  refreshSubscribers.push(cb);
 }
 
 window.fetch = async function () {
-    let response = await originalFetch.apply(this, arguments);
+  let response = await originalFetch.apply(this, arguments);
 
-    // If unauthorized (401) or forbidden / expired (403)
-    if (response.status === 401 || response.status === 403) {
-        const reqUrl = typeof arguments[0] === 'string' ? arguments[0] : (arguments[0]?.url || '');
-        if (reqUrl.includes('/api/auth/seeker/refresh') || reqUrl.includes('/api/auth/employer/refresh') || 
-            reqUrl.includes('/api/admin/refresh') || reqUrl.includes('/api/auth/refresh-token') ||
-            reqUrl.includes('/api/auth/seeker/login') || reqUrl.includes('/api/auth/employer/login') || reqUrl.includes('/api/admin/login')) {
-            return response;
-        }
-
-        const pathParts = window.location.pathname.split('/');
-        const currentPage = pathParts[pathParts.length - 1] || 'index.html';
-
-        const isAdminContext = currentPage.startsWith('admin') || reqUrl.includes('/api/admin');
-        const isEmployerContext = currentPage === 'employer.html' || reqUrl.includes('/api/employer') || reqUrl.includes('/api/jobs/employer') || reqUrl.includes('/api/applications/employer');
-        const isSeekerContext = currentPage === 'seeker.html' || reqUrl.includes('/api/seeker') || reqUrl.includes('/api/jobs/saved') || reqUrl.includes('/api/applications/seeker') || reqUrl.includes('/api/alerts');
-
-        if (isAdminContext) {
-            if (!isRefreshing) {
-                isRefreshing = true;
-                try {
-                    const refreshRes = await silentRefreshAuth('admin');
-                    isRefreshing = false;
-                    if (refreshRes.success) {
-                        onRefreshed();
-                        if (arguments[1] && arguments[1].headers && refreshRes.token) {
-                            if (arguments[1].headers instanceof Headers) {
-                                arguments[1].headers.set('Authorization', `Bearer ${refreshRes.token}`);
-                            } else if (typeof arguments[1].headers === 'object') {
-                                arguments[1].headers['Authorization'] = `Bearer ${refreshRes.token}`;
-                            }
-                        }
-                        return await originalFetch.apply(this, arguments);
-                    } else {
-                        if (currentPage.startsWith('admin') && currentPage !== 'admin-login.html') {
-                            window.location.href = 'admin-login.html';
-                        }
-                    }
-                } catch(e) {
-                    isRefreshing = false;
-                }
-            }
-        } else if (isEmployerContext) {
-            const { token, user } = getEmployerAuth();
-            if (!isRefreshing) {
-                isRefreshing = true;
-                try {
-                    const refreshRes = await originalFetch('/api/auth/employer/refresh', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include'
-                    });
-                    isRefreshing = false;
-                    if (refreshRes.ok) {
-                        const d = await refreshRes.json();
-                        if (d.user) setEmployerAuth(d.token || token, d.user);
-                        onRefreshed();
-                        if (arguments[1] && arguments[1].headers && d.token) {
-                            if (arguments[1].headers instanceof Headers) {
-                                arguments[1].headers.set('Authorization', `Bearer ${d.token}`);
-                            } else if (typeof arguments[1].headers === 'object') {
-                                arguments[1].headers['Authorization'] = `Bearer ${d.token}`;
-                            }
-                        }
-                        return await originalFetch.apply(this, arguments);
-                    } else {
-                        clearEmployerAuth();
-                        if (currentPage === 'employer.html') window.location.reload();
-                    }
-                } catch(e) {
-                    isRefreshing = false;
-                }
-            }
-        } else if (isSeekerContext) {
-            const { token, user } = getSeekerAuth();
-            if (!isRefreshing) {
-                isRefreshing = true;
-                try {
-                    const refreshRes = await originalFetch('/api/auth/seeker/refresh', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include'
-                    });
-                    isRefreshing = false;
-                    if (refreshRes.ok) {
-                        const d = await refreshRes.json();
-                        if (d.user) setSeekerAuth(d.token || token, d.user);
-                        onRefreshed();
-                        if (arguments[1] && arguments[1].headers && d.token) {
-                            if (arguments[1].headers instanceof Headers) {
-                                arguments[1].headers.set('Authorization', `Bearer ${d.token}`);
-                            } else if (typeof arguments[1].headers === 'object') {
-                                arguments[1].headers['Authorization'] = `Bearer ${d.token}`;
-                            }
-                        }
-                        return await originalFetch.apply(this, arguments);
-                    } else {
-                        clearSeekerAuth();
-                        if (currentPage === 'seeker.html') {
-                            window.location.reload();
-                        } else {
-                            if (typeof window.updateHeaderAuthUI === 'function') window.updateHeaderAuthUI(null);
-                        }
-                    }
-                } catch(e) {
-                    isRefreshing = false;
-                }
-            }
-        }
+  // If unauthorized (401) or forbidden / expired (403)
+  if (response.status === 401 || response.status === 403) {
+    const reqUrl = typeof arguments[0] === 'string' ? arguments[0] : (arguments[0]?.url || '');
+    if (reqUrl.includes('/api/auth/seeker/refresh') || reqUrl.includes('/api/auth/employer/refresh') ||
+      reqUrl.includes('/api/admin/refresh') || reqUrl.includes('/api/auth/refresh-token') ||
+      reqUrl.includes('/api/auth/seeker/login') || reqUrl.includes('/api/auth/employer/login') || reqUrl.includes('/api/admin/login')) {
+      return response;
     }
-    return response;
+
+    const pathParts = window.location.pathname.split('/');
+    const currentPage = pathParts[pathParts.length - 1] || 'index.html';
+
+    const isAdminContext = currentPage.startsWith('admin') || reqUrl.includes('/api/admin');
+    const isEmployerContext = currentPage === 'employer.html' || reqUrl.includes('/api/employer') || reqUrl.includes('/api/jobs/employer') || reqUrl.includes('/api/applications/employer');
+    const isSeekerContext = currentPage === 'seeker.html' || reqUrl.includes('/api/seeker') || reqUrl.includes('/api/jobs/saved') || reqUrl.includes('/api/applications/seeker') || reqUrl.includes('/api/alerts');
+
+    if (isAdminContext) {
+      if (!isRefreshing) {
+        isRefreshing = true;
+        try {
+          const refreshRes = await silentRefreshAuth('admin');
+          isRefreshing = false;
+          if (refreshRes.success) {
+            onRefreshed();
+            if (arguments[1] && arguments[1].headers && refreshRes.token) {
+              if (arguments[1].headers instanceof Headers) {
+                arguments[1].headers.set('Authorization', `Bearer ${refreshRes.token}`);
+              } else if (typeof arguments[1].headers === 'object') {
+                arguments[1].headers['Authorization'] = `Bearer ${refreshRes.token}`;
+              }
+            }
+            return await originalFetch.apply(this, arguments);
+          } else {
+            if (currentPage.startsWith('admin') && currentPage !== 'admin-login.html') {
+              window.location.href = 'admin-login.html';
+            }
+          }
+        } catch (e) {
+          isRefreshing = false;
+        }
+      }
+    } else if (isEmployerContext) {
+      const { token, user } = getEmployerAuth();
+      if (!isRefreshing) {
+        isRefreshing = true;
+        try {
+          const refreshRes = await originalFetch('/api/auth/employer/refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+          });
+          isRefreshing = false;
+          if (refreshRes.ok) {
+            const d = await refreshRes.json();
+            if (d.user) setEmployerAuth(d.token || token, d.user);
+            onRefreshed();
+            if (arguments[1] && arguments[1].headers && d.token) {
+              if (arguments[1].headers instanceof Headers) {
+                arguments[1].headers.set('Authorization', `Bearer ${d.token}`);
+              } else if (typeof arguments[1].headers === 'object') {
+                arguments[1].headers['Authorization'] = `Bearer ${d.token}`;
+              }
+            }
+            return await originalFetch.apply(this, arguments);
+          } else {
+            clearEmployerAuth();
+            if (currentPage === 'employer.html') window.location.reload();
+          }
+        } catch (e) {
+          isRefreshing = false;
+        }
+      }
+    } else if (isSeekerContext) {
+      const { token, user } = getSeekerAuth();
+      if (!isRefreshing) {
+        isRefreshing = true;
+        try {
+          const refreshRes = await originalFetch('/api/auth/seeker/refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+          });
+          isRefreshing = false;
+          if (refreshRes.ok) {
+            const d = await refreshRes.json();
+            if (d.user) setSeekerAuth(d.token || token, d.user);
+            onRefreshed();
+            if (arguments[1] && arguments[1].headers && d.token) {
+              if (arguments[1].headers instanceof Headers) {
+                arguments[1].headers.set('Authorization', `Bearer ${d.token}`);
+              } else if (typeof arguments[1].headers === 'object') {
+                arguments[1].headers['Authorization'] = `Bearer ${d.token}`;
+              }
+            }
+            return await originalFetch.apply(this, arguments);
+          } else {
+            clearSeekerAuth();
+            if (currentPage === 'seeker.html') {
+              window.location.reload();
+            } else {
+              if (typeof window.updateHeaderAuthUI === 'function') window.updateHeaderAuthUI(null);
+            }
+          }
+        } catch (e) {
+          isRefreshing = false;
+        }
+      }
+    }
+  }
+  return response;
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -751,7 +785,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         }, 150);
       }
-    } catch (e) {}
+    } catch (e) { }
 
     // Hash-based automatic tab activation for seeker dashboard (e.g. #cv, #alerts, #saved-jobs)
     if (currentPage === 'seeker.html' || window.location.pathname.includes('seeker.html')) {
@@ -1229,7 +1263,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             banner.style.borderRadius = '5px';
             banner.style.border = '1px solid #f87171';
             banner.innerHTML = '⚠️ Your account has been restricted by an administrator. Please contact support.';
-            
+
             const main = document.querySelector('main');
             if (main) {
               main.prepend(banner);
@@ -1307,6 +1341,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Ensure navbar links strictly reflect the current role and strip cross-role links
       const navMenu = document.querySelector('.header .nav-menu');
       if (navMenu) {
+        const authGrp = navMenu.querySelector('.nav-menu-auth-group');
+        if (authGrp) authGrp.remove();
         if (effectiveRole === 'employer' || currentPage === 'employer.html') {
           navMenu.querySelectorAll('a[href*="seeker"], a[href*="admin"]').forEach(el => el.remove());
         } else if (effectiveRole === 'job_seeker' || currentPage === 'seeker.html') {
@@ -1315,6 +1351,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           navMenu.querySelectorAll('a[href*="seeker"], a[href*="employer.html"]').forEach(el => el.remove());
         }
       }
+
+      const mobileNavBtnHtml = `<button type="button" class="btn btn-icon-small btn-outline mobile-nav-toggle" data-action="toggle-mobile-nav" aria-label="Toggle Navigation Menu" aria-expanded="false" title="Toggle Navigation Menu">
+          <svg class="hamburger-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>`;
 
       authActions.innerHTML = `
         <button class="btn btn-icon-small btn-outline btn-theme-toggle" data-action="toggle-theme" title="Toggle Dark Mode">
@@ -1326,8 +1370,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
         ${dashboardBtnHtml}
         <a href="index.html" data-action="${logoutAction}" id="${logoutId}" class="logout-link ml-4">Logout</a>
+        ${mobileNavBtnHtml}
       `;
     } else {
+      let navMenu = document.querySelector('.header .nav-menu');
+      if (navMenu && !navMenu.querySelector('.nav-menu-auth-group')) {
+        navMenu.insertAdjacentHTML('beforeend', `
+          <div class="nav-menu-auth-group">
+            <button type="button" class="btn btn-outline nav-menu-auth-btn" data-action="open-login" data-mode="login">
+              <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>
+              <span>Log In</span>
+            </button>
+            <button type="button" class="btn btn-primary nav-menu-auth-btn" data-action="open-login" data-mode="register">
+              <i class="fa-solid fa-user-plus mr-2"></i>
+              <span>Register</span>
+            </button>
+          </div>
+        `);
+      }
+
+      const mobileNavBtnHtml = `<button type="button" class="btn btn-icon-small btn-outline mobile-nav-toggle" data-action="toggle-mobile-nav" aria-label="Toggle Navigation Menu" aria-expanded="false" title="Toggle Navigation Menu">
+          <svg class="hamburger-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>`;
+
       authActions.innerHTML = `
         <button type="button" class="btn btn-outline btn-sm nav-auth-btn nav-login-btn" data-action="open-login" data-mode="login" id="nav-login-btn">
           <i class="fa-solid fa-arrow-right-to-bracket mr-1.5"></i>
@@ -1340,6 +1409,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <button class="btn btn-icon-small btn-outline btn-theme-toggle" data-action="toggle-theme" title="Toggle Dark Mode">
           <svg class="icon-theme-toggle" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
         </button>
+        ${mobileNavBtnHtml}
       `;
     }
   }
@@ -1348,10 +1418,101 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateHeaderAuthUI(user);
   }
 
+  // Mobile Nav Initialization & Outside Click Handling
+  function initMobileNav() {
+    const header = document.querySelector('.header');
+    if (!header) return;
+    let navMenu = header.querySelector('.nav-menu');
+    if (!navMenu) {
+      navMenu = document.createElement('nav');
+      navMenu.className = 'nav-menu';
+      navMenu.id = 'nav-menu';
+      navMenu.innerHTML = `
+        <a href="index.html" class="nav-link nav-home-link active">
+          <i class="fa-solid fa-house mr-1.5"></i>
+          <span>Home</span>
+        </a>
+        <div class="nav-menu-auth-group">
+          <button type="button" class="btn btn-outline nav-menu-auth-btn" data-action="open-login" data-mode="login">
+            <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>
+            <span>Log In</span>
+          </button>
+          <button type="button" class="btn btn-primary nav-menu-auth-btn" data-action="open-login" data-mode="register">
+            <i class="fa-solid fa-user-plus mr-2"></i>
+            <span>Register</span>
+          </button>
+        </div>
+      `;
+      const headerInner = header.querySelector('.header-inner');
+      if (headerInner) {
+        headerInner.appendChild(navMenu);
+      }
+    } else if (!navMenu.querySelector('.nav-menu-auth-group') && !user) {
+      navMenu.insertAdjacentHTML('beforeend', `
+        <div class="nav-menu-auth-group">
+          <button type="button" class="btn btn-outline nav-menu-auth-btn" data-action="open-login" data-mode="login">
+            <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>
+            <span>Log In</span>
+          </button>
+          <button type="button" class="btn btn-primary nav-menu-auth-btn" data-action="open-login" data-mode="register">
+            <i class="fa-solid fa-user-plus mr-2"></i>
+            <span>Register</span>
+          </button>
+        </div>
+      `);
+    }
+
+    if (!header.querySelector('.mobile-nav-toggle')) {
+      const authActions = header.querySelector('.auth-actions');
+      if (authActions) {
+        const toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = 'btn btn-icon-small btn-outline mobile-nav-toggle';
+        toggleBtn.setAttribute('data-action', 'toggle-mobile-nav');
+        toggleBtn.setAttribute('aria-label', 'Toggle Navigation Menu');
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        toggleBtn.setAttribute('title', 'Toggle Navigation Menu');
+        toggleBtn.innerHTML = `
+          <svg class="hamburger-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        `;
+        authActions.appendChild(toggleBtn);
+      }
+    }
+  }
+  initMobileNav();
+
+  document.addEventListener('click', (e) => {
+    const openNav = document.querySelector('.nav-menu.mobile-open');
+    if (!openNav) return;
+
+    // If clicked a button or link inside the mobile nav dropdown, close it
+    if (e.target.closest('.nav-menu a, .nav-menu button, .nav-menu-auth-btn')) {
+      openNav.classList.remove('mobile-open');
+      document.querySelectorAll('.mobile-nav-toggle').forEach(t => {
+        t.classList.remove('is-active');
+        t.setAttribute('aria-expanded', 'false');
+      });
+      return;
+    }
+
+    // If clicked outside nav-menu and outside the toggle button, close it
+    if (!e.target.closest('.nav-menu') && !e.target.closest('[data-action="toggle-mobile-nav"]')) {
+      openNav.classList.remove('mobile-open');
+      document.querySelectorAll('.mobile-nav-toggle').forEach(t => {
+        t.classList.remove('is-active');
+        t.setAttribute('aria-expanded', 'false');
+      });
+    }
+  });
+
   // Fetch and sync latest profile data on load
   initUserProfile();
 
-    // Handle Profile Photo Upload via FormData fetch (Strictly Role-Isolated)
+  // Handle Profile Photo Upload via FormData fetch (Strictly Role-Isolated)
   document.addEventListener('change', async (e) => {
     const fileInput = e.target.closest('#profile-upload, #sidebar-profile-upload, #employer-profile-upload, #sidebar-employer-upload, .user-avatar-input');
     if (!fileInput || !fileInput.files || fileInput.files.length === 0) return;
@@ -1372,7 +1533,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Instant local preview for immediate visual feedback
     const reader = new FileReader();
-    reader.onload = function(evt) {
+    reader.onload = function (evt) {
       if (evt.target && evt.target.result) {
         updateAllUserAvatars(evt.target.result);
       }
@@ -1387,10 +1548,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const isEmployer = (currentPage === 'employer.html') || (currentRole === 'employer');
     const activeAuth = isEmployer ? getEmployerAuth() : getSeekerAuth();
-    const curToken = activeAuth.token || 
-                     localStorage.getItem('accessToken') || 
-                     sessionStorage.getItem('accessToken') || 
-                     localStorage.getItem('token');
+    const curToken = activeAuth.token ||
+      localStorage.getItem('accessToken') ||
+      sessionStorage.getItem('accessToken') ||
+      localStorage.getItem('token');
     const authHeaders = {};
     if (curToken && curToken !== 'seeker_secure_cookie' && curToken !== 'employer_secure_cookie' && curToken !== 'secure_cookie_auth') {
       authHeaders['Authorization'] = 'Bearer ' + curToken;
@@ -1474,10 +1635,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const isEmployer = (currentPage === 'employer.html') || (currentRole === 'employer');
     const activeAuth = isEmployer ? getEmployerAuth() : getSeekerAuth();
-    const curToken = activeAuth.token || 
-                     localStorage.getItem('accessToken') || 
-                     sessionStorage.getItem('accessToken') || 
-                     localStorage.getItem('token');
+    const curToken = activeAuth.token ||
+      localStorage.getItem('accessToken') ||
+      sessionStorage.getItem('accessToken') ||
+      localStorage.getItem('token');
     const authHeaders = {};
     if (curToken && curToken !== 'seeker_secure_cookie' && curToken !== 'employer_secure_cookie' && curToken !== 'secure_cookie_auth') {
       authHeaders['Authorization'] = 'Bearer ' + curToken;
@@ -1533,9 +1694,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.addEventListener('click', (e) => {
     const changeTrigger = e.target.closest('#btn-change-photo-block, #btn-employer-change-photo-block, .profile-change-photo-btn');
     if (changeTrigger && e.target.tagName !== 'INPUT') {
-      const input = changeTrigger.querySelector('input[type="file"]') || 
-                    document.getElementById('profile-upload') || 
-                    document.getElementById('employer-profile-upload');
+      const input = changeTrigger.querySelector('input[type="file"]') ||
+        document.getElementById('profile-upload') ||
+        document.getElementById('employer-profile-upload');
       if (input) {
         input.click();
       }
@@ -1687,7 +1848,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     fileInput.addEventListener('change', () => {
       if (fileInput.files.length > 0) {
         const file = fileInput.files[0];
-        
+
         const seekerAuth = getSeekerAuth();
         if (seekerAuth.user) {
           const usr = seekerAuth.user;
@@ -1724,20 +1885,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Handle drag and drop with modern CSS classes
     cvFileBox.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        cvFileBox.classList.add('dragover');
+      e.preventDefault();
+      cvFileBox.classList.add('dragover');
     });
     cvFileBox.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        cvFileBox.classList.remove('dragover');
+      e.preventDefault();
+      cvFileBox.classList.remove('dragover');
     });
     cvFileBox.addEventListener('drop', (e) => {
-        e.preventDefault();
-        cvFileBox.classList.remove('dragover');
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            fileInput.files = e.dataTransfer.files;
-            fileInput.dispatchEvent(new Event('change'));
-        }
+      e.preventDefault();
+      cvFileBox.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        fileInput.files = e.dataTransfer.files;
+        fileInput.dispatchEvent(new Event('change'));
+      }
     });
 
     // load existing CV on load
@@ -1756,7 +1917,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const meta = document.querySelector('.preview-meta');
             if (meta) meta.textContent = 'Active file on record • Ready for 1-click apply';
           }
-        }).catch(e => {});
+        }).catch(e => { });
       }
     }
   }
@@ -1768,92 +1929,103 @@ document.addEventListener('DOMContentLoaded', async () => {
     const action = btn.getAttribute('data-action');
     const targetId = btn.getAttribute('data-target-id');
 
-      switch (action) {
-        case 'save-job':
+    switch (action) {
+      case 'save-job':
+        e.preventDefault();
+        const saveJobId = btn.getAttribute('data-job-id') || targetId || 1;
+        window.toggleSaveJob(saveJobId, btn);
+        break;
+      case 'google-auth':
+        e.preventDefault();
+        const targetAuthRole = btn.getAttribute('data-role') || (loginRedirectUrl === 'employer.html' || currentPage === 'employer.html' ? 'employer' : 'jobseeker');
+        window.location.href = `/auth/google?state=${targetAuthRole}`;
+        break;
+      case 'linkedin-auth':
+        if (btn) {
           e.preventDefault();
-          const saveJobId = btn.getAttribute('data-job-id') || targetId || 1;
-          window.toggleSaveJob(saveJobId, btn);
-          break;
-        case 'google-auth':
-          e.preventDefault();
-          const targetAuthRole = btn.getAttribute('data-role') || (loginRedirectUrl === 'employer.html' || currentPage === 'employer.html' ? 'employer' : 'jobseeker');
-          window.location.href = `/auth/google?state=${targetAuthRole}`;
-          break;
-        case 'linkedin-auth':
-          if (btn) {
-            e.preventDefault();
-            const authRole = btn.getAttribute('data-role') || (loginRedirectUrl === 'employer.html' || currentPage === 'employer.html' ? 'employer' : 'jobseeker');
-            window.location.href = `/api/auth/linkedin?role=${authRole}`;
+          const authRole = btn.getAttribute('data-role') || (loginRedirectUrl === 'employer.html' || currentPage === 'employer.html' ? 'employer' : 'jobseeker');
+          window.location.href = `/api/auth/linkedin?role=${authRole}`;
+        }
+        break;
+      case 'toggle-theme':
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        applySavedJobIconsState();
+        showToast(newTheme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled', 'info');
+        break;
+      case 'toggle-mobile-nav': {
+        e.preventDefault();
+        const header = btn.closest('.header') || document.querySelector('.header');
+        const navMenu = header ? header.querySelector('.nav-menu') : document.querySelector('.nav-menu');
+        if (navMenu) {
+          const isOpen = navMenu.classList.toggle('mobile-open');
+          btn.classList.toggle('is-active', isOpen);
+          btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        }
+        break;
+      }
+      case 'unsave-job':
+        e.preventDefault();
+        const unsaveJobId = btn.getAttribute('data-job-id') || targetId;
+        if (unsaveJobId) {
+          window.unsaveJob(unsaveJobId, btn);
+        } else {
+          const isSavedJobsContext = Boolean(btn && btn.closest('#saved-jobs'));
+          if (isSavedJobsContext) {
+            const jobCard = btn.closest('.card');
+            if (jobCard) jobCard.remove();
           }
-          break;
-        case 'toggle-theme':
-          const currentTheme = document.documentElement.getAttribute('data-theme');
-          const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-          document.documentElement.setAttribute('data-theme', newTheme);
-          localStorage.setItem('theme', newTheme);
-          applySavedJobIconsState();
-          showToast(newTheme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled', 'info');
-          break;
-        case 'unsave-job':
-          e.preventDefault();
-          const unsaveJobId = btn.getAttribute('data-job-id') || targetId;
-          if (unsaveJobId) {
-            window.unsaveJob(unsaveJobId, btn);
-          } else {
-            const isSavedJobsContext = Boolean(btn && btn.closest('#saved-jobs'));
-            if (isSavedJobsContext) {
-              const jobCard = btn.closest('.card');
-              if (jobCard) jobCard.remove();
-            }
-            showToast('Removed from saved jobs', 'info');
+          showToast('Removed from saved jobs', 'info');
+        }
+        break;
+      case 'withdraw-app':
+        const appRow = btn.closest('tr');
+        if (appRow) appRow.remove();
+        showToast('Application withdrawn successfully', 'info');
+        break;
+      case 'view-job':
+        showToast('Application details loaded', 'info');
+        break;
+      case 'download-cv':
+        e.preventDefault();
+        const fnameEl = document.querySelector('.preview-filename');
+        const linkInside = fnameEl ? fnameEl.querySelector('a') : null;
+        let cvDownloadUrl = (linkInside && linkInside.getAttribute('href')) || window.currentSeekerResumeUrl;
+        if (cvDownloadUrl && cvDownloadUrl !== '#' && !cvDownloadUrl.includes('placeholder')) {
+          showToast('Downloading resume...', 'info');
+          const dlAnchor = document.createElement('a');
+          dlAnchor.href = cvDownloadUrl;
+          dlAnchor.target = '_blank';
+          dlAnchor.download = cvDownloadUrl.split('/').pop() || 'resume.pdf';
+          document.body.appendChild(dlAnchor);
+          dlAnchor.click();
+          document.body.removeChild(dlAnchor);
+        } else {
+          showToast('No active resume file found. Please upload one first.', 'info');
+        }
+        break;
+      case 'remove-role':
+        const roleRow = btn.closest('tr');
+        if (roleRow) {
+          roleRow.remove();
+          showToast('Role removed', 'success');
+        }
+        break;
+      case 'delete-cv':
+        e.preventDefault();
+        if (confirm('Are you sure you want to remove your uploaded resume?')) {
+          const seekerAuthData = getSeekerAuth();
+          const sHeaders = {};
+          if (seekerAuthData.token && !seekerAuthData.token.includes('cookie')) {
+            sHeaders['Authorization'] = 'Bearer ' + seekerAuthData.token;
           }
-          break;
-        case 'withdraw-app':
-          const appRow = btn.closest('tr');
-          if (appRow) appRow.remove();
-          showToast('Application withdrawn successfully', 'info');
-          break;
-        case 'view-job':
-          showToast('Application details loaded', 'info');
-          break;
-        case 'download-cv':
-          e.preventDefault();
-          const fnameEl = document.querySelector('.preview-filename');
-          const linkInside = fnameEl ? fnameEl.querySelector('a') : null;
-          let cvDownloadUrl = (linkInside && linkInside.getAttribute('href')) || window.currentSeekerResumeUrl;
-          if (cvDownloadUrl && cvDownloadUrl !== '#' && !cvDownloadUrl.includes('placeholder')) {
-            showToast('Downloading resume...', 'info');
-            const dlAnchor = document.createElement('a');
-            dlAnchor.href = cvDownloadUrl;
-            dlAnchor.target = '_blank';
-            dlAnchor.download = cvDownloadUrl.split('/').pop() || 'resume.pdf';
-            document.body.appendChild(dlAnchor);
-            dlAnchor.click();
-            document.body.removeChild(dlAnchor);
-          } else {
-            showToast('No active resume file found. Please upload one first.', 'info');
-          }
-          break;
-        case 'remove-role':
-          const roleRow = btn.closest('tr');
-          if (roleRow) {
-            roleRow.remove();
-            showToast('Role removed', 'success');
-          }
-          break;
-        case 'delete-cv':
-          e.preventDefault();
-          if (confirm('Are you sure you want to remove your uploaded resume?')) {
-            const seekerAuthData = getSeekerAuth();
-            const sHeaders = {};
-            if (seekerAuthData.token && !seekerAuthData.token.includes('cookie')) {
-              sHeaders['Authorization'] = 'Bearer ' + seekerAuthData.token;
-            }
-            fetch('/api/seeker/cv', {
-              method: 'DELETE',
-              headers: sHeaders,
-              credentials: 'include'
-            })
+          fetch('/api/seeker/cv', {
+            method: 'DELETE',
+            headers: sHeaders,
+            credentials: 'include'
+          })
             .then(res => res.json())
             .then(data => {
               window.currentSeekerResumeUrl = null;
@@ -1873,91 +2045,91 @@ document.addEventListener('DOMContentLoaded', async () => {
               console.warn('Error deleting CV:', err);
               showToast('Error removing resume', 'error');
             });
-          }
-          break;
-        case 'delete-alert':
-          showToast('Alert removed', 'error');
-          break;
-        case 'close-posting': {
-          const btn = e.target.closest('[data-job-id], [data-id]');
-          const jId = btn ? (btn.getAttribute('data-job-id') || btn.getAttribute('data-id')) : null;
-          if (jId && typeof window.closeEmployerJob === 'function') {
-            window.closeEmployerJob(jId);
-          } else {
-            showToast('Posting Closed', 'info');
-          }
-          break;
         }
-        case 'mark-reviewed':
-          showToast('Marked as reviewed', 'success');
-          break;
-        case 'reject-applicant':
-          showToast('Applicant rejected', 'info');
-          break;
-        // Removed conflicting admin action dummy stubs
-        case 'save-profile':
-          e.preventDefault();
+        break;
+      case 'delete-alert':
+        showToast('Alert removed', 'error');
+        break;
+      case 'close-posting': {
+        const btn = e.target.closest('[data-job-id], [data-id]');
+        const jId = btn ? (btn.getAttribute('data-job-id') || btn.getAttribute('data-id')) : null;
+        if (jId && typeof window.closeEmployerJob === 'function') {
+          window.closeEmployerJob(jId);
+        } else {
+          showToast('Posting Closed', 'info');
+        }
+        break;
+      }
+      case 'mark-reviewed':
+        showToast('Marked as reviewed', 'success');
+        break;
+      case 'reject-applicant':
+        showToast('Applicant rejected', 'info');
+        break;
+      // Removed conflicting admin action dummy stubs
+      case 'save-profile':
+        e.preventDefault();
 
-          const pName = document.getElementById('profile-name');
-          const pTitle = document.getElementById('profile-title');
-          const pLocation = document.getElementById('profile-location');
-          const pBio = document.getElementById('profile-bio');
-          const pPhone = document.getElementById('profile-phone');
-          const pGithub = document.getElementById('profile-github');
-          const pLinkedin = document.getElementById('profile-linkedin');
-          const pPortfolio = document.getElementById('profile-portfolio');
+        const pName = document.getElementById('profile-name');
+        const pTitle = document.getElementById('profile-title');
+        const pLocation = document.getElementById('profile-location');
+        const pBio = document.getElementById('profile-bio');
+        const pPhone = document.getElementById('profile-phone');
+        const pGithub = document.getElementById('profile-github');
+        const pLinkedin = document.getElementById('profile-linkedin');
+        const pPortfolio = document.getElementById('profile-portfolio');
 
-          const sAuth = getSeekerAuth();
-          let su = sAuth.user || {};
-          if (pName) su.name = pName.value.trim();
-          if (pTitle) su.professional_title = pTitle.value.trim();
-          if (pLocation) su.location = pLocation.value.trim();
-          if (pBio) su.bio = pBio.value.trim();
-          if (pPhone) su.phone = pPhone.value.trim();
-          if (pGithub) su.github_url = pGithub.value.trim();
-          if (pLinkedin) su.linkedin_url = pLinkedin.value.trim();
-          if (pPortfolio) su.portfolio_url = pPortfolio.value.trim();
+        const sAuth = getSeekerAuth();
+        let su = sAuth.user || {};
+        if (pName) su.name = pName.value.trim();
+        if (pTitle) su.professional_title = pTitle.value.trim();
+        if (pLocation) su.location = pLocation.value.trim();
+        if (pBio) su.bio = pBio.value.trim();
+        if (pPhone) su.phone = pPhone.value.trim();
+        if (pGithub) su.github_url = pGithub.value.trim();
+        if (pLinkedin) su.linkedin_url = pLinkedin.value.trim();
+        if (pPortfolio) su.portfolio_url = pPortfolio.value.trim();
 
-          setSeekerAuth(sAuth.token, su);
+        setSeekerAuth(sAuth.token, su);
 
-          // Update dashboard greeting instantly
-          const greetingElement = document.querySelector('.user-company-name');
-          if (greetingElement && su.name) {
-            greetingElement.textContent = `Welcome, ${su.name}!`;
-          }
+        // Update dashboard greeting instantly
+        const greetingElement = document.querySelector('.user-company-name');
+        if (greetingElement && su.name) {
+          greetingElement.textContent = `Welcome, ${su.name}!`;
+        }
 
-          // Persist to backend database (accepts flexible custom location strings and social URLs)
-          const saveBtn = btn;
-          const originalText = saveBtn ? saveBtn.textContent : 'Save Profile';
-          if (saveBtn) {
-            saveBtn.disabled = true;
-            saveBtn.textContent = 'Saving...';
-          }
+        // Persist to backend database (accepts flexible custom location strings and social URLs)
+        const saveBtn = btn;
+        const originalText = saveBtn ? saveBtn.textContent : 'Save Profile';
+        if (saveBtn) {
+          saveBtn.disabled = true;
+          saveBtn.textContent = 'Saving...';
+        }
 
-          const saveHeaders = { 'Content-Type': 'application/json' };
-          if (sAuth.token && !sAuth.token.includes('cookie')) {
-            saveHeaders['Authorization'] = `Bearer ${sAuth.token}`;
-          }
+        const saveHeaders = { 'Content-Type': 'application/json' };
+        if (sAuth.token && !sAuth.token.includes('cookie')) {
+          saveHeaders['Authorization'] = `Bearer ${sAuth.token}`;
+        }
 
-          const targetSaveEndpoint = (currentPage === 'seeker.html' || su.role === 'job_seeker') 
-            ? '/api/seeker/profile' 
-            : '/api/user/profile';
+        const targetSaveEndpoint = (currentPage === 'seeker.html' || su.role === 'job_seeker')
+          ? '/api/seeker/profile'
+          : '/api/user/profile';
 
-          fetch(targetSaveEndpoint, {
-            method: 'PUT',
-            headers: saveHeaders,
-            credentials: 'include',
-            body: JSON.stringify({
-              name: su.name,
-              professional_title: su.professional_title,
-              location: su.location,
-              bio: su.bio,
-              phone: su.phone,
-              github_url: su.github_url,
-              linkedin_url: su.linkedin_url,
-              portfolio_url: su.portfolio_url
-            })
+        fetch(targetSaveEndpoint, {
+          method: 'PUT',
+          headers: saveHeaders,
+          credentials: 'include',
+          body: JSON.stringify({
+            name: su.name,
+            professional_title: su.professional_title,
+            location: su.location,
+            bio: su.bio,
+            phone: su.phone,
+            github_url: su.github_url,
+            linkedin_url: su.linkedin_url,
+            portfolio_url: su.portfolio_url
           })
+        })
           .then(res => res.json())
           .then(data => {
             if (data.user) {
@@ -1981,164 +2153,164 @@ document.addEventListener('DOMContentLoaded', async () => {
               saveBtn.textContent = originalText;
             }
           });
-          break;
-        case 'switch-tab':
-          const tabId = btn.getAttribute('data-target');
-          if (tabId) switchTab(tabId);
-          break;
-        case 'post-job':
-          const postModal = document.getElementById('postJobModal');
-          if (postModal) postModal.classList.add('active');
-          break;
-        case 'close-modal':
-          const openModal = btn.closest('.modal-overlay');
-          if (openModal) openModal.classList.remove('active');
-          break;
-        case 'switch-auth-role':
-          e.preventDefault();
-          const chosenRole = btn.getAttribute('data-role') || 'job_seeker';
-          selectedAuthRole = chosenRole;
-          loginRedirectUrl = (chosenRole === 'employer') ? 'employer.html' : 'seeker.html';
-          updateAuthModalUI();
-          break;
-        case 'open-login':
-          const redirectAttr = btn.getAttribute('data-redirect');
-          const roleAttr = btn.getAttribute('data-role');
-          if (roleAttr === 'employer' || redirectAttr === 'employer.html') {
-            selectedAuthRole = 'employer';
-            loginRedirectUrl = 'employer.html';
-          } else if (roleAttr === 'job_seeker' || redirectAttr === 'seeker.html') {
-            selectedAuthRole = 'job_seeker';
-            loginRedirectUrl = 'seeker.html';
-          } else if (!selectedAuthRole) {
-            selectedAuthRole = (currentPage === 'employer.html') ? 'employer' : 'job_seeker';
-            loginRedirectUrl = (selectedAuthRole === 'employer') ? 'employer.html' : 'seeker.html';
+        break;
+      case 'switch-tab':
+        const tabId = btn.getAttribute('data-target');
+        if (tabId) switchTab(tabId);
+        break;
+      case 'post-job':
+        const postModal = document.getElementById('postJobModal');
+        if (postModal) postModal.classList.add('active');
+        break;
+      case 'close-modal':
+        const openModal = btn.closest('.modal-overlay');
+        if (openModal) openModal.classList.remove('active');
+        break;
+      case 'switch-auth-role':
+        e.preventDefault();
+        const chosenRole = btn.getAttribute('data-role') || 'job_seeker';
+        selectedAuthRole = chosenRole;
+        loginRedirectUrl = (chosenRole === 'employer') ? 'employer.html' : 'seeker.html';
+        updateAuthModalUI();
+        break;
+      case 'open-login':
+        const redirectAttr = btn.getAttribute('data-redirect');
+        const roleAttr = btn.getAttribute('data-role');
+        if (roleAttr === 'employer' || redirectAttr === 'employer.html') {
+          selectedAuthRole = 'employer';
+          loginRedirectUrl = 'employer.html';
+        } else if (roleAttr === 'job_seeker' || redirectAttr === 'seeker.html') {
+          selectedAuthRole = 'job_seeker';
+          loginRedirectUrl = 'seeker.html';
+        } else if (!selectedAuthRole) {
+          selectedAuthRole = (currentPage === 'employer.html') ? 'employer' : 'job_seeker';
+          loginRedirectUrl = (selectedAuthRole === 'employer') ? 'employer.html' : 'seeker.html';
+        }
+
+        if (selectedAuthRole === 'employer') {
+          const empAuth = getEmployerAuth();
+          if (empAuth.token && empAuth.user) {
+            showToast('You are already logged into Employer Portal!', 'success');
+            window.location.href = 'employer.html';
+            break;
           }
-
-          if (selectedAuthRole === 'employer') {
-            const empAuth = getEmployerAuth();
-            if (empAuth.token && empAuth.user) {
-              showToast('You are already logged into Employer Portal!', 'success');
-              window.location.href = 'employer.html';
-              break;
-            }
-          } else if (selectedAuthRole === 'job_seeker') {
-            const seekerAuth = getSeekerAuth();
-            if (seekerAuth.token && seekerAuth.user) {
-              showToast('You are already logged into Job Seeker Portal!', 'success');
-              window.location.href = 'seeker.html';
-              break;
-            }
+        } else if (selectedAuthRole === 'job_seeker') {
+          const seekerAuth = getSeekerAuth();
+          if (seekerAuth.token && seekerAuth.user) {
+            showToast('You are already logged into Job Seeker Portal!', 'success');
+            window.location.href = 'seeker.html';
+            break;
           }
+        }
 
-          const redirect = redirectAttr;
-          const mode = btn.getAttribute('data-mode') || 'login';
-          loginRedirectUrl = redirect || (selectedAuthRole === 'employer' ? 'employer.html' : 'seeker.html');
+        const redirect = redirectAttr;
+        const mode = btn.getAttribute('data-mode') || 'login';
+        loginRedirectUrl = redirect || (selectedAuthRole === 'employer' ? 'employer.html' : 'seeker.html');
 
-          isRegisterMode = (mode === 'register');
-          registerStep = 1;
-          updateAuthModalUI();
+        isRegisterMode = (mode === 'register');
+        registerStep = 1;
+        updateAuthModalUI();
 
-          const loginModal = document.getElementById('login-modal');
-          if (loginModal) {
-            loginModal.classList.add('active');
-            loginModal.classList.remove('hidden');
-          }
-          break;
-        case 'logout-seeker':
-          e.preventDefault();
-          logoutSeeker();
-          break;
-        case 'logout-employer':
-          e.preventDefault();
+        const loginModal = document.getElementById('login-modal');
+        if (loginModal) {
+          loginModal.classList.add('active');
+          loginModal.classList.remove('hidden');
+        }
+        break;
+      case 'logout-seeker':
+        e.preventDefault();
+        logoutSeeker();
+        break;
+      case 'logout-employer':
+        e.preventDefault();
+        logoutEmployer();
+        break;
+      case 'logout':
+        e.preventDefault();
+        if (currentPage === 'employer.html') {
           logoutEmployer();
-          break;
-        case 'logout':
-          e.preventDefault();
-          if (currentPage === 'employer.html') {
+        } else if (currentPage === 'seeker.html') {
+          logoutSeeker();
+        } else {
+          if (currentRole === 'employer') {
             logoutEmployer();
-          } else if (currentPage === 'seeker.html') {
-            logoutSeeker();
           } else {
-            if (currentRole === 'employer') {
-              logoutEmployer();
-            } else {
-              logoutSeeker();
-            }
+            logoutSeeker();
           }
-          break;
-        case 'toggle-auth':
-          isRegisterMode = !isRegisterMode;
+        }
+        break;
+      case 'toggle-auth':
+        isRegisterMode = !isRegisterMode;
+        registerStep = 1;
+        updateAuthModalUI();
+        break;
+      case 'close-login':
+        const loginModalElement = document.getElementById('login-modal');
+        if (loginModalElement) {
+          loginModalElement.classList.remove('active');
           registerStep = 1;
-          updateAuthModalUI();
-          break;
-        case 'close-login':
-          const loginModalElement = document.getElementById('login-modal');
-          if (loginModalElement) {
-            loginModalElement.classList.remove('active');
-            registerStep = 1;
-            setTimeout(() => loginModalElement.classList.add('hidden'), 300);
-          }
-          break;
-        case 'copy-key':
-          showToast('Key copied to clipboard!', 'info');
-          break;
-        // Removed dummy cases for remove-ip and save-role
-        case 'apply-job':
-          const seekAuth = getSeekerAuth();
-          const jId = btn.getAttribute('data-job-id');
-          if (jId) {
-            sessionStorage.setItem('pendingApplyJobId', String(jId));
-          }
-          if (!seekAuth.token || !seekAuth.user) {
-            showToast('Please login as a job seeker to apply for jobs', 'error');
-            setTimeout(() => {
-              if (typeof window.setAuthModalMode === 'function') {
-                window.setAuthModalMode('seeker.html', false);
-              } else {
-                loginRedirectUrl = 'seeker.html';
-                isRegisterMode = false;
-                registerStep = 1;
-                if (typeof updateAuthModalUI === 'function') updateAuthModalUI();
-              }
-              const lm = document.getElementById('login-modal');
-              if (lm) {
-                if (typeof window.openModal === 'function') {
-                  window.openModal('login-modal');
-                } else {
-                  lm.classList.add('active');
-                  lm.classList.remove('hidden');
-                }
-              } else {
-                window.location.href = 'index.html?login=seeker';
-              }
-            }, 2000);
-            return;
-          }
-          const appUser = seekAuth.user;
-          if (appUser.role !== 'job_seeker') {
-            showToast('Only job seekers can apply for jobs', 'error');
-            return;
-          }
-          sessionStorage.removeItem('pendingApplyJobId');
-          const applyHeaders = { 'Content-Type': 'application/json' };
-          if (seekAuth.token && !seekAuth.token.includes('cookie')) {
-            applyHeaders['Authorization'] = `Bearer ${seekAuth.token}`;
-          }
-          fetch('/api/applications/apply', {
-            method: 'POST',
-            headers: applyHeaders,
-            credentials: 'include',
-            body: JSON.stringify({ job_id: jId, seeker_id: appUser.id })
-          }).then(res => res.json()).then(data => {
-            if (data.message === 'Application submitted successfully') {
-              showToast('Successfully applied!', 'success');
+          setTimeout(() => loginModalElement.classList.add('hidden'), 300);
+        }
+        break;
+      case 'copy-key':
+        showToast('Key copied to clipboard!', 'info');
+        break;
+      // Removed dummy cases for remove-ip and save-role
+      case 'apply-job':
+        const seekAuth = getSeekerAuth();
+        const jId = btn.getAttribute('data-job-id');
+        if (jId) {
+          sessionStorage.setItem('pendingApplyJobId', String(jId));
+        }
+        if (!seekAuth.token || !seekAuth.user) {
+          showToast('Please login as a job seeker to apply for jobs', 'error');
+          setTimeout(() => {
+            if (typeof window.setAuthModalMode === 'function') {
+              window.setAuthModalMode('seeker.html', false);
             } else {
-              showToast(data.message || 'Error applying', 'error');
+              loginRedirectUrl = 'seeker.html';
+              isRegisterMode = false;
+              registerStep = 1;
+              if (typeof updateAuthModalUI === 'function') updateAuthModalUI();
             }
-          }).catch(err => showToast('Network error', 'error'));
-          break;
-      }
+            const lm = document.getElementById('login-modal');
+            if (lm) {
+              if (typeof window.openModal === 'function') {
+                window.openModal('login-modal');
+              } else {
+                lm.classList.add('active');
+                lm.classList.remove('hidden');
+              }
+            } else {
+              window.location.href = 'index.html?login=seeker';
+            }
+          }, 2000);
+          return;
+        }
+        const appUser = seekAuth.user;
+        if (appUser.role !== 'job_seeker') {
+          showToast('Only job seekers can apply for jobs', 'error');
+          return;
+        }
+        sessionStorage.removeItem('pendingApplyJobId');
+        const applyHeaders = { 'Content-Type': 'application/json' };
+        if (seekAuth.token && !seekAuth.token.includes('cookie')) {
+          applyHeaders['Authorization'] = `Bearer ${seekAuth.token}`;
+        }
+        fetch('/api/applications/apply', {
+          method: 'POST',
+          headers: applyHeaders,
+          credentials: 'include',
+          body: JSON.stringify({ job_id: jId, seeker_id: appUser.id })
+        }).then(res => res.json()).then(data => {
+          if (data.message === 'Application submitted successfully') {
+            showToast('Successfully applied!', 'success');
+          } else {
+            showToast(data.message || 'Error applying', 'error');
+          }
+        }).catch(err => showToast('Network error', 'error'));
+        break;
+    }
   });
 
   // Direct listeners for Logout buttons
@@ -2246,17 +2418,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const emailGroup = emailInput?.closest('.form-group');
     const passwordGroup = passwordInput?.closest('.form-group');
 
-    if (!title || !submitBtn || !toggleBtn || !nameGroup || !emailGroup || !passwordGroup) return;
+    if (!title || !submitBtn || !nameGroup || !emailGroup || !passwordGroup) return;
 
     // Ensure OTP group exists
     let otpGroup = document.getElementById('otp-group');
     if (!otpGroup) {
-        otpGroup = document.createElement('div');
-        otpGroup.className = 'form-group auth-form-group';
-        otpGroup.id = 'otp-group';
-        otpGroup.style.display = 'none';
-        otpGroup.innerHTML = '<label class="form-label">Verification Code</label><input type="text" class="form-input auth-input" id="auth-otp" placeholder="123456" />';
-        emailGroup.insertAdjacentElement('afterend', otpGroup);
+      otpGroup = document.createElement('div');
+      otpGroup.className = 'form-group auth-form-group';
+      otpGroup.id = 'otp-group';
+      otpGroup.style.display = 'none';
+      otpGroup.innerHTML = '<label class="form-label">Verification Code</label><input type="text" class="form-input auth-input" id="auth-otp" placeholder="123456" />';
+      emailGroup.insertAdjacentElement('afterend', otpGroup);
     }
 
     const isEmployerRole = (selectedAuthRole === 'employer' || loginRedirectUrl === 'employer.html' || currentPage === 'employer.html');
@@ -2300,45 +2472,52 @@ document.addEventListener('DOMContentLoaded', async () => {
       lnBtnEmployerModal.setAttribute('data-role', roleState);
     }
 
+    const switchSignIn = document.getElementById('auth-switch-signin');
+    const switchRegister = document.getElementById('auth-switch-register');
+
     if (isRegisterMode) {
       title.textContent = 'Sign Up';
-      toggleText.textContent = 'Already have an account?';
-      toggleBtn.textContent = 'Sign in here';
-      
+      if (toggleText) toggleText.textContent = 'Already have an account?';
+      if (toggleBtn) toggleBtn.textContent = 'Sign in here';
+      if (switchSignIn) switchSignIn.style.display = 'none';
+      if (switchRegister) switchRegister.style.display = 'block';
+
       if (registerStep === 1) {
-          nameGroup.style.display = 'none';
-          passwordGroup.style.display = 'none';
-          emailGroup.style.display = 'block';
-          otpGroup.style.display = 'none';
-          submitBtn.textContent = 'Send Verification Code';
-          document.getElementById('auth-email').readOnly = false;
-          document.getElementById('auth-password').required = false;
+        nameGroup.style.display = 'none';
+        passwordGroup.style.display = 'none';
+        emailGroup.style.display = 'block';
+        otpGroup.style.display = 'none';
+        submitBtn.textContent = 'Send Verification Code';
+        document.getElementById('auth-email').readOnly = false;
+        document.getElementById('auth-password').required = false;
       } else if (registerStep === 2) {
-          nameGroup.style.display = 'none';
-          passwordGroup.style.display = 'none';
-          emailGroup.style.display = 'block';
-          document.getElementById('auth-email').readOnly = true; 
-          otpGroup.style.display = 'block';
-          submitBtn.textContent = 'Verify Code';
-          document.getElementById('auth-password').required = false;
+        nameGroup.style.display = 'none';
+        passwordGroup.style.display = 'none';
+        emailGroup.style.display = 'block';
+        document.getElementById('auth-email').readOnly = true;
+        otpGroup.style.display = 'block';
+        submitBtn.textContent = 'Verify Code';
+        document.getElementById('auth-password').required = false;
       } else if (registerStep === 3) {
-          nameGroup.style.display = 'block';
-          passwordGroup.style.display = 'block';
-          emailGroup.style.display = 'none';
-          otpGroup.style.display = 'none';
-          submitBtn.textContent = isEmployerRole ? 'Complete Employer Registration' : 'Complete Registration';
-          document.getElementById('auth-password').required = true;
-          const nameLabel = nameGroup.querySelector('.form-label');
-          const nameInput = document.getElementById('auth-name');
-          if (nameLabel) nameLabel.textContent = isEmployerRole ? 'Company / Organization Name' : 'Full Name';
-          if (nameInput) nameInput.placeholder = isEmployerRole ? 'TechSolutions PLC' : 'Abebe Kebede';
+        nameGroup.style.display = 'block';
+        passwordGroup.style.display = 'block';
+        emailGroup.style.display = 'none';
+        otpGroup.style.display = 'none';
+        submitBtn.textContent = isEmployerRole ? 'Complete Employer Registration' : 'Complete Registration';
+        document.getElementById('auth-password').required = true;
+        const nameLabel = nameGroup.querySelector('.form-label');
+        const nameInput = document.getElementById('auth-name');
+        if (nameLabel) nameLabel.textContent = isEmployerRole ? 'Company / Organization Name' : 'Full Name';
+        if (nameInput) nameInput.placeholder = isEmployerRole ? 'TechSolutions PLC' : 'Abebe Kebede';
       }
     } else {
       registerStep = 1; // reset for next time
       title.textContent = 'Sign In';
       submitBtn.textContent = isEmployerRole ? 'Sign In as Employer' : 'Sign In as Job Seeker';
-      toggleText.textContent = "Don't have an account?";
-      toggleBtn.textContent = 'Register here';
+      if (toggleText) toggleText.textContent = "Don't have an account?";
+      if (toggleBtn) toggleBtn.textContent = 'Register here';
+      if (switchSignIn) switchSignIn.style.display = 'block';
+      if (switchRegister) switchRegister.style.display = 'none';
       nameGroup.style.display = 'none';
       passwordGroup.style.display = 'block';
       emailGroup.style.display = 'block';
@@ -2348,7 +2527,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
   window.updateAuthModalUI = updateAuthModalUI;
-  window.setAuthModalMode = function(redirectUrl, isRegister = false, role = null) {
+  window.setAuthModalMode = function (redirectUrl, isRegister = false, role = null) {
     if (role) {
       selectedAuthRole = role;
     } else if (redirectUrl === 'employer.html') {
@@ -2388,86 +2567,86 @@ document.addEventListener('DOMContentLoaded', async () => {
       const determinedRole = isEmployerRole ? 'employer' : 'job_seeker';
 
       if (isRegisterMode) {
-          if (registerStep === 1) {
-              // Send OTP
-              try {
-                  const res = await fetch('/api/auth/send-otp', {
-                      method: 'POST',
-                      headers: {'Content-Type': 'application/json'},
-                      body: JSON.stringify({email})
-                  });
-                  const data = await res.json();
-                  if (res.ok) {
-                      showToast('Verification code sent!', 'success');
-                      registerStep = 2;
-                      updateAuthModalUI();
-                  } else {
-                      showToast(data.message || 'Failed to send OTP', 'error');
-                  }
-              } catch(e) {
-                  showToast('Network error', 'error');
-              }
-              return;
-          } else if (registerStep === 2) {
-              // Verify OTP
-              const otpCode = document.getElementById('auth-otp') ? document.getElementById('auth-otp').value : '';
-              try {
-                  const res = await fetch('/api/auth/verify-otp', {
-                      method: 'POST',
-                      headers: {'Content-Type': 'application/json'},
-                      body: JSON.stringify({email, code: otpCode})
-                  });
-                  const data = await res.json();
-                  if (res.ok) {
-                      showToast('Email verified!', 'success');
-                      pendingRegistrationToken = data.registrationToken;
-                      registerStep = 3;
-                      updateAuthModalUI();
-                  } else {
-                      showToast(data.message || 'Invalid OTP', 'error');
-                  }
-              } catch(e) {
-                  showToast('Network error', 'error');
-              }
-              return;
-          } else if (registerStep === 3) {
-              // Complete Registration
-              const endpoint = determinedRole === 'employer' ? '/api/auth/employer/register' : '/api/auth/seeker/register';
-              try {
-                  const res = await fetch(endpoint, {
-                      method: 'POST',
-                      headers: {'Content-Type': 'application/json'},
-                      body: JSON.stringify({name, email, password, registrationToken: pendingRegistrationToken})
-                  });
-                  const data = await res.json();
-                  if (res.ok) {
-                      showToast('Registration successful!', 'success');
-                      if (determinedRole === 'employer') {
-                          setEmployerAuth(data.token, data.user);
-                      } else {
-                          setSeekerAuth(data.token, data.user);
-                      }
-                      setTimeout(() => {
-                         if (determinedRole === 'employer') {
-                           window.location.href = 'employer.html';
-                         } else {
-                           const pendingJobId = sessionStorage.getItem('pendingApplyJobId');
-                           if (pendingJobId) {
-                             sessionStorage.removeItem('pendingApplyJobId');
-                             window.location.href = `job-details.html?id=${pendingJobId}`;
-                           } else {
-                             window.location.href = 'seeker.html';
-                           }
-                         }
-                      }, 1000);
-                  } else {
-                      showToast(data.message || 'Registration failed', 'error');
-                  }
-              } catch(e) {
-                  showToast('Network error', 'error');
-              }
-              return;
+        if (registerStep === 1) {
+          // Send OTP
+          try {
+            const res = await fetch('/api/auth/send-otp', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+            if (res.ok) {
+              showToast('Verification code sent!', 'success');
+              registerStep = 2;
+              updateAuthModalUI();
+            } else {
+              showToast(data.message || 'Failed to send OTP', 'error');
+            }
+          } catch (e) {
+            showToast('Network error', 'error');
           }
+          return;
+        } else if (registerStep === 2) {
+          // Verify OTP
+          const otpCode = document.getElementById('auth-otp') ? document.getElementById('auth-otp').value : '';
+          try {
+            const res = await fetch('/api/auth/verify-otp', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, code: otpCode })
+            });
+            const data = await res.json();
+            if (res.ok) {
+              showToast('Email verified!', 'success');
+              pendingRegistrationToken = data.registrationToken;
+              registerStep = 3;
+              updateAuthModalUI();
+            } else {
+              showToast(data.message || 'Invalid OTP', 'error');
+            }
+          } catch (e) {
+            showToast('Network error', 'error');
+          }
+          return;
+        } else if (registerStep === 3) {
+          // Complete Registration
+          const endpoint = determinedRole === 'employer' ? '/api/auth/employer/register' : '/api/auth/seeker/register';
+          try {
+            const res = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name, email, password, registrationToken: pendingRegistrationToken })
+            });
+            const data = await res.json();
+            if (res.ok) {
+              showToast('Registration successful!', 'success');
+              if (determinedRole === 'employer') {
+                setEmployerAuth(data.token, data.user);
+              } else {
+                setSeekerAuth(data.token, data.user);
+              }
+              setTimeout(() => {
+                if (determinedRole === 'employer') {
+                  window.location.href = 'employer.html';
+                } else {
+                  const pendingJobId = sessionStorage.getItem('pendingApplyJobId');
+                  if (pendingJobId) {
+                    sessionStorage.removeItem('pendingApplyJobId');
+                    window.location.href = `job-details.html?id=${pendingJobId}`;
+                  } else {
+                    window.location.href = 'seeker.html';
+                  }
+                }
+              }, 1000);
+            } else {
+              showToast(data.message || 'Registration failed', 'error');
+            }
+          } catch (e) {
+            showToast('Network error', 'error');
+          }
+          return;
+        }
       }
 
       // Normal Login Logic
@@ -2484,28 +2663,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         const data = await response.json();
 
         if (response.ok) {
-            showToast('Logged in successfully!', 'success');
-            if (data.token && data.user) {
-              if (determinedRole === 'employer') {
-                setEmployerAuth(data.token, data.user);
+          showToast('Logged in successfully!', 'success');
+          if (data.token && data.user) {
+            if (determinedRole === 'employer') {
+              setEmployerAuth(data.token, data.user);
+            } else {
+              setSeekerAuth(data.token, data.user);
+            }
+          }
+
+          setTimeout(() => {
+            if (determinedRole === 'employer') {
+              window.location.href = 'employer.html';
+            } else {
+              const pendingJobId = sessionStorage.getItem('pendingApplyJobId');
+              if (pendingJobId) {
+                sessionStorage.removeItem('pendingApplyJobId');
+                window.location.href = `job-details.html?id=${pendingJobId}`;
               } else {
-                setSeekerAuth(data.token, data.user);
+                window.location.href = 'seeker.html';
               }
             }
-  
-            setTimeout(() => {
-              if (determinedRole === 'employer') {
-                window.location.href = 'employer.html';
-              } else {
-                const pendingJobId = sessionStorage.getItem('pendingApplyJobId');
-                if (pendingJobId) {
-                  sessionStorage.removeItem('pendingApplyJobId');
-                  window.location.href = `job-details.html?id=${pendingJobId}`;
-                } else {
-                  window.location.href = 'seeker.html';
-                }
-              }
-            }, 1000);
+          }, 1000);
         } else {
           showToast(data.message || 'Authentication failed', 'error');
         }
@@ -2516,12 +2695,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function showOTPModal(email, role) {
-      let otpModal = document.getElementById('otp-modal');
-      if (!otpModal) {
-          otpModal = document.createElement('div');
-          otpModal.id = 'otp-modal';
-          otpModal.className = 'modal hidden';
-          otpModal.innerHTML = `
+    let otpModal = document.getElementById('otp-modal');
+    if (!otpModal) {
+      otpModal = document.createElement('div');
+      otpModal.id = 'otp-modal';
+      otpModal.className = 'modal hidden';
+      otpModal.innerHTML = `
               <div class="modal-content">
                   <span class="close-modal" id="otp-close">&times;</span>
                   <h2>Verify Your Email</h2>
@@ -2535,67 +2714,67 @@ document.addEventListener('DOMContentLoaded', async () => {
                   </form>
               </div>
           `;
-          document.body.appendChild(otpModal);
-  
-          document.getElementById('otp-close').addEventListener('click', () => {
-              otpModal.classList.add('hidden');
-              otpModal.classList.remove('active');
+      document.body.appendChild(otpModal);
+
+      document.getElementById('otp-close').addEventListener('click', () => {
+        otpModal.classList.add('hidden');
+        otpModal.classList.remove('active');
+      });
+
+      document.getElementById('otp-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const code = document.getElementById('otp-code').value;
+        const targetEmail = document.getElementById('otp-email-display').innerText;
+        const currentRole = otpModal.getAttribute('data-role');
+
+        const endpoint = currentRole === 'employer' ? '/api/auth/employer/verify' : '/api/auth/seeker/verify';
+
+        try {
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: targetEmail, code })
           });
-  
-          document.getElementById('otp-form').addEventListener('submit', async (e) => {
-              e.preventDefault();
-              const code = document.getElementById('otp-code').value;
-              const targetEmail = document.getElementById('otp-email-display').innerText;
-              const currentRole = otpModal.getAttribute('data-role');
-              
-              const endpoint = currentRole === 'employer' ? '/api/auth/employer/verify' : '/api/auth/seeker/verify';
-              
-              try {
-                  const res = await fetch(endpoint, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ email: targetEmail, code })
-                  });
-                  const d = await res.json();
-                  if (res.ok) {
-                      showToast('Email verified successfully!', 'success');
-                      if (currentRole === 'employer') {
-                          setEmployerAuth(d.token, d.user);
-                      } else {
-                          setSeekerAuth(d.token, d.user);
-                      }
-                      if (currentRole === 'employer') {
-                          window.location.href = 'employer.html';
-                      } else {
-                          const pendingJobId = sessionStorage.getItem('pendingApplyJobId');
-                          if (pendingJobId) {
-                            sessionStorage.removeItem('pendingApplyJobId');
-                            window.location.href = `job-details.html?id=${pendingJobId}`;
-                          } else {
-                            window.location.href = 'seeker.html';
-                          }
-                      }
-                  } else {
-                      showToast(d.message || 'Verification failed', 'error');
-                  }
-              } catch (err) {
-                  console.error(err);
-                  showToast('An error occurred. Try again.', 'error');
+          const d = await res.json();
+          if (res.ok) {
+            showToast('Email verified successfully!', 'success');
+            if (currentRole === 'employer') {
+              setEmployerAuth(d.token, d.user);
+            } else {
+              setSeekerAuth(d.token, d.user);
+            }
+            if (currentRole === 'employer') {
+              window.location.href = 'employer.html';
+            } else {
+              const pendingJobId = sessionStorage.getItem('pendingApplyJobId');
+              if (pendingJobId) {
+                sessionStorage.removeItem('pendingApplyJobId');
+                window.location.href = `job-details.html?id=${pendingJobId}`;
+              } else {
+                window.location.href = 'seeker.html';
               }
-          });
-      }
-      
-      document.getElementById('otp-email-display').innerText = email;
-      otpModal.setAttribute('data-role', role);
-      
-      const authModal = document.getElementById('login-modal');
-      if (authModal) {
-          authModal.classList.remove('active');
-          authModal.classList.add('hidden');
-      }
-  
-      otpModal.classList.remove('hidden');
-      otpModal.classList.add('active');
+            }
+          } else {
+            showToast(d.message || 'Verification failed', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('An error occurred. Try again.', 'error');
+        }
+      });
+    }
+
+    document.getElementById('otp-email-display').innerText = email;
+    otpModal.setAttribute('data-role', role);
+
+    const authModal = document.getElementById('login-modal');
+    if (authModal) {
+      authModal.classList.remove('active');
+      authModal.classList.add('hidden');
+    }
+
+    otpModal.classList.remove('hidden');
+    otpModal.classList.add('active');
   }
 
 
@@ -2749,7 +2928,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.loadFreemiumStatus = loadFreemiumStatus;
 
   // Global helper to open Pre-Checkout Payment Method Modal with dynamic Job Title & Job ID
-  window.openPaymentMethodModal = function({ jobTitle = 'Job Listing', jobId = null, onProceed }) {
+  window.openPaymentMethodModal = function ({ jobTitle = 'Job Listing', jobId = null, onProceed }) {
     const paymentModal = document.getElementById('payment-method-modal');
     if (!paymentModal) return;
 
@@ -2915,7 +3094,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       try {
         fieldEl.focus();
         fieldEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } catch (err) {}
+      } catch (err) { }
       showToast(errorMsg, 'error');
 
       const clearError = () => {
@@ -3140,7 +3319,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const browseWrapper = document.querySelector('.browse-jobs-wrapper');
 
   // Helper functions for user reported jobs
-  window.getReportedJobsFromStorage = function() {
+  window.getReportedJobsFromStorage = function () {
     try {
       return new Set(JSON.parse(sessionStorage.getItem('user_reported_jobs') || '[]'));
     } catch (e) {
@@ -3148,20 +3327,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  window.addReportedJobToStorage = function(jobId) {
+  window.addReportedJobToStorage = function (jobId) {
     try {
       const set = window.getReportedJobsFromStorage();
       set.add(String(jobId));
       sessionStorage.setItem('user_reported_jobs', JSON.stringify(Array.from(set)));
-    } catch (e) {}
+    } catch (e) { }
   };
 
-  window.removeReportedJobFromStorage = function(jobId) {
+  window.removeReportedJobFromStorage = function (jobId) {
     try {
       const set = window.getReportedJobsFromStorage();
       set.delete(String(jobId));
       sessionStorage.setItem('user_reported_jobs', JSON.stringify(Array.from(set)));
-    } catch (e) {}
+    } catch (e) { }
   };
 
   // Reusable job card HTML builder for home page
@@ -3217,7 +3396,7 @@ document.addEventListener('DOMContentLoaded', async () => {
          </button>`;
 
     return `
-      <div class="card card-hover custom-job-card" id="job-card-${job.id}">
+      <div class="card card-hover custom-job-card job-card" id="job-card-${job.id}">
         <div class="job-card-header">
           <div class="job-card-meta">
             ${avatarHtml}
@@ -3277,6 +3456,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const updateBrowseButtonUI = (expanded) => {
       if (!browseAllBtn) return;
       isJobsExpanded = expanded;
+      if (jobGrid) {
+        jobGrid.classList.toggle('is-expanded', expanded);
+      }
+      const recentContainer = document.getElementById('recent-jobs-container');
+      if (recentContainer) {
+        recentContainer.classList.toggle('is-expanded', expanded);
+      }
       if (expanded) {
         browseAllBtn.innerHTML = `
           <span>Show Less</span>
@@ -3311,8 +3497,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderHomepageJobs(allHomepageJobs.slice(0, HOMEPAGE_JOB_LIMIT));
         updateBrowseButtonUI(false);
 
-        // If total jobs is 6 or fewer, hide the button since all jobs are already displayed
-        if (allHomepageJobs.length <= HOMEPAGE_JOB_LIMIT && browseWrapper) {
+        // If total jobs is equal or fewer than the visible limit, hide the button
+        const isMobileScreen = window.innerWidth <= 768;
+        const visibleLimit = isMobileScreen ? 3 : HOMEPAGE_JOB_LIMIT;
+        if (allHomepageJobs.length <= visibleLimit && browseWrapper) {
           browseWrapper.style.display = 'none';
         } else if (browseWrapper) {
           browseWrapper.style.display = 'flex';
@@ -3386,7 +3574,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       const filtered = allHomepageJobs.filter(job => {
-        const titleMatch = !keyword || 
+        const titleMatch = !keyword ||
           (job.title && job.title.toLowerCase().includes(keyword)) ||
           (job.company_name && job.company_name.toLowerCase().includes(keyword)) ||
           (job.description && job.description.toLowerCase().includes(keyword));
@@ -3449,7 +3637,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const loadEmployerApplications = async () => {
     const pendingColumn = document.querySelector('.kanban-cards[data-column="pending"]');
     const hiredColumn = document.querySelector('.kanban-cards[data-column="hired"]');
-    
+
     if (!pendingColumn && !hiredColumn) return;
 
     const empAuth = typeof getEmployerAuth === 'function' ? getEmployerAuth() : {};
@@ -3460,7 +3648,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (payload && (payload.id || payload.employer_id)) {
           employerId = payload.id || payload.employer_id;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
     if (!employerId) {
       try {
@@ -3468,17 +3656,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (stored && (stored.id || stored.employer_id)) {
           employerId = stored.id || stored.employer_id;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
     if (!employerId) employerId = 4; // Default active employer ID fallback
 
     try {
-      const token = empAuth?.token || 
-                    localStorage.getItem('employer_token') || 
-                    localStorage.getItem('accessToken') || 
-                    sessionStorage.getItem('accessToken') || 
-                    sessionStorage.getItem('employer_token') || 
-                    localStorage.getItem('token');
+      const token = empAuth?.token ||
+        localStorage.getItem('employer_token') ||
+        localStorage.getItem('accessToken') ||
+        sessionStorage.getItem('accessToken') ||
+        sessionStorage.getItem('employer_token') ||
+        localStorage.getItem('token');
 
       const headers = { 'Accept': 'application/json' };
       if (token && !token.includes('cookie')) {
@@ -3495,9 +3683,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       const applications = await response.json();
 
-      if (pendingColumn) pendingColumn.innerHTML = ''; 
+      if (pendingColumn) pendingColumn.innerHTML = '';
       if (hiredColumn) hiredColumn.innerHTML = '';
-      
+
       let pendingCount = 0;
       let hiredCount = 0;
 
@@ -3523,7 +3711,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           const appliedDate = app.applied_at ? new Date(app.applied_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently';
 
-          const cvAction = app.resume_file_url 
+          const cvAction = app.resume_file_url
             ? `window.open('${app.resume_file_url}', '_blank')`
             : `if (typeof showToast === 'function') { showToast('No CV uploaded by this applicant yet.', 'info'); } else { alert('No CV uploaded.'); }`;
           const cvBtnText = app.resume_file_url ? 'Download CV' : 'No CV';
@@ -3552,7 +3740,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                    </div>
                    <span class="badge badge-green kanban-badge font-semibold">Hired</span>
                  </div>
-                 ${app.message ? `<div class="applicant-cover-note p-2 rounded bg-slate-50 border border-slate-100 text-xs text-slate-700 mt-2 mb-1"><strong>Cover Note:</strong> "${(typeof safeEscapeText==='function'?safeEscapeText(app.message):app.message)}"</div>` : ''}
+                 ${app.message ? `<div class="applicant-cover-note p-2 rounded bg-slate-50 border border-slate-100 text-xs text-slate-700 mt-2 mb-1"><strong>Cover Note:</strong> "${(typeof safeEscapeText === 'function' ? safeEscapeText(app.message) : app.message)}"</div>` : ''}
                  <div class="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100 flex-wrap">
                    <button type="button" class="btn ${cvBtnClass} flex-grow btn-sm kanban-btn flex items-center justify-center gap-1.5" onclick="${cvAction}">
                      <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 15px; height: 15px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -3586,7 +3774,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                    </div>
                    ${statusBadge}
                  </div>
-                 ${app.message ? `<div class="applicant-cover-note p-2 rounded bg-slate-50 border border-slate-100 text-xs text-slate-700 mt-2 mb-1"><strong>Cover Note:</strong> "${(typeof safeEscapeText==='function'?safeEscapeText(app.message):app.message)}"</div>` : ''}
+                 ${app.message ? `<div class="applicant-cover-note p-2 rounded bg-slate-50 border border-slate-100 text-xs text-slate-700 mt-2 mb-1"><strong>Cover Note:</strong> "${(typeof safeEscapeText === 'function' ? safeEscapeText(app.message) : app.message)}"</div>` : ''}
                  
                  <div class="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100 flex-wrap">
                    <button type="button" class="btn ${cvBtnClass} btn-sm flex-grow kanban-btn flex items-center justify-center gap-1.5" onclick="${cvAction}">
@@ -3624,12 +3812,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       const totalBadge = document.getElementById('pipeline-total-badge');
       if (totalBadge) totalBadge.textContent = `${pendingCount + hiredCount} Candidates`;
 
-      const pendingBadge = document.getElementById('pipeline-pending-badge') || 
-                           document.querySelector('.kanban-cards[data-column="pending"]')?.closest('.kanban-col')?.querySelector('.badge');
+      const pendingBadge = document.getElementById('pipeline-pending-badge') ||
+        document.querySelector('.kanban-cards[data-column="pending"]')?.closest('.kanban-col')?.querySelector('.badge');
       if (pendingBadge) pendingBadge.textContent = pendingCount;
-      
-      const hiredBadge = document.getElementById('pipeline-hired-badge') || 
-                         document.querySelector('.kanban-cards[data-column="hired"]')?.closest('.kanban-col')?.querySelector('.badge');
+
+      const hiredBadge = document.getElementById('pipeline-hired-badge') ||
+        document.querySelector('.kanban-cards[data-column="hired"]')?.closest('.kanban-col')?.querySelector('.badge');
       if (hiredBadge) hiredBadge.textContent = hiredCount;
 
       // Realtime search filter
@@ -3666,12 +3854,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!statViews && !statApps && !statConv && !statActive) return;
 
     const empAuth = typeof getEmployerAuth === 'function' ? getEmployerAuth() : { user: null, token: null };
-    const token = empAuth?.token || 
-                  localStorage.getItem('employer_token') || 
-                  localStorage.getItem('accessToken') || 
-                  sessionStorage.getItem('accessToken') || 
-                  sessionStorage.getItem('employer_token') || 
-                  localStorage.getItem('token');
+    const token = empAuth?.token ||
+      localStorage.getItem('employer_token') ||
+      localStorage.getItem('accessToken') ||
+      sessionStorage.getItem('accessToken') ||
+      sessionStorage.getItem('employer_token') ||
+      localStorage.getItem('token');
 
     const headers = { 'Accept': 'application/json' };
     if (token && !token.includes('cookie')) {
@@ -3712,7 +3900,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       try {
         const storedUser = JSON.parse(localStorage.getItem('employer_user') || localStorage.getItem('user') || 'null');
         if (storedUser && storedUser.id) employerId = storedUser.id;
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (employerId) {
@@ -3841,7 +4029,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (seekerAuth.token && !seekerAuth.token.includes('cookie')) {
         seekerHeaders['Authorization'] = `Bearer ${seekerAuth.token}`;
       }
-      
+
       // 1. Load Applications
       if (seekerAppsTable) {
         fetch(`/api/applications/seeker/${user.id}`, { headers: seekerHeaders, credentials: 'include' })
@@ -3920,26 +4108,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       // 2. Load Saved Jobs
       if (savedJobsGrid) {
         fetch(`/api/jobs/saved/${user.id}`, { headers: seekerHeaders, credentials: 'include' })
-            .then(res => res.json())
-            .then(jobs => {
-              savedJobsGrid.innerHTML = '';
-              if (Array.isArray(jobs)) {
-                window.userSavedJobIds = new Set(jobs.map(j => Number(j.job_id || j.id)));
-                applySavedJobIconsState();
-              }
-              if (!Array.isArray(jobs) || jobs.length === 0) {
-                savedJobsGrid.innerHTML = `
+          .then(res => res.json())
+          .then(jobs => {
+            savedJobsGrid.innerHTML = '';
+            if (Array.isArray(jobs)) {
+              window.userSavedJobIds = new Set(jobs.map(j => Number(j.job_id || j.id)));
+              applySavedJobIconsState();
+            }
+            if (!Array.isArray(jobs) || jobs.length === 0) {
+              savedJobsGrid.innerHTML = `
                   <div class="col-span-full py-8 text-center text-slate-500">
                     <p class="font-medium text-slate-600 mb-1">No saved jobs yet.</p>
                     <p class="text-xs text-slate-400">Save jobs while browsing to review and apply to them later.</p>
                   </div>
                 `;
-              } else {
-                jobs.forEach(job => {
-                  const jobId = job.job_id || job.id;
-                  const isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark';
-                  const bookmarkColor = isDarkTheme ? 'var(--text-color, #ffffff)' : '#000000';
-                  savedJobsGrid.innerHTML += `
+            } else {
+              jobs.forEach(job => {
+                const jobId = job.job_id || job.id;
+                const isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark';
+                const bookmarkColor = isDarkTheme ? 'var(--text-color, #ffffff)' : '#000000';
+                savedJobsGrid.innerHTML += `
                     <div class="card" id="saved-job-${jobId}">
                       <div class="flex justify-between items-start mb-3">
                         <div>
@@ -3963,56 +4151,56 @@ document.addEventListener('DOMContentLoaded', async () => {
                       </div>
                     </div>
                   `;
-                });
-              }
-            }).catch(console.error);
+              });
+            }
+          }).catch(console.error);
+      }
+
+      // 4. Load Active Alerts
+      window.loadAlerts = async function () {
+        if (typeof window.loadActiveAlerts === 'function' && window.loadActiveAlerts !== window.loadAlerts) {
+          return window.loadActiveAlerts();
+        }
+        const container = document.getElementById('active-alerts-container') ||
+          document.querySelector('#alerts .dashboard-grid .card:last-child');
+        const titleEl = document.getElementById('active-alerts-title') ||
+          document.querySelector('#alerts .dashboard-grid .card:last-child h2');
+
+        if (!container) return;
+
+        const seekerAuth = getSeekerAuth();
+        const headers = {};
+        if (seekerAuth.token && !seekerAuth.token.includes('cookie')) {
+          headers['Authorization'] = `Bearer ${seekerAuth.token}`;
         }
 
-        // 4. Load Active Alerts
-        window.loadAlerts = async function() {
-          if (typeof window.loadActiveAlerts === 'function' && window.loadActiveAlerts !== window.loadAlerts) {
-            return window.loadActiveAlerts();
+        try {
+          let res = await fetch('/api/seeker/alerts', { headers, credentials: 'include' });
+          if (!res.ok && res.status === 404) {
+            res = await fetch('/api/alerts', { headers, credentials: 'include' });
           }
-          const container = document.getElementById('active-alerts-container') ||
-                            document.querySelector('#alerts .dashboard-grid .card:last-child');
-          const titleEl = document.getElementById('active-alerts-title') ||
-                          document.querySelector('#alerts .dashboard-grid .card:last-child h2');
+          if (!res.ok) return;
+          const alerts = await res.json();
+          const count = Array.isArray(alerts) ? alerts.length : 0;
 
-          if (!container) return;
-
-          const seekerAuth = getSeekerAuth();
-          const headers = {};
-          if (seekerAuth.token && !seekerAuth.token.includes('cookie')) {
-            headers['Authorization'] = `Bearer ${seekerAuth.token}`;
+          if (titleEl) {
+            titleEl.textContent = `Active Alerts (${count})`;
           }
 
-          try {
-            let res = await fetch('/api/seeker/alerts', { headers, credentials: 'include' });
-            if (!res.ok && res.status === 404) {
-              res = await fetch('/api/alerts', { headers, credentials: 'include' });
-            }
-            if (!res.ok) return;
-            const alerts = await res.json();
-            const count = Array.isArray(alerts) ? alerts.length : 0;
+          const targetElement = document.getElementById('active-alerts-container') || container;
+          targetElement.innerHTML = '';
 
-            if (titleEl) {
-              titleEl.textContent = `Active Alerts (${count})`;
-            }
+          if (!Array.isArray(alerts) || alerts.length === 0) {
+            targetElement.innerHTML = '<p class="text-slate-500 py-4 text-sm">No active alerts configured.</p>';
+          } else {
+            alerts.forEach(alert => {
+              const alertId = alert.id;
+              const sector = alert.job_sector || alert.sector || alert.keyword || 'Software & Tech';
+              const location = alert.location || 'Addis Ababa';
+              const frequency = alert.frequency || 'daily';
+              const channelText = alert.email_notification ? 'Email Notification' : 'Notifications Disabled';
 
-            const targetElement = document.getElementById('active-alerts-container') || container;
-            targetElement.innerHTML = '';
-
-            if (!Array.isArray(alerts) || alerts.length === 0) {
-              targetElement.innerHTML = '<p class="text-slate-500 py-4 text-sm">No active alerts configured.</p>';
-            } else {
-              alerts.forEach(alert => {
-                const alertId = alert.id;
-                const sector = alert.job_sector || alert.sector || alert.keyword || 'Software & Tech';
-                const location = alert.location || 'Addis Ababa';
-                const frequency = alert.frequency || 'daily';
-                const channelText = alert.email_notification ? 'Email Notification' : 'Notifications Disabled';
-
-                const cardHtml = `
+              const cardHtml = `
                   <div class="alert-card mb-3" id="alert-${alertId}" data-id="${alertId}">
                     <div class="flex justify-between items-start mb-2">
                         <h4 class="font-bold text-slate-900 text-sm">${sector}</h4>
@@ -4025,46 +4213,60 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                   </div>
                 `;
-                targetElement.insertAdjacentHTML('beforeend', cardHtml);
-              });
-            }
-          } catch (err) {
-            console.error('Error loading job alerts:', err);
+              targetElement.insertAdjacentHTML('beforeend', cardHtml);
+            });
           }
-        };
+        } catch (err) {
+          console.error('Error loading job alerts:', err);
+        }
+      };
 
-        // Automatically fetch active alerts on dashboard load
-        window.loadAlerts();
+      // Automatically fetch active alerts on dashboard load
+      window.loadAlerts();
 
-        const alertForm = document.getElementById('alert-form');
-        if (alertForm && !alertForm.dataset.seekerAlertBound) {
-          alertForm.dataset.seekerAlertBound = 'true';
-          alertForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+      const alertForm = document.getElementById('alert-form');
+      if (alertForm && !alertForm.dataset.seekerAlertBound) {
+        alertForm.dataset.seekerAlertBound = 'true';
+        alertForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
 
-            const seekerAuth = getSeekerAuth();
-            const sectorEl = document.getElementById('job-sector') || document.getElementById('alert-sector');
-            const locationEl = document.getElementById('alert-location') || document.getElementById('job-location');
-            const emailEl = document.getElementById('alert-email');
+          const seekerAuth = getSeekerAuth();
+          const sectorEl = document.getElementById('job-sector') || document.getElementById('alert-sector');
+          const locationEl = document.getElementById('alert-location') || document.getElementById('job-location');
+          const emailEl = document.getElementById('alert-email');
 
-            const job_sector = sectorEl ? sectorEl.value : 'Software & Tech';
-            const location = locationEl ? locationEl.value : 'Addis Ababa';
-            const email_notification = emailEl ? emailEl.checked : true;
+          const job_sector = sectorEl ? sectorEl.value : 'Software & Tech';
+          const location = locationEl ? locationEl.value : 'Addis Ababa';
+          const email_notification = emailEl ? emailEl.checked : true;
 
-            const submitBtn = alertForm.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn ? submitBtn.textContent : 'Save Alert Preferences';
-            if (submitBtn) {
-              submitBtn.disabled = true;
-              submitBtn.textContent = 'Saving...';
-            }
+          const submitBtn = alertForm.querySelector('button[type="submit"]');
+          const originalBtnText = submitBtn ? submitBtn.textContent : 'Save Alert Preferences';
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+          }
 
-            const headers = { 'Content-Type': 'application/json' };
-            if (seekerAuth.token && !seekerAuth.token.includes('cookie')) {
-              headers['Authorization'] = `Bearer ${seekerAuth.token}`;
-            }
+          const headers = { 'Content-Type': 'application/json' };
+          if (seekerAuth.token && !seekerAuth.token.includes('cookie')) {
+            headers['Authorization'] = `Bearer ${seekerAuth.token}`;
+          }
 
-            try {
-              let res = await fetch('/api/seeker/alerts', {
+          try {
+            let res = await fetch('/api/seeker/alerts', {
+              method: 'POST',
+              headers: headers,
+              credentials: 'include',
+              body: JSON.stringify({
+                seekerId: seekerAuth.user ? seekerAuth.user.id : undefined,
+                job_sector,
+                sector: job_sector,
+                location,
+                email_notification,
+                frequency: 'daily'
+              })
+            });
+            if (!res.ok && res.status === 404) {
+              res = await fetch('/api/alerts', {
                 method: 'POST',
                 headers: headers,
                 credentials: 'include',
@@ -4077,54 +4279,40 @@ document.addEventListener('DOMContentLoaded', async () => {
                   frequency: 'daily'
                 })
               });
-              if (!res.ok && res.status === 404) {
-                res = await fetch('/api/alerts', {
-                  method: 'POST',
-                  headers: headers,
-                  credentials: 'include',
-                  body: JSON.stringify({
-                    seekerId: seekerAuth.user ? seekerAuth.user.id : undefined,
-                    job_sector,
-                    sector: job_sector,
-                    location,
-                    email_notification,
-                    frequency: 'daily'
-                  })
-                });
-              }
-
-              const data = await res.json();
-              if (res.ok) {
-                showToast(data.message || 'Alert preferences saved!', 'success');
-                // Dynamically update UI without page reload
-                if (typeof window.loadAlerts === 'function') {
-                  await window.loadAlerts();
-                }
-              } else {
-                showToast(data.message || 'Error saving alert preferences', 'error');
-              }
-            } catch (err) {
-              console.error('Error saving alert preferences:', err);
-              showToast('Network error while saving alert preferences', 'error');
-            } finally {
-              if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalBtnText;
-              }
             }
-          });
-        }
 
-        const profileForm = document.getElementById('profile-form');
-        if (profileForm) {
-          profileForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const saveBtn = profileForm.querySelector('[data-action="save-profile"]');
-            if (saveBtn) {
-              saveBtn.click();
+            const data = await res.json();
+            if (res.ok) {
+              showToast(data.message || 'Alert preferences saved!', 'success');
+              // Dynamically update UI without page reload
+              if (typeof window.loadAlerts === 'function') {
+                await window.loadAlerts();
+              }
+            } else {
+              showToast(data.message || 'Error saving alert preferences', 'error');
             }
-          });
-        }
+          } catch (err) {
+            console.error('Error saving alert preferences:', err);
+            showToast('Network error while saving alert preferences', 'error');
+          } finally {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = originalBtnText;
+            }
+          }
+        });
+      }
+
+      const profileForm = document.getElementById('profile-form');
+      if (profileForm) {
+        profileForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const saveBtn = profileForm.querySelector('[data-action="save-profile"]');
+          if (saveBtn) {
+            saveBtn.click();
+          }
+        });
+      }
 
     } else {
       // Unauthenticated or not job_seeker: show clean empty state instead of dummy content
@@ -4154,7 +4342,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // Global functions for dynamic elements
-window.rejectApplication = function(appId, btnElement) {
+window.rejectApplication = function (appId, btnElement) {
   if (confirm('Are you sure you want to reject this application?')) {
     const empAuth = typeof getEmployerAuth === 'function' ? getEmployerAuth() : {};
     const token = empAuth.token || localStorage.getItem('employer_token') || localStorage.getItem('accessToken') || localStorage.getItem('token');
@@ -4171,76 +4359,76 @@ window.rejectApplication = function(appId, btnElement) {
       credentials: 'include',
       body: JSON.stringify({ status: 'rejected' })
     })
-    .then(res => res.json())
-    .then(data => {
-      if (data.message === 'Application status updated successfully') {
-        showToast('Application rejected', 'info');
+      .then(res => res.json())
+      .then(data => {
+        if (data.message === 'Application status updated successfully') {
+          showToast('Application rejected', 'info');
 
-        // Smooth fade-out and complete removal from the DOM
-        if (card) {
-          card.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-          card.style.opacity = '0';
-          card.style.transform = 'scale(0.92) translateY(-8px)';
-          card.style.maxHeight = `${card.offsetHeight}px`;
-
-          setTimeout(() => {
-            card.style.maxHeight = '0px';
-            card.style.paddingTop = '0px';
-            card.style.paddingBottom = '0px';
-            card.style.marginTop = '0px';
-            card.style.marginBottom = '0px';
-            card.style.overflow = 'hidden';
+          // Smooth fade-out and complete removal from the DOM
+          if (card) {
+            card.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.92) translateY(-8px)';
+            card.style.maxHeight = `${card.offsetHeight}px`;
 
             setTimeout(() => {
-              card.remove();
+              card.style.maxHeight = '0px';
+              card.style.paddingTop = '0px';
+              card.style.paddingBottom = '0px';
+              card.style.marginTop = '0px';
+              card.style.marginBottom = '0px';
+              card.style.overflow = 'hidden';
 
-              // Check if pending column is now empty
-              const pendingColumn = document.getElementById('kanban-pending-col') || document.querySelector('.kanban-cards[data-column="pending"]');
-              if (pendingColumn && pendingColumn.querySelectorAll('.kanban-card').length === 0) {
-                pendingColumn.innerHTML = '<div class="text-center py-8 text-slate-400 text-xs italic">No candidates pending review.</div>';
-              }
+              setTimeout(() => {
+                card.remove();
 
-              // Check if hired column is now empty
-              const hiredColumn = document.getElementById('kanban-hired-col') || document.querySelector('.kanban-cards[data-column="hired"]');
-              if (hiredColumn && hiredColumn.querySelectorAll('.kanban-card').length === 0) {
-                hiredColumn.innerHTML = '<div class="text-center py-8 text-slate-400 text-xs italic">No candidates marked as hired yet.</div>';
-              }
+                // Check if pending column is now empty
+                const pendingColumn = document.getElementById('kanban-pending-col') || document.querySelector('.kanban-cards[data-column="pending"]');
+                if (pendingColumn && pendingColumn.querySelectorAll('.kanban-card').length === 0) {
+                  pendingColumn.innerHTML = '<div class="text-center py-8 text-slate-400 text-xs italic">No candidates pending review.</div>';
+                }
 
-              // Update badge counts dynamically
-              const pCount = pendingColumn ? pendingColumn.querySelectorAll('.kanban-card').length : 0;
-              const hCount = hiredColumn ? hiredColumn.querySelectorAll('.kanban-card').length : 0;
+                // Check if hired column is now empty
+                const hiredColumn = document.getElementById('kanban-hired-col') || document.querySelector('.kanban-cards[data-column="hired"]');
+                if (hiredColumn && hiredColumn.querySelectorAll('.kanban-card').length === 0) {
+                  hiredColumn.innerHTML = '<div class="text-center py-8 text-slate-400 text-xs italic">No candidates marked as hired yet.</div>';
+                }
 
-              const totalBadge = document.getElementById('pipeline-total-badge');
-              if (totalBadge) totalBadge.textContent = `${pCount + hCount} Candidates`;
+                // Update badge counts dynamically
+                const pCount = pendingColumn ? pendingColumn.querySelectorAll('.kanban-card').length : 0;
+                const hCount = hiredColumn ? hiredColumn.querySelectorAll('.kanban-card').length : 0;
 
-              const pendingBadge = document.getElementById('pipeline-pending-badge') || 
-                                   pendingColumn?.closest('.kanban-col')?.querySelector('.badge');
-              if (pendingBadge) pendingBadge.textContent = pCount;
+                const totalBadge = document.getElementById('pipeline-total-badge');
+                if (totalBadge) totalBadge.textContent = `${pCount + hCount} Candidates`;
 
-              const hiredBadge = document.getElementById('pipeline-hired-badge') || 
-                                 hiredColumn?.closest('.kanban-col')?.querySelector('.badge');
-              if (hiredBadge) hiredBadge.textContent = hCount;
-            }, 300);
-          }, 150);
-        } else if (typeof window.loadEmployerApplications === 'function') {
-          window.loadEmployerApplications();
+                const pendingBadge = document.getElementById('pipeline-pending-badge') ||
+                  pendingColumn?.closest('.kanban-col')?.querySelector('.badge');
+                if (pendingBadge) pendingBadge.textContent = pCount;
+
+                const hiredBadge = document.getElementById('pipeline-hired-badge') ||
+                  hiredColumn?.closest('.kanban-col')?.querySelector('.badge');
+                if (hiredBadge) hiredBadge.textContent = hCount;
+              }, 300);
+            }, 150);
+          } else if (typeof window.loadEmployerApplications === 'function') {
+            window.loadEmployerApplications();
+          }
+
+          if (typeof window.loadEmployerStats === 'function') {
+            window.loadEmployerStats();
+          }
+        } else {
+          showToast(data.message || 'Error updating status', 'error');
         }
-
-        if (typeof window.loadEmployerStats === 'function') {
-          window.loadEmployerStats();
-        }
-      } else {
-        showToast(data.message || 'Error updating status', 'error');
-      }
-    })
-    .catch(err => {
-      console.error('Error rejecting application:', err);
-      showToast('Network error', 'error');
-    });
+      })
+      .catch(err => {
+        console.error('Error rejecting application:', err);
+        showToast('Network error', 'error');
+      });
   }
 };
 
-window.hireApplication = function(appId, btnElement) {
+window.hireApplication = function (appId, btnElement) {
   if (confirm('Are you sure you want to select/hire this candidate?')) {
     const empAuth = typeof getEmployerAuth === 'function' ? getEmployerAuth() : {};
     const token = empAuth.token || localStorage.getItem('employer_token') || localStorage.getItem('accessToken') || localStorage.getItem('token');
@@ -4255,25 +4443,25 @@ window.hireApplication = function(appId, btnElement) {
       credentials: 'include',
       body: JSON.stringify({ status: 'Hired' })
     })
-    .then(res => res.json())
-    .then(data => {
-      if (data.message === 'Application status updated successfully') {
-        showToast('Candidate Hired successfully!', 'success');
-        if (typeof window.loadEmployerApplications === 'function') {
-          window.loadEmployerApplications();
+      .then(res => res.json())
+      .then(data => {
+        if (data.message === 'Application status updated successfully') {
+          showToast('Candidate Hired successfully!', 'success');
+          if (typeof window.loadEmployerApplications === 'function') {
+            window.loadEmployerApplications();
+          }
+          if (typeof window.loadEmployerStats === 'function') {
+            window.loadEmployerStats();
+          }
+        } else {
+          showToast(data.message || 'Error updating status', 'error');
         }
-        if (typeof window.loadEmployerStats === 'function') {
-          window.loadEmployerStats();
-        }
-      } else {
-        showToast(data.message || 'Error updating status', 'error');
-      }
-    })
-    .catch(err => showToast('Network error', 'error'));
+      })
+      .catch(err => showToast('Network error', 'error'));
   }
 };
 
-window.deleteAlert = async function(id, btnElement) {
+window.deleteAlert = async function (id, btnElement) {
   const seekerAuth = getSeekerAuth();
   if (!seekerAuth.token || !seekerAuth.user) {
     showToast('Please log in as a job seeker first', 'error');
@@ -4332,7 +4520,7 @@ window.deleteAlert = async function(id, btnElement) {
 };
 
 // Kanban Drag and Drop Logic
-window.setupKanbanDragAndDrop = function() {
+window.setupKanbanDragAndDrop = function () {
   const cards = document.querySelectorAll('.kanban-card');
   const columns = document.querySelectorAll('.kanban-cards');
 
@@ -4363,7 +4551,7 @@ window.setupKanbanDragAndDrop = function() {
       if (draggable) {
         const appId = draggable.getAttribute('data-id');
         const newStatus = column.getAttribute('data-column') === 'hired' ? 'Hired' : 'Pending';
-        
+
         fetch(`/api/applications/${appId}/status`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -4404,7 +4592,7 @@ window.applyForJob = function (jId) {
           if (typeof updateAuthModalUI === 'function') {
             try {
               updateAuthModalUI();
-            } catch (e) {}
+            } catch (e) { }
           }
         }
         if (typeof window.openModal === 'function') {
@@ -4439,7 +4627,7 @@ window.applyForJob = function (jId) {
         showToast('You have already applied for this job', 'info');
         return;
       }
-      
+
       // Inject modal dynamically if it doesn't exist
       let applyModal = document.getElementById('apply-modal');
       if (!applyModal) {
@@ -4477,40 +4665,40 @@ window.applyForJob = function (jId) {
           }
         });
       }
-      
+
       const msgInput = document.getElementById('apply-message-input');
       if (msgInput) msgInput.value = '';
 
       applyModal.classList.remove('hidden');
       applyModal.classList.add('active');
-      
+
       const cancelBtn = document.getElementById('apply-cancel-btn');
       const confirmBtn = document.getElementById('apply-confirm-btn');
       const closeXBtn = document.getElementById('apply-modal-close-x');
-      
+
       if (closeXBtn) {
         closeXBtn.onclick = () => {
           applyModal.classList.remove('active');
           applyModal.classList.add('hidden');
         };
       }
-      
+
       if (cancelBtn && confirmBtn) {
         // Clone to remove old event listeners
         const newConfirmBtn = confirmBtn.cloneNode(true);
         confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
         const newCancelBtn = cancelBtn.cloneNode(true);
         cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-        
+
         newCancelBtn.addEventListener('click', () => {
           applyModal.classList.remove('active');
           applyModal.classList.add('hidden');
         });
-        
+
         newConfirmBtn.addEventListener('click', () => {
           newConfirmBtn.disabled = true;
           newConfirmBtn.textContent = 'Submitting...';
-          
+
           const messageVal = (document.getElementById('apply-message-input')?.value || '').trim();
 
           fetch('/api/applications/apply', {
@@ -4523,7 +4711,7 @@ window.applyForJob = function (jId) {
             applyModal.classList.add('hidden');
             newConfirmBtn.disabled = false;
             newConfirmBtn.textContent = 'Submit Application';
-            
+
             if (data.message === 'Application submitted successfully') {
               showToast('Successfully applied!', 'success');
               setTimeout(() => window.location.reload(), 1000);
@@ -4546,7 +4734,7 @@ window.applyForJob = function (jId) {
     });
 };
 
-window.withdrawApplication = function(appId, btnElement) {
+window.withdrawApplication = function (appId, btnElement) {
   if (confirm('Are you sure you want to withdraw this application?')) {
     const seekerAuth = getSeekerAuth();
     const authHeaders = {};
@@ -4568,7 +4756,7 @@ window.withdrawApplication = function(appId, btnElement) {
   }
 };
 
-window.updateJobBookmarkVisualState = function(jobId, isSaved) {
+window.updateJobBookmarkVisualState = function (jobId, isSaved) {
   const numJobId = Number(jobId);
   if (!window.userSavedJobIds) window.userSavedJobIds = new Set();
   if (isSaved) {
@@ -4625,7 +4813,7 @@ window.updateJobBookmarkVisualState = function(jobId, isSaved) {
   }
 };
 
-window.saveJob = async function(jobId, btnElement) {
+window.saveJob = async function (jobId, btnElement) {
   // Correct Token Injection: Dynamically retrieve getSeekerAuth().token right before request
   const seekerAuth = getSeekerAuth();
   const curToken = seekerAuth ? seekerAuth.token : null;
@@ -4649,7 +4837,7 @@ window.saveJob = async function(jobId, btnElement) {
     showToast('Only job seekers can save jobs', 'error');
     return false;
   }
-  
+
   const headers = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${curToken}`
@@ -4703,7 +4891,7 @@ window.saveJob = async function(jobId, btnElement) {
   }
 };
 
-window.unsaveJob = async function(jobId, btnElement) {
+window.unsaveJob = async function (jobId, btnElement) {
   // Dynamically retrieve seeker token and user right before request
   const seekerAuth = getSeekerAuth();
   const curToken = seekerAuth ? seekerAuth.token : null;
@@ -4799,7 +4987,7 @@ window.unsaveJob = async function(jobId, btnElement) {
   }
 };
 
-window.toggleSaveJob = async function(jobId, btnElement) {
+window.toggleSaveJob = async function (jobId, btnElement) {
   const numJobId = Number(jobId);
   const isCurrentlySaved = (window.userSavedJobIds && window.userSavedJobIds.has(numJobId)) ||
     (btnElement && btnElement.classList.contains('saved'));
@@ -4812,7 +5000,7 @@ window.toggleSaveJob = async function(jobId, btnElement) {
 };
 
 // View Candidate Profile
-window.viewProfile = function(seekerId) {
+window.viewProfile = function (seekerId) {
   if (!seekerId) {
     showToast('Applicant ID not found.', 'error');
     return;
@@ -4820,10 +5008,10 @@ window.viewProfile = function(seekerId) {
   showToast('Fetching profile...', 'info');
 
   const empAuth = (typeof getEmployerAuth === 'function') ? getEmployerAuth() : {};
-  const token = empAuth.token || 
-                localStorage.getItem('employer_token') || 
-                localStorage.getItem('accessToken') || 
-                localStorage.getItem('token');
+  const token = empAuth.token ||
+    localStorage.getItem('employer_token') ||
+    localStorage.getItem('accessToken') ||
+    localStorage.getItem('token');
 
   const authHeaders = {
     'Accept': 'application/json'
@@ -4869,7 +5057,7 @@ window.viewProfile = function(seekerId) {
         profileModal.className = 'modal-overlay hidden';
         document.body.appendChild(profileModal);
       }
-      
+
       // Dynamic fields with graceful fallbacks for null/empty values
       const fullName = (seeker.full_name || seeker.name || 'Candidate').trim();
       const professionalTitle = (seeker.professional_title || seeker.title || 'Job Seeker').trim();
@@ -4882,20 +5070,20 @@ window.viewProfile = function(seekerId) {
       // Generate initials
       let initials = 'U';
       if (fullName && fullName.length >= 2) {
-         initials = fullName.substring(0, 2).toUpperCase();
+        initials = fullName.substring(0, 2).toUpperCase();
       } else if (fullName && fullName.length === 1) {
-         initials = fullName.toUpperCase();
+        initials = fullName.toUpperCase();
       }
-      
+
       // Avatar rendering: use photo if uploaded and not default avatar, else fallback initials
       const rawPhoto = (seeker.profile_photo || seeker.profile_photo_url || '').trim();
       const hasCustomPhoto = rawPhoto && !rawPhoto.toLowerCase().includes('default-avatar');
-      
+
       let avatarHtml = `<div id="candidate-profile-avatar-fallback" class="profile-avatar-circle" style="width: 80px; height: 80px; min-width: 80px; max-width: 80px; min-height: 80px; max-height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; flex-shrink: 0; font-size: 1.75rem; font-weight: bold; background: #1e3a8a; color: #bfdbfe; border: 2px solid rgba(255,255,255,0.12);">${initials}</div>`;
       if (hasCustomPhoto) {
-         avatarHtml = `<img id="candidate-profile-avatar-img" src="${rawPhoto}" alt="${fullName}" class="profile-avatar-img" style="width: 80px; height: 80px; min-width: 80px; max-width: 80px; min-height: 80px; max-height: 80px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 10px auto; flex-shrink: 0; border: 2px solid #3b82f6;" onerror="this.outerHTML='<div class=\\'profile-avatar-circle\\' style=\\'width: 80px; height: 80px; min-width: 80px; max-width: 80px; min-height: 80px; max-height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; flex-shrink: 0; font-size: 1.75rem; font-weight: bold; background: #1e3a8a; color: #bfdbfe; border: 2px solid rgba(255,255,255,0.12);\\'>${initials}</div>'" />`;
+        avatarHtml = `<img id="candidate-profile-avatar-img" src="${rawPhoto}" alt="${fullName}" class="profile-avatar-img" style="width: 80px; height: 80px; min-width: 80px; max-width: 80px; min-height: 80px; max-height: 80px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 10px auto; flex-shrink: 0; border: 2px solid #3b82f6;" onerror="this.outerHTML='<div class=\\'profile-avatar-circle\\' style=\\'width: 80px; height: 80px; min-width: 80px; max-width: 80px; min-height: 80px; max-height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; flex-shrink: 0; font-size: 1.75rem; font-weight: bold; background: #1e3a8a; color: #bfdbfe; border: 2px solid rgba(255,255,255,0.12);\\'>${initials}</div>'" />`;
       }
-      
+
       // Download CV Button: dynamic href if file exists, or disabled with 'No CV Available'
       let cvHtml = '';
       if (cvUrl && cvUrl !== '#') {
@@ -5006,7 +5194,7 @@ window.viewProfile = function(seekerId) {
           </div>
         `;
       }
-         
+
       profileModal.innerHTML = `
         <div class="modal-content card profile-modal-content">
           <div class="profile-modal-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -5069,7 +5257,7 @@ window.viewProfile = function(seekerId) {
           </div>
         </div>
       `;
-      
+
       profileModal.classList.remove('hidden');
       requestAnimationFrame(() => {
         profileModal.classList.add('active');
@@ -5294,8 +5482,8 @@ function handleFooterProtectedResourceClick(e) {
     e.preventDefault();
     e.stopPropagation();
 
-    const toastMessage = !isAuthenticated 
-      ? 'Please log in to access this feature' 
+    const toastMessage = !isAuthenticated
+      ? 'Please log in to access this feature'
       : 'Please log in as a job seeker to access this feature';
 
     if (typeof showToast === 'function') {
@@ -5317,7 +5505,7 @@ function handleFooterProtectedResourceClick(e) {
           registerStep = 1;
           loginRedirectUrl = targetUrl;
           updateAuthModalUI();
-        } catch (err) {}
+        } catch (err) { }
       }
       if (typeof window.openModal === 'function') {
         window.openModal('login-modal');
@@ -5329,7 +5517,7 @@ function handleFooterProtectedResourceClick(e) {
       try {
         sessionStorage.setItem('pendingAuthToast', toastMessage);
         sessionStorage.setItem('loginRedirectUrl', targetUrl);
-      } catch (err) {}
+      } catch (err) { }
       setTimeout(() => {
         window.location.href = `index.html?login=seeker&redirect=${encodeURIComponent(targetUrl)}`;
       }, 100);
@@ -5356,7 +5544,7 @@ function handleFooterProtectedResourceClick(e) {
 document.addEventListener('click', handleFooterProtectedResourceClick, true);
 
 // Expose and bind direct listeners on DOMContentLoaded
-window.initFooterAuthGuards = function() {
+window.initFooterAuthGuards = function () {
   const links = document.querySelectorAll('#footer-create-cv, #footer-job-alerts, #footer-saved-jobs, .footer-protected-link, .footer-links a[data-auth-required="true"]');
   links.forEach(l => {
     l.removeEventListener('click', handleFooterProtectedResourceClick);
@@ -5372,117 +5560,117 @@ if (document.readyState === 'loading') {
 
 // Function to update job card button to 'Undo Report'
 function updateJobCardToReported(jobId) {
-    const buttons = document.querySelectorAll(`[data-job-id="${jobId}"]`);
-    buttons.forEach(btn => {
-        if (btn.getAttribute('data-action') === 'report-job') {
-            btn.setAttribute('data-action', 'undo-report');
-            btn.className = 'btn btn-outline btn-undo-report ml-1';
-            btn.title = 'Undo Report';
-            btn.disabled = false;
-            btn.style.color = '';
-            btn.style.borderColor = '';
-            btn.style.opacity = '1';
-            btn.innerHTML = `
+  const buttons = document.querySelectorAll(`[data-job-id="${jobId}"]`);
+  buttons.forEach(btn => {
+    if (btn.getAttribute('data-action') === 'report-job') {
+      btn.setAttribute('data-action', 'undo-report');
+      btn.className = 'btn btn-outline btn-undo-report ml-1';
+      btn.title = 'Undo Report';
+      btn.disabled = false;
+      btn.style.color = '';
+      btn.style.borderColor = '';
+      btn.style.opacity = '1';
+      btn.innerHTML = `
                 <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a5 5 0 015 5v2M3 10l6 6m-6-6l6-6"></path>
                 </svg>
                 <span>Undo Report</span>
             `;
-        }
-    });
+    }
+  });
 }
 
 // Function to revert job card button to 'Report'
 function updateJobCardToUnreported(jobId) {
-    const buttons = document.querySelectorAll(`[data-job-id="${jobId}"]`);
-    buttons.forEach(btn => {
-        if (btn.getAttribute('data-action') === 'undo-report' || btn.getAttribute('data-action') === 'withdraw-report') {
-            btn.setAttribute('data-action', 'report-job');
-            btn.className = 'btn btn-outline btn-icon-small btn-report ml-1';
-            btn.title = 'Report Job';
-            btn.disabled = false;
-            btn.style.color = '';
-            btn.style.borderColor = '';
-            btn.style.opacity = '1';
-            btn.innerHTML = `
+  const buttons = document.querySelectorAll(`[data-job-id="${jobId}"]`);
+  buttons.forEach(btn => {
+    if (btn.getAttribute('data-action') === 'undo-report' || btn.getAttribute('data-action') === 'withdraw-report') {
+      btn.setAttribute('data-action', 'report-job');
+      btn.className = 'btn btn-outline btn-icon-small btn-report ml-1';
+      btn.title = 'Report Job';
+      btn.disabled = false;
+      btn.style.color = '';
+      btn.style.borderColor = '';
+      btn.style.opacity = '1';
+      btn.innerHTML = `
                 <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path>
                 </svg>
             `;
-        }
-    });
+    }
+  });
 }
 
 // Global function to withdraw/undo report
-window.undoReportJob = async function(jobId, triggerBtn) {
-    if (!jobId) return;
+window.undoReportJob = async function (jobId, triggerBtn) {
+  if (!jobId) return;
+  if (triggerBtn) {
+    triggerBtn.disabled = true;
+    triggerBtn.style.opacity = '0.6';
+  }
+
+  try {
+    const res = await fetch(`/api/reports/${jobId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (res.ok) {
+      updateJobCardToUnreported(jobId);
+      if (typeof window.removeReportedJobFromStorage === 'function') {
+        window.removeReportedJobFromStorage(jobId);
+      }
+      if (typeof showToast === 'function') {
+        showToast('Report withdrawn successfully.', 'info');
+      }
+    } else {
+      const err = await res.json().catch(() => ({}));
+      if (typeof showToast === 'function') {
+        showToast(err.message || 'Failed to withdraw report.', 'error');
+      }
+      if (triggerBtn) {
+        triggerBtn.disabled = false;
+        triggerBtn.style.opacity = '1';
+      }
+    }
+  } catch (err) {
+    console.error('Error withdrawing report:', err);
+    if (typeof showToast === 'function') {
+      showToast('Network error while withdrawing report.', 'error');
+    }
     if (triggerBtn) {
-        triggerBtn.disabled = true;
-        triggerBtn.style.opacity = '0.6';
+      triggerBtn.disabled = false;
+      triggerBtn.style.opacity = '1';
     }
-
-    try {
-        const res = await fetch(`/api/reports/${jobId}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (res.ok) {
-            updateJobCardToUnreported(jobId);
-            if (typeof window.removeReportedJobFromStorage === 'function') {
-                window.removeReportedJobFromStorage(jobId);
-            }
-            if (typeof showToast === 'function') {
-                showToast('Report withdrawn successfully.', 'info');
-            }
-        } else {
-            const err = await res.json().catch(() => ({}));
-            if (typeof showToast === 'function') {
-                showToast(err.message || 'Failed to withdraw report.', 'error');
-            }
-            if (triggerBtn) {
-                triggerBtn.disabled = false;
-                triggerBtn.style.opacity = '1';
-            }
-        }
-    } catch (err) {
-        console.error('Error withdrawing report:', err);
-        if (typeof showToast === 'function') {
-            showToast('Network error while withdrawing report.', 'error');
-        }
-        if (triggerBtn) {
-            triggerBtn.disabled = false;
-            triggerBtn.style.opacity = '1';
-        }
-    }
+  }
 };
 
 // Handle dynamic report job clicks
 document.addEventListener('click', async (e) => {
-    // 1. Check if Undo Report was clicked
-    const undoBtn = e.target.closest('[data-action="undo-report"], [data-action="withdraw-report"]');
-    if (undoBtn) {
-        e.preventDefault();
-        const jobId = undoBtn.getAttribute('data-job-id');
-        if (jobId) {
-            await window.undoReportJob(jobId, undoBtn);
-        }
-        return;
+  // 1. Check if Undo Report was clicked
+  const undoBtn = e.target.closest('[data-action="undo-report"], [data-action="withdraw-report"]');
+  if (undoBtn) {
+    e.preventDefault();
+    const jobId = undoBtn.getAttribute('data-job-id');
+    if (jobId) {
+      await window.undoReportJob(jobId, undoBtn);
     }
+    return;
+  }
 
-    // 2. Check if Report Job was clicked
-    const reportBtn = e.target.closest('[data-action="report-job"]');
-    if (reportBtn) {
-        e.preventDefault();
-        const jobId = reportBtn.getAttribute('data-job-id');
-        if (!jobId) return;
-        
-        let reportModal = document.getElementById('report-job-modal');
-        if (!reportModal) {
-            reportModal = document.createElement('div');
-            reportModal.id = 'report-job-modal';
-            reportModal.className = 'modal-overlay hidden';
-            reportModal.innerHTML = `
+  // 2. Check if Report Job was clicked
+  const reportBtn = e.target.closest('[data-action="report-job"]');
+  if (reportBtn) {
+    e.preventDefault();
+    const jobId = reportBtn.getAttribute('data-job-id');
+    if (!jobId) return;
+
+    let reportModal = document.getElementById('report-job-modal');
+    if (!reportModal) {
+      reportModal = document.createElement('div');
+      reportModal.id = 'report-job-modal';
+      reportModal.className = 'modal-overlay hidden';
+      reportModal.innerHTML = `
                 <div class="modal-content card report-modal-content">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-xl font-bold text-slate-900">Report Job</h2>
@@ -5501,151 +5689,151 @@ document.addEventListener('click', async (e) => {
                     </form>
                 </div>
             `;
-            document.body.appendChild(reportModal);
-            
-            document.getElementById('close-report-modal').addEventListener('click', () => {
-                reportModal.classList.remove('active');
-                setTimeout(() => reportModal.classList.add('hidden'), 300);
-            });
+      document.body.appendChild(reportModal);
 
-            // Input event listener for word count validation and preventing numbers
-            const reportReasonInput = document.getElementById('report-reason');
-            const submitReportBtn = document.getElementById('submit-report-btn');
-            const reportWordError = document.getElementById('report-word-error');
+      document.getElementById('close-report-modal').addEventListener('click', () => {
+        reportModal.classList.remove('active');
+        setTimeout(() => reportModal.classList.add('hidden'), 300);
+      });
 
-            reportReasonInput.addEventListener('input', (event) => {
-                // Prevent entry of numbers: digits are immediately stripped out
-                const stripped = event.target.value.replace(/[0-9]/g, '');
-                if (event.target.value !== stripped) {
-                    event.target.value = stripped;
-                }
+      // Input event listener for word count validation and preventing numbers
+      const reportReasonInput = document.getElementById('report-reason');
+      const submitReportBtn = document.getElementById('submit-report-btn');
+      const reportWordError = document.getElementById('report-word-error');
 
-                // Count words
-                const trimmed = event.target.value.trim();
-                const words = trimmed ? trimmed.split(/\s+/).filter(Boolean) : [];
-                const wordCount = words.length;
-
-                // Word count validation: at least 15 words required
-                if (wordCount < 15) {
-                    if (submitReportBtn) submitReportBtn.disabled = true;
-                    if (reportWordError) {
-                        reportWordError.textContent = 'Please provide at least 15 words.';
-                        reportWordError.style.display = 'block';
-                    }
-                } else {
-                    if (submitReportBtn) submitReportBtn.disabled = false;
-                    if (reportWordError) {
-                        reportWordError.style.display = 'none';
-                    }
-                }
-            });
-            
-            document.getElementById('report-job-form').addEventListener('submit', async (ev) => {
-                ev.preventDefault();
-                const btn = document.getElementById('submit-report-btn');
-                const originalText = btn ? btn.textContent : 'Submit Report';
-                
-                const rJobId = document.getElementById('report-job-id').value;
-                const reasonInput = document.getElementById('report-reason');
-                const reason = reasonInput ? reasonInput.value.trim() : '';
-
-                const words = reason ? reason.split(/\s+/).filter(Boolean) : [];
-                if (words.length < 15) {
-                    if (reportWordError) {
-                        reportWordError.textContent = 'Please provide at least 15 words.';
-                        reportWordError.style.display = 'block';
-                    }
-                    if (btn) btn.disabled = true;
-                    return;
-                }
-
-                if (btn) {
-                    btn.textContent = 'Submitting...';
-                    btn.disabled = true;
-                }
-                
-                try {
-                    const res = await fetch('/api/reports', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ jobId: rJobId, reason })
-                    });
-                    if (res.ok) {
-                        showToast('Job reported successfully. Admin will review it.', 'success');
-                        
-                        // Dynamically change 'Report' button on that specific job card to 'Undo Report'
-                        updateJobCardToReported(rJobId);
-                        if (typeof window.addReportedJobToStorage === 'function') {
-                            window.addReportedJobToStorage(rJobId);
-                        }
-
-                        reportModal.classList.remove('active');
-                        setTimeout(() => reportModal.classList.add('hidden'), 300);
-                        document.getElementById('report-job-form').reset();
-                        if (submitReportBtn) submitReportBtn.disabled = true;
-                        if (reportWordError) reportWordError.style.display = 'none';
-                    } else {
-                        const err = await res.json().catch(() => ({}));
-                        showToast(err.message || 'Failed to report job.', 'error');
-                    }
-                } catch (error) {
-                    console.error('Error reporting job:', error);
-                    showToast('Network error', 'error');
-                } finally {
-                    if (btn) {
-                        btn.textContent = originalText;
-                        const curWords = reasonInput && reasonInput.value.trim() ? reasonInput.value.trim().split(/\s+/).filter(Boolean) : [];
-                        btn.disabled = curWords.length < 15;
-                    }
-                }
-            });
+      reportReasonInput.addEventListener('input', (event) => {
+        // Prevent entry of numbers: digits are immediately stripped out
+        const stripped = event.target.value.replace(/[0-9]/g, '');
+        if (event.target.value !== stripped) {
+          event.target.value = stripped;
         }
-        
-        document.getElementById('report-job-id').value = jobId;
-        const reasonInput = document.getElementById('report-reason');
-        if (reasonInput) reasonInput.value = '';
-        const submitBtn = document.getElementById('submit-report-btn');
-        if (submitBtn) submitBtn.disabled = true;
-        const wordError = document.getElementById('report-word-error');
-        if (wordError) wordError.style.display = 'none';
 
-        reportModal.classList.remove('hidden');
-        // Force reflow
-        void reportModal.offsetWidth;
-        reportModal.classList.add('active');
+        // Count words
+        const trimmed = event.target.value.trim();
+        const words = trimmed ? trimmed.split(/\s+/).filter(Boolean) : [];
+        const wordCount = words.length;
+
+        // Word count validation: at least 15 words required
+        if (wordCount < 15) {
+          if (submitReportBtn) submitReportBtn.disabled = true;
+          if (reportWordError) {
+            reportWordError.textContent = 'Please provide at least 15 words.';
+            reportWordError.style.display = 'block';
+          }
+        } else {
+          if (submitReportBtn) submitReportBtn.disabled = false;
+          if (reportWordError) {
+            reportWordError.style.display = 'none';
+          }
+        }
+      });
+
+      document.getElementById('report-job-form').addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const btn = document.getElementById('submit-report-btn');
+        const originalText = btn ? btn.textContent : 'Submit Report';
+
+        const rJobId = document.getElementById('report-job-id').value;
+        const reasonInput = document.getElementById('report-reason');
+        const reason = reasonInput ? reasonInput.value.trim() : '';
+
+        const words = reason ? reason.split(/\s+/).filter(Boolean) : [];
+        if (words.length < 15) {
+          if (reportWordError) {
+            reportWordError.textContent = 'Please provide at least 15 words.';
+            reportWordError.style.display = 'block';
+          }
+          if (btn) btn.disabled = true;
+          return;
+        }
+
+        if (btn) {
+          btn.textContent = 'Submitting...';
+          btn.disabled = true;
+        }
+
+        try {
+          const res = await fetch('/api/reports', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jobId: rJobId, reason })
+          });
+          if (res.ok) {
+            showToast('Job reported successfully. Admin will review it.', 'success');
+
+            // Dynamically change 'Report' button on that specific job card to 'Undo Report'
+            updateJobCardToReported(rJobId);
+            if (typeof window.addReportedJobToStorage === 'function') {
+              window.addReportedJobToStorage(rJobId);
+            }
+
+            reportModal.classList.remove('active');
+            setTimeout(() => reportModal.classList.add('hidden'), 300);
+            document.getElementById('report-job-form').reset();
+            if (submitReportBtn) submitReportBtn.disabled = true;
+            if (reportWordError) reportWordError.style.display = 'none';
+          } else {
+            const err = await res.json().catch(() => ({}));
+            showToast(err.message || 'Failed to report job.', 'error');
+          }
+        } catch (error) {
+          console.error('Error reporting job:', error);
+          showToast('Network error', 'error');
+        } finally {
+          if (btn) {
+            btn.textContent = originalText;
+            const curWords = reasonInput && reasonInput.value.trim() ? reasonInput.value.trim().split(/\s+/).filter(Boolean) : [];
+            btn.disabled = curWords.length < 15;
+          }
+        }
+      });
     }
+
+    document.getElementById('report-job-id').value = jobId;
+    const reasonInput = document.getElementById('report-reason');
+    if (reasonInput) reasonInput.value = '';
+    const submitBtn = document.getElementById('submit-report-btn');
+    if (submitBtn) submitBtn.disabled = true;
+    const wordError = document.getElementById('report-word-error');
+    if (wordError) wordError.style.display = 'none';
+
+    reportModal.classList.remove('hidden');
+    // Force reflow
+    void reportModal.offsetWidth;
+    reportModal.classList.add('active');
+  }
 });
 
 
 // Password visibility toggle feature
 function applyPasswordToggles() {
-    const passwordInputs = document.querySelectorAll('input[type="password"]');
-    passwordInputs.forEach(input => {
-        if (!input || !input.parentElement || !input.parentNode) return;
-        if (input.parentElement.classList && input.parentElement.classList.contains('password-wrapper')) return;
+  const passwordInputs = document.querySelectorAll('input[type="password"]');
+  passwordInputs.forEach(input => {
+    if (!input || !input.parentElement || !input.parentNode) return;
+    if (input.parentElement.classList && input.parentElement.classList.contains('password-wrapper')) return;
 
-        const wrapper = document.createElement('div');
-        wrapper.className = 'password-wrapper';
-        wrapper.style.position = 'relative';
-        wrapper.style.display = 'block';
-        
-        input.parentNode.insertBefore(wrapper, input);
-        wrapper.appendChild(input);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'password-wrapper';
+    wrapper.style.position = 'relative';
+    wrapper.style.display = 'block';
 
-        input.style.paddingRight = '40px';
+    input.parentNode.insertBefore(wrapper, input);
+    wrapper.appendChild(input);
 
-        const toggleBtn = document.createElement('span');
-        toggleBtn.className = 'password-toggle';
-        toggleBtn.style.position = 'absolute';
-        toggleBtn.style.right = '10px';
-        toggleBtn.style.top = '50%';
-        toggleBtn.style.transform = 'translateY(-50%)';
-        toggleBtn.style.cursor = 'pointer';
-        toggleBtn.style.color = '#94a3b8';
-        toggleBtn.style.display = 'flex';
-        toggleBtn.style.alignItems = 'center';
-        
-        toggleBtn.innerHTML = `
+    input.style.paddingRight = '40px';
+
+    const toggleBtn = document.createElement('span');
+    toggleBtn.className = 'password-toggle';
+    toggleBtn.style.position = 'absolute';
+    toggleBtn.style.right = '10px';
+    toggleBtn.style.top = '50%';
+    toggleBtn.style.transform = 'translateY(-50%)';
+    toggleBtn.style.cursor = 'pointer';
+    toggleBtn.style.color = '#94a3b8';
+    toggleBtn.style.display = 'flex';
+    toggleBtn.style.alignItems = 'center';
+
+    toggleBtn.innerHTML = `
             <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -5655,30 +5843,30 @@ function applyPasswordToggles() {
             </svg>
         `;
 
-        wrapper.appendChild(toggleBtn);
+    wrapper.appendChild(toggleBtn);
 
-        toggleBtn.addEventListener('click', () => {
-            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
-            input.setAttribute('type', type);
-            
-            const eyeOpen = toggleBtn.querySelector('.eye-open');
-            const eyeClosed = toggleBtn.querySelector('.eye-closed');
-            
-            if (type === 'text') {
-                if (eyeOpen) eyeOpen.style.display = 'none';
-                if (eyeClosed) eyeClosed.style.display = 'block';
-            } else {
-                if (eyeOpen) eyeOpen.style.display = 'block';
-                if (eyeClosed) eyeClosed.style.display = 'none';
-            }
-        });
+    toggleBtn.addEventListener('click', () => {
+      const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+      input.setAttribute('type', type);
+
+      const eyeOpen = toggleBtn.querySelector('.eye-open');
+      const eyeClosed = toggleBtn.querySelector('.eye-closed');
+
+      if (type === 'text') {
+        if (eyeOpen) eyeOpen.style.display = 'none';
+        if (eyeClosed) eyeClosed.style.display = 'block';
+      } else {
+        if (eyeOpen) eyeOpen.style.display = 'block';
+        if (eyeClosed) eyeClosed.style.display = 'none';
+      }
     });
+  });
 }
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', applyPasswordToggles);
+  document.addEventListener('DOMContentLoaded', applyPasswordToggles);
 } else {
-    applyPasswordToggles();
+  applyPasswordToggles();
 }
 
 
@@ -5740,13 +5928,13 @@ const loadManageJobs = async () => {
       }
 
       const isPendingPayment = job.payment_status === 'pending';
-      const paymentBadge = isPendingPayment 
-        ? '<span class="badge badge-amber text-xs ml-2">Pending Payment (300 ETB)</span>' 
+      const paymentBadge = isPendingPayment
+        ? '<span class="badge badge-amber text-xs ml-2">Pending Payment (300 ETB)</span>'
         : (job.payment_status === 'paid' ? '<span class="badge badge-primary text-xs ml-2">Paid Listing</span>' : '');
 
       const isClosed = String(job.status || '').toLowerCase() === 'closed';
-      const statusBadge = isClosed 
-        ? '<span class="badge badge-red text-xs font-semibold ml-2"><i class="fa-solid fa-lock mr-1"></i>Closed</span>' 
+      const statusBadge = isClosed
+        ? '<span class="badge badge-red text-xs font-semibold ml-2"><i class="fa-solid fa-lock mr-1"></i>Closed</span>'
         : '<span class="badge badge-green text-xs font-semibold ml-2"><i class="fa-solid fa-circle-check mr-1"></i>Active</span>';
 
       const badgeType = typeof getJobTypeBadgeClass === 'function' ? getJobTypeBadgeClass(job.job_type) : 'badge-green';
@@ -5821,7 +6009,7 @@ document.addEventListener('click', async (e) => {
     e.preventDefault();
     const jobId = payBtn.getAttribute('data-job-id');
     const rawTitle = decodeURIComponent(payBtn.getAttribute('data-job-title') || 'Job Listing');
-    
+
     if (typeof window.openPaymentMethodModal === 'function') {
       window.openPaymentMethodModal({
         jobTitle: rawTitle,
@@ -5874,7 +6062,7 @@ if (manageJobsTab || editJobModal || manageJobsContainer) {
         if (empAuth.token && !empAuth.token.includes('cookie')) {
           headers['Authorization'] = `Bearer ${empAuth.token}`;
         }
-        const response = await fetch(`/api/jobs/${id}`, { 
+        const response = await fetch(`/api/jobs/${id}`, {
           method: 'DELETE',
           headers,
           credentials: 'include'
@@ -5968,23 +6156,23 @@ if (manageJobsTab || editJobModal || manageJobsContainer) {
 
       const empAuth = getEmployerAuth();
       const user = empAuth.user || {};
-      
+
       const idInput = document.getElementById('edit-job-id');
       if (idInput) idInput.value = job.id;
-      
+
       const titleInput = document.getElementById('edit-job-title');
       if (titleInput) titleInput.value = job.title || '';
-      
+
       const companyInput = document.getElementById('edit-job-company');
       if (companyInput) companyInput.value = job.company_name || '';
-      
+
       const locationInput = document.getElementById('edit-job-location');
       if (locationInput) locationInput.value = job.location || '';
-      
+
       const deadlineInput = document.getElementById('edit-job-deadline');
       const today = new Date();
       const localMinDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0];
-      
+
       let fetchedDeadline = job.deadline ? job.deadline.split('T')[0] : '';
       if (deadlineInput) {
         deadlineInput.value = fetchedDeadline;
@@ -5994,19 +6182,19 @@ if (manageJobsTab || editJobModal || manageJobsContainer) {
           deadlineInput.min = localMinDate;
         }
       }
-      
+
       const salaryInput = document.getElementById('edit-job-salary');
       if (salaryInput) salaryInput.value = job.salary || '';
-      
+
       const applyEmailInput = document.getElementById('edit-job-apply-email');
       if (applyEmailInput) applyEmailInput.value = job.apply_email || '';
-      
+
       const applyLinkInput = document.getElementById('edit-job-apply-link');
       if (applyLinkInput) applyLinkInput.value = job.apply_link || '';
-      
+
       const contactEmailInput = document.getElementById('edit-job-contact-email');
       if (contactEmailInput) contactEmailInput.value = job.contact_email || user.email || '';
-      
+
       const descInput = document.getElementById('edit-job-description');
       if (descInput) descInput.value = job.description || '';
 
@@ -6064,7 +6252,7 @@ if (manageJobsTab || editJobModal || manageJobsContainer) {
   if (editForm) {
     editForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const id = document.getElementById('edit-job-id')?.value;
       if (!id) {
         alert('Job ID is missing. Please re-open the job to edit.');
@@ -6073,12 +6261,12 @@ if (manageJobsTab || editJobModal || manageJobsContainer) {
 
       const submitBtn = document.getElementById('update-job-btn') || document.getElementById('update-job-btn-proxy');
       const originalText = submitBtn ? submitBtn.textContent : 'Update Job';
-      
+
       if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.textContent = 'Updating...';
       }
-      
+
       const rawSalary = document.getElementById('edit-job-salary')?.value || '';
       const cleanSalary = rawSalary ? String(rawSalary).replace(/,/g, '').trim() : '';
 
