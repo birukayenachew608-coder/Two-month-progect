@@ -163,6 +163,11 @@ exports.verifySuperAdmin = (req, res, next) => {
 };
 
 exports.checkIpWhitelist = async (req, res, next) => {
+    // If strict IP whitelisting is not explicitly enabled, allow access (prevents blocking admins on cloud deployments like Render)
+    if (process.env.ENABLE_STRICT_IP_WHITELIST !== 'true') {
+        return next();
+    }
+
     try {
         const pool = require('../config/db');
         const [ips] = await pool.query('SELECT ip_address FROM whitelisted_ips');

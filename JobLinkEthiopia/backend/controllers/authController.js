@@ -61,7 +61,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     passport.use(new GoogleStrategy({
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: process.env.GOOGLE_CALLBACK_URL || `http://localhost:${process.env.PORT || 3000}/auth/google/callback`,
+        callbackURL: process.env.GOOGLE_CALLBACK_URL || `${(process.env.APP_URL || (process.env.NODE_ENV === 'production' ? 'https://joblink-ethiopia.onrender.com' : `http://localhost:${process.env.PORT || 3000}`)).replace(/\/$/, '')}/auth/google/callback`,
         scope: ['profile', 'email'],
         passReqToCallback: true
     }, async (req, accessToken, refreshToken, profile, done) => {
@@ -413,7 +413,8 @@ exports.getMe = async (req, res) => {
 // --- GitHub OAuth ---
 exports.githubAuth = (req, res) => {
     const clientId = process.env.GITHUB_CLIENT_ID || 'mock_github_client_id';
-    const redirectUri = `http://localhost:${process.env.PORT || 3000}/api/auth/github/callback`;
+    const baseUrl = (process.env.APP_URL || (process.env.NODE_ENV === 'production' ? 'https://joblink-ethiopia.onrender.com' : `http://localhost:${process.env.PORT || 3000}`)).replace(/\/$/, '');
+    const redirectUri = `${baseUrl}/api/auth/github/callback`;
     const url = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user:email`;
     res.redirect(url);
 };
@@ -469,11 +470,12 @@ exports.linkedinAuth = (req, res) => {
     const clientId = process.env.LINKEDIN_CLIENT_ID;
     const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
     const port = process.env.PORT || 3000;
+    const baseUrl = (process.env.APP_URL || (process.env.NODE_ENV === 'production' ? 'https://joblink-ethiopia.onrender.com' : `http://localhost:${port}`)).replace(/\/$/, '');
 
     const isApiPath = req.baseUrl ? req.baseUrl.includes('/api/auth') : (req.originalUrl && req.originalUrl.startsWith('/api/'));
     const defaultCallback = isApiPath 
-        ? `http://localhost:${port}/api/auth/linkedin/callback`
-        : `http://localhost:${port}/auth/linkedin/callback`;
+        ? `${baseUrl}/api/auth/linkedin/callback`
+        : `${baseUrl}/auth/linkedin/callback`;
     const redirectUri = process.env.LINKEDIN_CALLBACK_URL || defaultCallback;
 
     // Check if valid production credentials exist in environment
@@ -693,10 +695,11 @@ exports.linkedinCallback = async (req, res) => {
         } else {
             // Live LinkedIn OAuth Token Exchange
             const port = process.env.PORT || 3000;
+            const baseUrl = (process.env.APP_URL || (process.env.NODE_ENV === 'production' ? 'https://joblink-ethiopia.onrender.com' : `http://localhost:${port}`)).replace(/\/$/, '');
             const isApiPath = req.baseUrl ? req.baseUrl.includes('/api/auth') : (req.originalUrl && req.originalUrl.startsWith('/api/'));
             const defaultCallback = isApiPath 
-                ? `http://localhost:${port}/api/auth/linkedin/callback`
-                : `http://localhost:${port}/auth/linkedin/callback`;
+                ? `${baseUrl}/api/auth/linkedin/callback`
+                : `${baseUrl}/auth/linkedin/callback`;
             const redirectUri = process.env.LINKEDIN_CALLBACK_URL || defaultCallback;
 
             const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {

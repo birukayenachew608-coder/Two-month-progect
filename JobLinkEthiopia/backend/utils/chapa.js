@@ -18,7 +18,7 @@ async function initializePayment({
     return_url,
     title = 'Job Post Fee',
     description = 'Job listing publication fee',
-    baseUrl = 'http://localhost:3000',
+    baseUrl = (process.env.APP_URL || process.env.BASE_URL || (process.env.NODE_ENV === 'production' ? 'https://joblink-ethiopia.onrender.com' : 'http://localhost:3000')).replace(/\/$/, ''),
     jobId,
     payment_method
 }) {
