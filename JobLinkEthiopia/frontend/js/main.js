@@ -760,10 +760,45 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('error')) {
-      const errorMsg = urlParams.get('error');
+      const rawErrorMsg = urlParams.get('error');
+      const errorMsg = rawErrorMsg ? decodeURIComponent(rawErrorMsg) : '';
       if (errorMsg) {
-        showToast(decodeURIComponent(errorMsg), 'error');
+        showToast(errorMsg, 'error');
       }
+
+      const openAuth = urlParams.get('openAuth');
+      if (openAuth === 'register' || errorMsg.includes('register first')) {
+        setTimeout(() => {
+          if (typeof window.openRegisterModal === 'function') {
+            window.openRegisterModal();
+          } else {
+            isRegisterMode = true;
+            registerStep = 1;
+            if (typeof updateAuthModalUI === 'function') updateAuthModalUI();
+            const lm = document.getElementById('login-modal');
+            if (lm) {
+              lm.classList.add('active');
+              lm.classList.remove('hidden');
+            }
+          }
+        }, 350);
+      } else if (openAuth === 'login' || errorMsg.includes('already exists') || errorMsg.includes('already registered')) {
+        setTimeout(() => {
+          if (typeof window.openLoginModal === 'function') {
+            window.openLoginModal();
+          } else {
+            isRegisterMode = false;
+            registerStep = 1;
+            if (typeof updateAuthModalUI === 'function') updateAuthModalUI();
+            const lm = document.getElementById('login-modal');
+            if (lm) {
+              lm.classList.add('active');
+              lm.classList.remove('hidden');
+            }
+          }
+        }, 350);
+      }
+
       const cleanUrl = window.location.pathname;
       window.history.replaceState({}, document.title, cleanUrl);
     }
@@ -1959,8 +1994,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         break;
       case 'google-auth':
         e.preventDefault();
-        const targetAuthRole = btn.getAttribute('data-role') || (loginRedirectUrl === 'employer.html' || currentPage === 'employer.html' ? 'employer' : 'jobseeker');
-        window.location.href = `/auth/google?state=${targetAuthRole}`;
+        const currentMode = isRegisterMode ? 'register' : (btn.getAttribute('data-action-mode') || 'login');
+        const isEmpRole = (selectedAuthRole === 'employer' || btn.getAttribute('data-role') === 'employer' || loginRedirectUrl === 'employer.html' || currentPage === 'employer.html');
+        const targetAuthRole = isEmpRole ? 'employer' : 'job_seeker';
+        window.location.href = `/auth/google?action=${currentMode}&role=${targetAuthRole}&state=${currentMode}:${targetAuthRole}`;
         break;
       case 'linkedin-auth':
         if (btn) {
@@ -2365,8 +2402,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('#btn-google-auth, #btn-google-auth-employer, [data-action="google-auth"]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      const targetRole = btn.getAttribute('data-role') || (loginRedirectUrl === 'employer.html' || currentPage === 'employer.html' ? 'employer' : 'jobseeker');
-      window.location.href = `/auth/google?state=${targetRole}`;
+      const currentMode = isRegisterMode ? 'register' : (btn.getAttribute('data-action-mode') || 'login');
+      const isEmpRole = (selectedAuthRole === 'employer' || btn.getAttribute('data-role') === 'employer' || loginRedirectUrl === 'employer.html' || currentPage === 'employer.html');
+      const targetRole = isEmpRole ? 'employer' : 'job_seeker';
+      window.location.href = `/auth/google?action=${currentMode}&role=${targetRole}&state=${currentMode}:${targetRole}`;
     });
   });
 
@@ -2375,8 +2414,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const googleBtn = e.target.closest('#btn-google-auth, #btn-google-auth-employer, [data-action="google-auth"]');
     if (googleBtn) {
       e.preventDefault();
-      const targetRole = googleBtn.getAttribute('data-role') || (loginRedirectUrl === 'employer.html' || currentPage === 'employer.html' ? 'employer' : 'jobseeker');
-      window.location.href = `/auth/google?state=${targetRole}`;
+      const currentMode = isRegisterMode ? 'register' : (googleBtn.getAttribute('data-action-mode') || 'login');
+      const isEmpRole = (selectedAuthRole === 'employer' || googleBtn.getAttribute('data-role') === 'employer' || loginRedirectUrl === 'employer.html' || currentPage === 'employer.html');
+      const targetRole = isEmpRole ? 'employer' : 'job_seeker';
+      window.location.href = `/auth/google?action=${currentMode}&role=${targetRole}&state=${currentMode}:${targetRole}`;
     }
   });
 
@@ -2465,7 +2506,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const isEmployerRole = (selectedAuthRole === 'employer' || loginRedirectUrl === 'employer.html' || currentPage === 'employer.html');
     const roleText = isEmployerRole ? 'Employer' : 'Job Seeker';
-    const roleState = isEmployerRole ? 'employer' : 'jobseeker';
+    const normalizedRole = isEmployerRole ? 'employer' : 'job_seeker';
+    const currentAction = isRegisterMode ? 'register' : 'login';
+    const googleAuthUrl = `/auth/google?action=${currentAction}&role=${normalizedRole}&state=${currentAction}:${normalizedRole}`;
 
     // Synchronize segmented role toggle buttons
     const roleButtons = document.querySelectorAll('.role-switch-btn');
@@ -2486,8 +2529,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const googleBtn = document.getElementById('btn-google-auth');
     if (googleBtn) {
-      googleBtn.setAttribute('href', `/auth/google?state=${roleState}`);
-      googleBtn.setAttribute('data-role', roleState);
+      googleBtn.setAttribute('href', googleAuthUrl);
+      googleBtn.setAttribute('data-role', normalizedRole);
+      googleBtn.setAttribute('data-action-mode', currentAction);
+      const googleSpan = googleBtn.querySelector('span');
+      if (googleSpan) {
+        googleSpan.textContent = isRegisterMode ? `Sign up with Google as ${roleText}` : 'Continue with Google';
+      }
+    }
+
+    const googleEmployerBtn = document.getElementById('btn-google-auth-employer');
+    if (googleEmployerBtn) {
+      const empGoogleUrl = `/auth/google?action=${currentAction}&role=employer&state=${currentAction}:employer`;
+      googleEmployerBtn.setAttribute('href', empGoogleUrl);
+      googleEmployerBtn.setAttribute('data-role', 'employer');
+      googleEmployerBtn.setAttribute('data-action-mode', currentAction);
+      const googleSpan = googleEmployerBtn.querySelector('span');
+      if (googleSpan) {
+        googleSpan.textContent = isRegisterMode ? 'Sign up with Google as Employer' : 'Continue with Google';
+      }
     }
 
     // LinkedIn button null checks for auth modal state updates

@@ -72,7 +72,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     }, async (req, accessToken, refreshToken, profile, done) => {
         try {
             const googleId = profile.id;
-            const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
+            const email = profile.emails && profile.emails[0] ? profile.emails[0].value.toLowerCase().trim() : null;
             const name = profile.displayName || (profile.name ? `${profile.name.givenName || ''} ${profile.name.familyName || ''}`.trim() : 'Google User');
             const photo = profile.photos && profile.photos[0] ? profile.photos[0].value : null;
 
@@ -80,55 +80,84 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                 return done(new Error('Google did not return user email or ID'), null);
             }
 
-            // Retrieve the state parameter to know intended role
-            const rawState = (req.query && req.query.state) ? String(req.query.state).toLowerCase() : '';
-            const intendedRole = rawState.includes('employer') ? 'employer' : 'job_seeker';
+            // Retrieve the state parameter to know intended action and role
+            const rawState = (req.query && req.query.state) ? String(req.query.state).trim() : '';
+            let authAction = 'login';
+            let intendedRole = 'job_seeker';
+
+            if (rawState.includes(':')) {
+                const parts = rawState.split(':');
+                authAction = parts[0].toLowerCase().trim() === 'register' ? 'register' : 'login';
+                intendedRole = parts[1].toLowerCase().trim() === 'employer' ? 'employer' : 'job_seeker';
+            } else if (rawState.includes('|')) {
+                const parts = rawState.split('|');
+                authAction = parts[0].toLowerCase().trim() === 'register' ? 'register' : 'login';
+                intendedRole = parts[1].toLowerCase().trim() === 'employer' ? 'employer' : 'job_seeker';
+            } else {
+                if (rawState.toLowerCase().includes('register')) authAction = 'register';
+                if (rawState.toLowerCase().includes('employer')) intendedRole = 'employer';
+            }
 
             // Query existing users across all tables
             const [employers] = await pool.query('SELECT * FROM employers WHERE google_id = ? OR email = ?', [googleId, email]);
             const [seekers] = await pool.query('SELECT * FROM job_seekers WHERE google_id = ? OR email = ?', [googleId, email]);
             const [admins] = await pool.query('SELECT * FROM admins WHERE email = ?', [email]);
 
-            let user = null;
-            let role = intendedRole;
+            const userExists = (employers.length > 0 || seekers.length > 0 || admins.length > 0);
 
-            if (employers.length > 0) {
-                // User already exists as an Employer in DB
-                if (intendedRole !== 'employer') {
-                    return done(null, false, { message: 'This email is already registered as an Employer' });
+            // --- 1. SIGN IN FLOW (authAction === 'login') ---
+            if (authAction === 'login') {
+                if (!userExists) {
+                    // Refactor requirement: DO NOT create account on login if email doesn't exist in DB
+                    return done(null, false, { message: 'Account not found. Please register first.' });
                 }
-                user = employers[0];
-                user.role = 'employer';
-                role = 'employer';
-                if (!user.google_id) {
-                    await pool.query('UPDATE employers SET google_id = ? WHERE id = ?', [googleId, user.id]);
-                    user.google_id = googleId;
+
+                if (admins.length > 0) {
+                    return done(null, false, { message: 'Administrator accounts must sign in using email and password' });
                 }
-            } else if (seekers.length > 0) {
-                // User already exists as a Job Seeker in DB
-                if (intendedRole !== 'job_seeker') {
-                    return done(null, false, { message: 'This email is already registered as a Job Seeker' });
+
+                if (employers.length > 0) {
+                    const user = employers[0];
+                    user.role = 'employer';
+                    if (!user.google_id) {
+                        await pool.query('UPDATE employers SET google_id = ? WHERE id = ?', [googleId, user.id]);
+                        user.google_id = googleId;
+                        try {
+                            await pool.query('UPDATE users SET google_id = ? WHERE email = ?', [googleId, email]);
+                        } catch (e) {}
+                    }
+                    return done(null, user);
                 }
-                user = seekers[0];
-                user.role = 'job_seeker';
-                role = 'job_seeker';
-                if (!user.google_id) {
-                    await pool.query('UPDATE job_seekers SET google_id = ? WHERE id = ?', [googleId, user.id]);
-                    user.google_id = googleId;
+
+                if (seekers.length > 0) {
+                    const user = seekers[0];
+                    user.role = 'job_seeker';
+                    if (!user.google_id) {
+                        await pool.query('UPDATE job_seekers SET google_id = ? WHERE id = ?', [googleId, user.id]);
+                        user.google_id = googleId;
+                        try {
+                            await pool.query('UPDATE users SET google_id = ? WHERE email = ?', [googleId, email]);
+                        } catch (e) {}
+                    }
+                    return done(null, user);
                 }
-            } else if (admins.length > 0) {
-                // User is an administrator
-                return done(null, false, { message: 'This email is already registered as an Administrator' });
-            } else {
-                // New user: register using the intended role from state
+            }
+
+            // --- 2. SIGN UP / REGISTRATION FLOW (authAction === 'register') ---
+            if (authAction === 'register') {
+                if (userExists) {
+                    return done(null, false, { message: 'This email is already registered. Please sign in instead.' });
+                }
+
+                let newUser = null;
                 if (intendedRole === 'employer') {
-                    role = 'employer';
                     const [result] = await pool.query(
-                        'INSERT INTO employers (name, email, password, google_id, company_name, profile_photo_url, account_status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                        'INSERT INTO employers (name, email, password, google_id, company_name, profile_photo_url, is_email_verified, account_status) VALUES (?, ?, ?, ?, ?, ?, true, ?)',
                         [name, email, 'google_oauth_user', googleId, name, photo, 'active']
                     );
                     const [newEmployers] = await pool.query('SELECT * FROM employers WHERE id = ?', [result.insertId]);
-                    user = newEmployers[0];
+                    newUser = newEmployers[0];
+                    newUser.role = 'employer';
 
                     try {
                         await pool.query(
@@ -139,13 +168,13 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                         console.error('Users table sync error:', e);
                     }
                 } else {
-                    role = 'job_seeker';
                     const [result] = await pool.query(
                         'INSERT INTO job_seekers (name, email, google_id, profile_photo_url, is_email_verified, account_status) VALUES (?, ?, ?, ?, true, ?)',
                         [name, email, googleId, photo, 'active']
                     );
                     const [newUsers] = await pool.query('SELECT * FROM job_seekers WHERE id = ?', [result.insertId]);
-                    user = newUsers[0];
+                    newUser = newUsers[0];
+                    newUser.role = 'job_seeker';
 
                     try {
                         await pool.query(
@@ -156,10 +185,11 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                         console.error('Users table sync error:', e);
                     }
                 }
+
+                return done(null, newUser);
             }
 
-            user.role = role;
-            return done(null, user);
+            return done(null, false, { message: 'Invalid authentication request' });
         } catch (err) {
             console.error('Google OAuth Strategy Error:', err);
             return done(err, null);
@@ -861,10 +891,34 @@ exports.linkedinCallback = async (req, res) => {
 
 // --- Google OAuth ---
 exports.googleAuth = (req, res, next) => {
-    const rawState = req.query.state || 'jobseeker';
+    let action = (req.query.action || '').toLowerCase().trim();
+    let role = (req.query.role || '').toLowerCase().trim();
+    const rawState = (req.query.state || '').trim();
+
+    if (rawState) {
+        if (rawState.includes(':')) {
+            const parts = rawState.split(':');
+            if (!action && parts[0]) action = parts[0].toLowerCase().trim();
+            if (!role && parts[1]) role = parts[1].toLowerCase().trim();
+        } else if (rawState.includes('|')) {
+            const parts = rawState.split('|');
+            if (!action && parts[0]) action = parts[0].toLowerCase().trim();
+            if (!role && parts[1]) role = parts[1].toLowerCase().trim();
+        } else {
+            if (!action && (rawState === 'register' || rawState === 'login')) action = rawState;
+            if (!role && (rawState.includes('employer') || rawState.includes('jobseeker') || rawState.includes('job_seeker'))) {
+                role = rawState.includes('employer') ? 'employer' : 'job_seeker';
+            }
+        }
+    }
+
+    if (action !== 'register') action = 'login';
+    const normalizedRole = (role === 'employer') ? 'employer' : 'job_seeker';
+    const statePayload = `${action}:${normalizedRole}`;
+
     passport.authenticate('google', {
         scope: ['profile', 'email'],
-        state: rawState,
+        state: statePayload,
         session: false
     })(req, res, next);
 };
@@ -873,8 +927,17 @@ exports.googleCallback = (req, res, next) => {
     passport.authenticate('google', { session: false }, async (err, user, info) => {
         if (err || !user) {
             const errorMsg = (info && info.message) || (err && err.message) || 'Google authentication failed';
-            console.error('Google OAuth callback error / role mismatch:', errorMsg);
-            return res.redirect(`/?error=${encodeURIComponent(errorMsg)}`);
+            console.error('[Google OAuth] Callback error / authentication rejected:', errorMsg);
+
+            const rawState = (req.query && req.query.state) ? String(req.query.state).toLowerCase() : '';
+            const isEmployer = rawState.includes('employer');
+            const redirectBase = isEmployer ? '/employer.html' : '/';
+
+            const isNotFound = errorMsg.includes('Account not found') || errorMsg.includes('register first');
+            const isAlreadyExists = errorMsg.includes('already exists') || errorMsg.includes('already registered');
+            const modeParam = isNotFound ? '&openAuth=register' : (isAlreadyExists ? '&openAuth=login' : '');
+
+            return res.redirect(`${redirectBase}?error=${encodeURIComponent(errorMsg)}${modeParam}`);
         }
 
         try {
