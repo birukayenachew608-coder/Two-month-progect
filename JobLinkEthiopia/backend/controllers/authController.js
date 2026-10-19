@@ -58,12 +58,17 @@ const issueAuthTokens = async (res, user, role) => {
 
 // Configure Google OAuth Strategy
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    const defaultGoogleCallback = `${(process.env.APP_URL || (process.env.NODE_ENV === 'production' ? 'https://joblink-ethiopia.onrender.com' : `http://localhost:${process.env.PORT || 3000}`)).replace(/\/$/, '')}/api/auth/google/callback`;
+    const googleCallbackURL = process.env.GOOGLE_CALLBACK_URL || defaultGoogleCallback;
+    console.log(`[OAuth] Google Strategy initialized with callbackURL: ${googleCallbackURL}`);
+
     passport.use(new GoogleStrategy({
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: process.env.GOOGLE_CALLBACK_URL || `${(process.env.APP_URL || (process.env.NODE_ENV === 'production' ? 'https://joblink-ethiopia.onrender.com' : `http://localhost:${process.env.PORT || 3000}`)).replace(/\/$/, '')}/auth/google/callback`,
+        callbackURL: googleCallbackURL,
         scope: ['profile', 'email'],
-        passReqToCallback: true
+        passReqToCallback: true,
+        proxy: true
     }, async (req, accessToken, refreshToken, profile, done) => {
         try {
             const googleId = profile.id;

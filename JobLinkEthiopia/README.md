@@ -186,6 +186,7 @@ EMAIL_APP_PASSWORD=your_gmail_app_password
 # OAuth 2.0 Credentials (Optional)
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_CALLBACK_URL=https://joblink-ethiopia.onrender.com/api/auth/google/callback
 LINKEDIN_CLIENT_ID=your_linkedin_client_id
 LINKEDIN_CLIENT_SECRET=your_linkedin_client_secret
 LINKEDIN_CALLBACK_URL=http://localhost:3000/api/auth/linkedin/callback
