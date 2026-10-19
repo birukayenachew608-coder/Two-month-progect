@@ -48,12 +48,12 @@ const createTransporter = async () => {
 
     // Strictly resolve smtp.gmail.com to IPv4 address to eliminate ENETUNREACH on Render
     const ipv4Gmail = await resolveIPv4Host('smtp.gmail.com');
-    console.log(`[Email] Using IPv4 Gmail SMTP address: ${ipv4Gmail}:465`);
+    console.log(`[Email] Using IPv4 Gmail SMTP address: ${ipv4Gmail}:587`);
 
     return nodemailer.createTransport({
         host: ipv4Gmail,
-        port: 465,
-        secure: true,
+        port: 587,
+        secure: false, // Use STARTTLS on port 587
         tls: {
             servername: 'smtp.gmail.com'
         },
