@@ -15,16 +15,17 @@ const createTransporter = () => {
             host: process.env.SMTP_HOST,
             port: parseInt(process.env.SMTP_PORT || '465', 10),
             secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
+            family: 4, // Strictly force IPv4
             auth: { user, pass }
         });
     }
 
-    // Standard Gmail SMTP configuration with SSL
+    // Standard Gmail SMTP configuration with SSL, strictly forcing IPv4 for cloud environments like Render
     return nodemailer.createTransport({
-        service: 'gmail',
         host: 'smtp.gmail.com',
         port: 465,
         secure: true,
+        family: 4, // Strictly force IPv4 to prevent ENETUNREACH on Render/Docker
         auth: {
             user: user,
             pass: pass,
