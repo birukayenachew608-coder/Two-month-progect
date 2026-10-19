@@ -3961,7 +3961,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 #login-modal [data-action="toggle-auth"],
-.auth-modal [data-action="toggle-auth"] {
+.auth-modal [data-action="toggle-auth"],
+#login-modal [data-action="switch-to-register"],
+.auth-modal [data-action="switch-to-register"],
+#login-modal [data-action="switch-to-login"],
+.auth-modal [data-action="switch-to-login"] {
   color: #0284c7 !important;
   font-weight: 600 !important;
   cursor: pointer;
@@ -4258,7 +4262,15 @@ body.dark #login-modal #auth-toggle-text {
 [data-theme="dark"] #login-modal [data-action="toggle-auth"],
 [data-theme="dark"] .auth-modal [data-action="toggle-auth"],
 .dark-theme #login-modal [data-action="toggle-auth"],
-.dark #login-modal [data-action="toggle-auth"] {
+.dark #login-modal [data-action="toggle-auth"],
+[data-theme="dark"] #login-modal [data-action="switch-to-register"],
+[data-theme="dark"] .auth-modal [data-action="switch-to-register"],
+.dark-theme #login-modal [data-action="switch-to-register"],
+.dark #login-modal [data-action="switch-to-register"],
+[data-theme="dark"] #login-modal [data-action="switch-to-login"],
+[data-theme="dark"] .auth-modal [data-action="switch-to-login"],
+.dark-theme #login-modal [data-action="switch-to-login"],
+.dark #login-modal [data-action="switch-to-login"] {
   color: #38bdf8 !important;
 }
 

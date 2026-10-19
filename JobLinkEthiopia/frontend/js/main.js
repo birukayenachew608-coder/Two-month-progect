@@ -136,34 +136,56 @@ window.closeModal = function (modalId) {
 
 // Helper: Open Register Modal directly
 window.openRegisterModal = function (e, role) {
-  if (e && e.preventDefault) e.preventDefault();
+  if (e) {
+    if (e.preventDefault) e.preventDefault();
+    if (e.stopPropagation) e.stopPropagation();
+  }
+  if (role) selectedAuthRole = role;
   if (typeof window.setAuthModalMode === 'function') {
     window.setAuthModalMode(null, true, role);
   } else {
     try {
       isRegisterMode = true;
+      registerStep = 1;
       if (typeof updateAuthModalUI === 'function') updateAuthModalUI();
     } catch (err) {}
   }
   if (typeof window.openModal === 'function') {
     window.openModal('login-modal');
+  } else {
+    const modal = document.getElementById('login-modal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('active');
+    }
   }
   return false;
 };
 
 // Helper: Open Sign In / Login Modal directly
 window.openLoginModal = function (e, role) {
-  if (e && e.preventDefault) e.preventDefault();
+  if (e) {
+    if (e.preventDefault) e.preventDefault();
+    if (e.stopPropagation) e.stopPropagation();
+  }
+  if (role) selectedAuthRole = role;
   if (typeof window.setAuthModalMode === 'function') {
     window.setAuthModalMode(null, false, role);
   } else {
     try {
       isRegisterMode = false;
+      registerStep = 1;
       if (typeof updateAuthModalUI === 'function') updateAuthModalUI();
     } catch (err) {}
   }
   if (typeof window.openModal === 'function') {
     window.openModal('login-modal');
+  } else {
+    const modal = document.getElementById('login-modal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('active');
+    }
   }
   return false;
 };
@@ -2238,9 +2260,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             logoutSeeker();
           }
         }
-        break;
       case 'toggle-auth':
-        isRegisterMode = !isRegisterMode;
+      case 'switch-to-register':
+      case 'switch-to-login':
+        e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+        const modeAttr = btn.getAttribute('data-mode');
+        if (action === 'switch-to-register' || modeAttr === 'register') {
+          isRegisterMode = true;
+        } else if (action === 'switch-to-login' || modeAttr === 'login') {
+          isRegisterMode = false;
+        } else {
+          isRegisterMode = !isRegisterMode;
+        }
         registerStep = 1;
         updateAuthModalUI();
         break;

@@ -427,8 +427,8 @@
         </button>
       </form>
       <!-- Switch to Register / Sign In links -->
-      <div class="auth-switch-text" id="auth-switch-signin" style="text-align: center; margin-top: 15px; font-size: 0.9rem;">Don't have an account? <a href="#" data-action="toggle-auth" onclick="openRegisterModal(event); return false;" style="color: #00c3ff;">Register</a></div>
-      <div class="auth-switch-text" id="auth-switch-register" style="text-align: center; margin-top: 15px; font-size: 0.9rem; display: none;">Already have an account? <a href="#" data-action="toggle-auth" onclick="openLoginModal(event); return false;" style="color: #00c3ff;">Sign In</a></div>
+      <div class="auth-switch-text" id="auth-switch-signin" style="text-align: center; margin-top: 15px; font-size: 0.9rem;">Don't have an account? <a href="#" data-action="switch-to-register" data-mode="register" onclick="openRegisterModal(event); return false;" style="color: #00c3ff;">Register</a></div>
+      <div class="auth-switch-text" id="auth-switch-register" style="text-align: center; margin-top: 15px; font-size: 0.9rem; display: none;">Already have an account? <a href="#" data-action="switch-to-login" data-mode="login" onclick="openLoginModal(event); return false;" style="color: #00c3ff;">Sign In</a></div>
     </div>
   </div>
 

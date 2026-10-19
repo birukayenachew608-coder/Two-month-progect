@@ -1378,10 +1378,16 @@ exports.employerVerify = async (req, res) => {
 
 exports.sendOtp = async (req, res) => {
     const { email } = req.body;
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+        return res.status(400).json({ message: 'A valid email address is required.' });
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+
     try {
-        const [existingAdmins] = await pool.query('SELECT id FROM admins WHERE email = ?', [email]);
-        const [existingEmployers] = await pool.query('SELECT id FROM employers WHERE email = ?', [email]);
-        const [existingSeekers] = await pool.query('SELECT id FROM job_seekers WHERE email = ?', [email]);
+        const [existingAdmins] = await pool.query('SELECT id FROM admins WHERE email = ?', [trimmedEmail]);
+        const [existingEmployers] = await pool.query('SELECT id FROM employers WHERE email = ?', [trimmedEmail]);
+        const [existingSeekers] = await pool.query('SELECT id FROM job_seekers WHERE email = ?', [trimmedEmail]);
         
         if (existingAdmins.length > 0 || existingEmployers.length > 0 || existingSeekers.length > 0) {
             return res.status(400).json({ message: 'This email is already registered in the system.' });
@@ -1391,18 +1397,24 @@ exports.sendOtp = async (req, res) => {
         const expiryDate = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
         // Upsert pending_verifications
-        const [existingPending] = await pool.query('SELECT id FROM pending_verifications WHERE email = ?', [email]);
-        if (existingPending.length > 0) {
-            await pool.query('UPDATE pending_verifications SET code = ?, expires_at = ?, verified = false WHERE email = ?', [verificationCode, expiryDate, email]);
-        } else {
-            await pool.query('INSERT INTO pending_verifications (email, code, expires_at, verified) VALUES (?, ?, ?, false)', [email, verificationCode, expiryDate]);
+        await pool.query(
+            `INSERT INTO pending_verifications (email, code, expires_at, verified)
+             VALUES (?, ?, ?, false)
+             ON DUPLICATE KEY UPDATE code = VALUES(code), expires_at = VALUES(expires_at), verified = false`,
+            [trimmedEmail, verificationCode, expiryDate]
+        );
+
+        const emailSent = await sendVerificationEmail(trimmedEmail, verificationCode);
+        if (!emailSent) {
+            return res.status(500).json({ 
+                message: 'Failed to deliver verification email. Please ensure EMAIL_USER and EMAIL_APP_PASSWORD are configured on the server.' 
+            });
         }
 
-        await sendVerificationEmail(email, verificationCode);
-        res.status(200).json({ message: 'OTP sent successfully.' });
+        res.status(200).json({ message: 'Verification code sent to your email.' });
     } catch (error) {
         console.error('Send OTP Error:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({ message: error.message || 'Internal server error while sending verification code.' });
     }
 };
 
