@@ -39,7 +39,7 @@
   - Two-Factor Authentication (2FA TOTP with QR Code generation via Speakeasy)
 - **Security**: BCrypt password hashing, Express Rate Limiting, IP Whitelisting, Role-Based Access Control (RBAC)
 - **File Uploads**: Multer (Secure handling of CVs, resumes, and company logos)
-- **Email Service**: Nodemailer (Automated transactional emails & application notifications)
+- **Email Service**: HTTP REST API (Brevo / Resend via HTTPS port 443 for cloud compatibility)
 - **Payments**: Chapa Payment Gateway API integration (Freemium tier upgrades)
 
 ### 🗄️ Database
