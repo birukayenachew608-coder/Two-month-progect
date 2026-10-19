@@ -2,9 +2,8 @@ const nodemailer = require('nodemailer');
 
 const createTransporter = () => {
     const user = process.env.EMAIL_USER ? process.env.EMAIL_USER.trim() : null;
-    const pass = process.env.EMAIL_APP_PASSWORD 
-        ? process.env.EMAIL_APP_PASSWORD.replace(/\s+/g, '') 
-        : (process.env.EMAIL_PASSWORD ? process.env.EMAIL_PASSWORD.trim() : null);
+    const rawPass = process.env.EMAIL_APP_PASSWORD || process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD;
+    const pass = rawPass ? rawPass.replace(/\s+/g, '') : null;
 
     if (!user || !pass) {
         console.warn('[Email] ⚠️ Missing EMAIL_USER or EMAIL_APP_PASSWORD in environment variables.');
@@ -35,9 +34,8 @@ const createTransporter = () => {
 
 exports.sendVerificationEmail = async (to, code) => {
     const user = process.env.EMAIL_USER ? process.env.EMAIL_USER.trim() : null;
-    const pass = process.env.EMAIL_APP_PASSWORD 
-        ? process.env.EMAIL_APP_PASSWORD.replace(/\s+/g, '') 
-        : (process.env.EMAIL_PASSWORD ? process.env.EMAIL_PASSWORD.trim() : null);
+    const rawPass = process.env.EMAIL_APP_PASSWORD || process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD;
+    const pass = rawPass ? rawPass.replace(/\s+/g, '') : null;
 
     if (!user || !pass) {
         console.error('[Email] ❌ Cannot send email: EMAIL_USER and EMAIL_APP_PASSWORD must be configured in environment variables.');
