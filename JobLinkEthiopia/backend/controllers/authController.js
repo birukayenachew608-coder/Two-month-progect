@@ -1279,7 +1279,7 @@ exports.employerGetMe = async (req, res) => {
         }
 
         if (employers.length === 0) {
-            const [users] = await pool.query('SELECT * FROM users WHERE (id = ? OR email = ?) AND role = "employer"', [employerId, employerEmail]);
+            const [users] = await pool.query("SELECT * FROM users WHERE (id = ? OR email = ?) AND role = 'employer'", [employerId, employerEmail]);
             if (users.length > 0) {
                 employers = users;
             }

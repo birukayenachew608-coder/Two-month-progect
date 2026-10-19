@@ -1,6 +1,27 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns');
+const dnsPromises = dns.promises;
 
-const createTransporter = () => {
+// Set default result order to IPv4 first if supported by Node runtime
+if (typeof dns.setDefaultResultOrder === 'function') {
+    try {
+        dns.setDefaultResultOrder('ipv4first');
+    } catch (_) {}
+}
+
+const resolveIPv4Host = async (hostname) => {
+    try {
+        const addresses = await dnsPromises.resolve4(hostname);
+        if (addresses && addresses.length > 0) {
+            return addresses[0];
+        }
+    } catch (err) {
+        console.warn(`[Email] Could not resolve IPv4 for ${hostname}, falling back to hostname:`, err.message);
+    }
+    return hostname;
+};
+
+const createTransporter = async () => {
     const user = process.env.EMAIL_USER ? process.env.EMAIL_USER.trim() : null;
     const rawPass = process.env.EMAIL_APP_PASSWORD || process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD;
     const pass = rawPass ? rawPass.replace(/\s+/g, '') : null;
@@ -11,21 +32,31 @@ const createTransporter = () => {
 
     // Support custom SMTP configuration if provided
     if (process.env.SMTP_HOST) {
+        const targetHost = process.env.SMTP_HOST.trim();
+        const ipv4Host = await resolveIPv4Host(targetHost);
         return nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
+            host: ipv4Host,
             port: parseInt(process.env.SMTP_PORT || '465', 10),
             secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
-            family: 4, // Strictly force IPv4
+            tls: {
+                servername: targetHost,
+                rejectUnauthorized: false
+            },
             auth: { user, pass }
         });
     }
 
-    // Standard Gmail SMTP configuration with SSL, strictly forcing IPv4 for cloud environments like Render
+    // Strictly resolve smtp.gmail.com to IPv4 address to eliminate ENETUNREACH on Render
+    const ipv4Gmail = await resolveIPv4Host('smtp.gmail.com');
+    console.log(`[Email] Using IPv4 Gmail SMTP address: ${ipv4Gmail}:465`);
+
     return nodemailer.createTransport({
-        host: 'smtp.gmail.com',
+        host: ipv4Gmail,
         port: 465,
         secure: true,
-        family: 4, // Strictly force IPv4 to prevent ENETUNREACH on Render/Docker
+        tls: {
+            servername: 'smtp.gmail.com'
+        },
         auth: {
             user: user,
             pass: pass,
@@ -44,7 +75,7 @@ exports.sendVerificationEmail = async (to, code) => {
     }
 
     try {
-        const transporter = createTransporter();
+        const transporter = await createTransporter();
         const info = await transporter.sendMail({
             from: `"JobLink Ethiopia" <${user}>`,
             to: to,

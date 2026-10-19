@@ -260,7 +260,7 @@ exports.getJobs = async (req, res) => {
                 COALESCE(NULLIF(e.company_name, ''), j.company_name) AS company_name
             FROM jobs j
             LEFT JOIN employers e ON j.employer_id = e.id
-            WHERE (j.status = "active" OR j.status = "open") AND (j.payment_status = "free" OR j.payment_status = "paid")
+            WHERE (j.status = 'active' OR j.status = 'open') AND (j.payment_status = 'free' OR j.payment_status = 'paid')
         `;
         const params = [];
 

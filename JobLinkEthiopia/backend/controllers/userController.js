@@ -422,7 +422,7 @@ exports.getPublicEmployerProfile = async (req, res) => {
         }
         const employer = employers[0];
         const [jobs] = await pool.query(
-            'SELECT * FROM jobs WHERE employer_id = ? AND status = "active" ORDER BY created_at DESC',
+            "SELECT * FROM jobs WHERE employer_id = ? AND status = 'active' ORDER BY created_at DESC",
             [id]
         );
         employer.jobs = jobs;
