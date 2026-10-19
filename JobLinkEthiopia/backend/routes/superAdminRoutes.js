@@ -7,6 +7,11 @@ const { authenticateToken, verifySuperAdmin } = require('../middleware/authMiddl
 router.use(authenticateToken);
 router.use(verifySuperAdmin);
 
+// Super Admin session verification endpoint
+router.get('/verify', (req, res) => {
+    res.json({ success: true, message: 'Super admin verified successfully', user: req.user });
+});
+
 // IP Whitelisting Routes
 router.get('/ips', superAdminController.getIps);
 router.post('/ips', verifySuperAdmin, superAdminController.addIp);

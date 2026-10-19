@@ -863,7 +863,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Page-level access control & role context
   const pathParts = window.location.pathname.split('/');
   const currentPage = pathParts[pathParts.length - 1] || 'index.html';
-  const protectedPages = ['seeker.html', 'employer.html', 'admin.html', 'admin-security.html'];
+  const protectedPages = ['seeker.html', 'employer.html', 'admin.html', 'admin-profile.html', 'admin-security.html'];
 
   let token = null;
   let user = null;
@@ -881,7 +881,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentRole = 'job_seeker';
     token = auth.token || activeSession.token;
     user = auth.user || (activeSession.role === 'job_seeker' ? activeSession.user : null);
-  } else if (currentPage === 'admin.html' || currentPage === 'admin-security.html') {
+  } else if (currentPage === 'admin.html' || currentPage === 'admin-profile.html' || currentPage === 'admin-security.html') {
     currentRole = activeSession.role || 'admin';
     token = activeSession.token;
     user = activeSession.user;
@@ -1021,7 +1021,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           return;
         }
       }
-    } else if (currentPage === 'admin.html' || currentPage === 'admin-security.html') {
+    } else if (currentPage === 'admin.html' || currentPage === 'admin-profile.html' || currentPage === 'admin-security.html') {
       if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
         const refreshResult = await silentRefreshAuth('admin');
         if (refreshResult.success && (refreshResult.role === 'admin' || refreshResult.role === 'super_admin')) {

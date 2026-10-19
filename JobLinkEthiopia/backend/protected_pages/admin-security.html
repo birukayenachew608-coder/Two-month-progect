@@ -1,43 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <!-- Critical Anti-FOUC Shield: Synchronously blocks rendering before DOM is parsed -->
+  <style id="admin-auth-anti-fouc">
+    html {
+      visibility: hidden !important;
+      opacity: 0 !important;
+    }
+    @keyframes adminAuthSpin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
   <script>
-    // Inline Authentication Guard: Verify admin authorization immediately before rendering
-    (async function verifyAdminAuth() {
+    (function () {
       try {
-        let res = await fetch('/api/auth/verify-admin', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        });
-        if (res.status === 401 || res.status === 403 || !res.ok) {
-          // Attempt silent refresh before redirecting
-          const refreshRes = await fetch('/api/admin/refresh', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          });
-          if (refreshRes.ok) {
-            const data = await refreshRes.json();
-            if (data && data.user && (data.user.role === 'admin' || data.user.role === 'super_admin')) {
-              const newToken = data.accessToken || data.token || 'secure_cookie_auth';
-              localStorage.setItem('token', newToken);
-              localStorage.setItem('accessToken', newToken);
-              sessionStorage.setItem('token', newToken);
-              sessionStorage.setItem('accessToken', newToken);
-              localStorage.setItem('user', JSON.stringify(data.user));
-              sessionStorage.setItem('user', JSON.stringify(data.user));
-              return; // Verified successfully!
-            }
+        function decodeJwt(tokenStr) {
+          if (!tokenStr || typeof tokenStr !== 'string') return null;
+          try {
+            var parts = tokenStr.split('.');
+            if (parts.length !== 3) return null;
+            var base64Url = parts[1];
+            var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            var jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+              return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+          } catch (e) {
+            return null;
           }
-          window.location.replace('/admin-login.html');
         }
-      } catch (err) {
-        window.location.replace('/admin-login.html');
+        var token = localStorage.getItem('token') || sessionStorage.getItem('token') || localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken') || localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
+        var rawUser = localStorage.getItem('user') || sessionStorage.getItem('user') || localStorage.getItem('admin_user') || sessionStorage.getItem('admin_user');
+        var user = rawUser ? (typeof rawUser === 'string' ? JSON.parse(rawUser) : rawUser) : null;
+        var payload = decodeJwt(token);
+        var resolvedRole = (payload && payload.role) || (user && user.role);
+
+        if (!token && !user) {
+          window.stop && window.stop();
+          window.location.replace('admin-login.html');
+          return;
+        }
+
+        if (resolvedRole !== 'super_admin') {
+          window.stop && window.stop();
+          window.location.replace(resolvedRole === 'admin' ? 'admin.html' : 'admin-login.html');
+          return;
+        }
+      } catch (e) {
+        window.stop && window.stop();
+        window.location.replace('admin-login.html');
+        return;
       }
     })();
   </script>
-  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Security - JobLink Ethiopia</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -46,6 +62,15 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+  <!-- Security Handshake Loading Overlay -->
+  <div id="admin-auth-guard-overlay" style="position: fixed; inset: 0; width: 100vw; height: 100vh; background: #0f172a; z-index: 9999999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Inter', -apple-system, sans-serif;">
+    <div style="width: 48px; height: 48px; border: 4px solid rgba(255, 255, 255, 0.15); border-top-color: #0284c7; border-radius: 50%; animation: adminAuthSpin 0.8s linear infinite;"></div>
+    <div style="margin-top: 18px; color: #f8fafc; font-size: 15px; font-weight: 600; letter-spacing: 0.5px;">Verifying Super Admin Authorization...</div>
+    <div style="margin-top: 6px; color: #94a3b8; font-size: 12px;">JobLink Ethiopia Security Shield</div>
+  </div>
+
+  <!-- Protected Admin Dashboard Root Container (Hidden until verified) -->
+  <div id="admin-dashboard-root" style="display: none;">
   <!-- Header -->
   <header class="header">
     <div class="container header-inner flex-between">
@@ -175,6 +200,7 @@
       
     </div>
   </main>
+  </div><!-- /admin-dashboard-root -->
 
   <script src="js/main.js" defer></script>
   <script src="js/admin-security.js" defer></script>

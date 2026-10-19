@@ -96,52 +96,54 @@ router.post('/login', adminAuthLimiter, adminController.login);
 router.post('/refresh', adminController.refresh);
 
 // 2FA Routes
-const { authenticateToken } = require('../middleware/authMiddleware');
+const { authenticateToken, authorizeRole } = require('../middleware/authMiddleware');
 router.post('/2fa/verify', adminAuthLimiter, adminController.verify2FA);
 router.post('/verify-2fa', adminAuthLimiter, adminController.verify2FA);
-router.get('/2fa/setup', authenticateToken, adminController.setup2FA);
+
+// Strict Authentication and Role Guard for all admin endpoints below
+const requireAdmin = [authenticateToken, authorizeRole('admin', 'super_admin')];
+
+// 2FA Setup
+router.get('/2fa/setup', requireAdmin, adminController.setup2FA);
 
 // Auth verification & Logout
-router.get('/verify', authenticateToken, adminController.verify);
+router.get('/verify', requireAdmin, adminController.verify);
 router.post('/logout', adminController.logout);
 
-// Admin Profile & Security
-router.get('/profile', authenticateToken, adminController.getAdminProfile);
-router.put('/profile', authenticateToken, adminController.updateAdminProfile);
-router.post('/profile', authenticateToken, adminController.updateAdminProfile);
-router.post('/change-password', authenticateToken, adminController.changeAdminPassword);
-router.put('/change-password', authenticateToken, adminController.changeAdminPassword);
-router.post('/profile/upload', authenticateToken, handleAdminImageUpload, adminController.uploadProfilePhoto);
-router.put('/profile/upload', authenticateToken, handleAdminImageUpload, adminController.uploadProfilePhoto);
-router.delete('/profile/photo', authenticateToken, adminController.removeProfilePhoto);
-router.delete('/profile/upload', authenticateToken, adminController.removeProfilePhoto);
+// Admin Profile & Security (Strictly Protected)
+router.get('/profile', requireAdmin, adminController.getAdminProfile);
+router.put('/profile', requireAdmin, adminController.updateAdminProfile);
+router.post('/profile', requireAdmin, adminController.updateAdminProfile);
+router.post('/change-password', requireAdmin, adminController.changeAdminPassword);
+router.put('/change-password', requireAdmin, adminController.changeAdminPassword);
+router.post('/profile/upload', requireAdmin, handleAdminImageUpload, adminController.uploadProfilePhoto);
+router.put('/profile/upload', requireAdmin, handleAdminImageUpload, adminController.uploadProfilePhoto);
+router.delete('/profile/photo', requireAdmin, adminController.removeProfilePhoto);
+router.delete('/profile/upload', requireAdmin, adminController.removeProfilePhoto);
 
-// In a real application, you would add authentication and authorization middleware here
-// to ensure only admins can access these routes.
+// Analytics Stats (Strictly Protected)
+router.get('/stats', requireAdmin, adminController.getDashboardStats);
 
-// Analytics Stats
-router.get('/stats', adminController.getDashboardStats);
+// Employers Management (Strictly Protected)
+router.get('/employers', requireAdmin, adminController.getEmployers);
+router.put('/employers/:id/status', requireAdmin, adminController.updateEmployerStatus);
+router.put('/employers/:id/approve', requireAdmin, adminController.approveEmployer);
+router.put('/employers/:id/reject', requireAdmin, adminController.rejectEmployer);
+router.delete('/employers/:id', requireAdmin, adminController.deleteEmployer);
 
-// Employers
-router.get('/employers', adminController.getEmployers);
-router.put('/employers/:id/status', adminController.updateEmployerStatus);
-router.put('/employers/:id/approve', adminController.approveEmployer);
-router.put('/employers/:id/reject', adminController.rejectEmployer);
-router.delete('/employers/:id', adminController.deleteEmployer);
+// Job Seekers Management (Strictly Protected)
+router.get('/seekers', requireAdmin, adminController.getJobSeekers);
+router.put('/seekers/:id/status', requireAdmin, adminController.updateSeekerStatus);
+router.delete('/seekers/:id', requireAdmin, adminController.deleteJobSeeker);
 
-// Job Seekers
-router.get('/seekers', adminController.getJobSeekers);
-router.put('/seekers/:id/status', adminController.updateSeekerStatus);
-router.delete('/seekers/:id', adminController.deleteJobSeeker);
+// Reported Jobs & Reports Management (Strictly Protected)
+router.get('/jobs/reported', requireAdmin, adminController.getReportedJobs);
+router.delete('/reports/:id', requireAdmin, adminController.dismissReport);
+router.delete('/jobs/:id/report', requireAdmin, adminController.dismissReport);
+router.put('/jobs/:id/status', requireAdmin, adminController.updateJobStatus);
+router.delete('/jobs/:id', requireAdmin, adminController.deleteJob);
 
-// Reported Jobs & Reports Management
-router.get('/jobs/reported', adminController.getReportedJobs);
-router.delete('/reports/:id', adminController.dismissReport);
-router.delete('/jobs/:id/report', adminController.dismissReport);
-router.put('/jobs/:id/status', adminController.updateJobStatus);
-router.delete('/jobs/:id', adminController.deleteJob);
-
-// Admin to Employer Messages
-router.post('/messages', adminController.sendMessageToEmployer);
+// Admin to Employer Messages (Strictly Protected)
+router.post('/messages', requireAdmin, adminController.sendMessageToEmployer);
 
 module.exports = router;

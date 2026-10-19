@@ -39,11 +39,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 1. Auth Guard & Fetch Profile with Silent Refresh
+    // 1. Lift initial anti-FOUC styling to show loading screen
+    const antiFouc = document.getElementById('admin-auth-anti-fouc');
+    if (antiFouc) antiFouc.remove();
+
+    const guardOverlay = document.getElementById('admin-auth-guard-overlay');
+    const dashboardRoot = document.getElementById('admin-dashboard-root');
+
+    function revealDashboard() {
+        if (guardOverlay) guardOverlay.remove();
+        if (dashboardRoot) dashboardRoot.style.display = 'block';
+    }
+
+    function denyAccess() {
+        if (dashboardRoot) dashboardRoot.remove();
+        try {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('admin_user');
+            sessionStorage.clear();
+        } catch (e) {}
+        window.location.replace('/admin-login.html');
+    }
+
+    // Auth Guard & Fetch Profile with Silent Refresh
     try {
+        const storedToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token') ||
+                            localStorage.getItem('accessToken') || localStorage.getItem('token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (storedToken && storedToken !== 'secure_cookie_auth') {
+            headers['Authorization'] = `Bearer ${storedToken}`;
+        }
+
         let verifyRes = await fetch(`${API_URL}/profile`, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             credentials: 'include'
         });
 
@@ -57,21 +89,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             verifyRes = await fetch(`${API_URL}/profile`, {
                 method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 credentials: 'include'
             });
         }
 
         if (!verifyRes.ok) {
-            window.location.href = '/admin-login.html';
+            denyAccess();
             return;
         }
 
         currentAdmin = await verifyRes.json();
+        revealDashboard();
         renderAdminProfile(currentAdmin);
     } catch (err) {
         console.error('Auth verification error:', err);
-        window.location.href = '/admin-login.html';
+        denyAccess();
         return;
     }
 

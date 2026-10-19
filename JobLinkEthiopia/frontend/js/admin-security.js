@@ -36,41 +36,118 @@
     }
 })();
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Lift Anti-FOUC shield
+    const antiFouc = document.getElementById('admin-auth-anti-fouc');
+    if (antiFouc) antiFouc.remove();
+
+    const dashboardRoot = document.getElementById('admin-dashboard-root');
+    const overlay = document.getElementById('admin-auth-guard-overlay');
     const API_URL = '/api';
-    const token = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token') ||
-                  localStorage.getItem('accessToken') || localStorage.getItem('token');
+
+    function decodeJwt(tokenStr) {
+        if (!tokenStr || typeof tokenStr !== 'string') return null;
+        try {
+            const parts = tokenStr.split('.');
+            if (parts.length !== 3) return null;
+            const base64Url = parts[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    let token = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token') ||
+                localStorage.getItem('accessToken') || localStorage.getItem('token') ||
+                sessionStorage.getItem('admin_token') || localStorage.getItem('admin_token');
+    const userStr = sessionStorage.getItem('user') || localStorage.getItem('user') ||
+                    sessionStorage.getItem('admin_user') || localStorage.getItem('admin_user');
     
-    // Check Super Admin status
-    const userStr = sessionStorage.getItem('user') || localStorage.getItem('user');
-    if (!userStr && !token) {
+    let user = null;
+    try { user = typeof userStr === 'string' ? JSON.parse(userStr) : userStr; } catch (e) {}
+
+    const payload = decodeJwt(token);
+    const resolvedRole = (payload && payload.role) || (user && user.role);
+
+    // Initial local guard: reject immediately without rendering anything
+    if (!token && !user) {
+        if (dashboardRoot) dashboardRoot.remove();
         window.location.replace('admin-login.html');
         return;
     }
-    
-    let user = null;
-    try { user = JSON.parse(userStr); } catch (e) {}
 
-    // Decode token to verify role
-    let tokenRole = null;
-    if (token) {
-        try {
-            const base64Url = token.split('.')[1];
-            if (base64Url) {
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const decoded = JSON.parse(decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
-                tokenRole = decoded.role;
-            }
-        } catch (e) {}
-    }
-
-    const resolvedRole = tokenRole || (user && user.role);
     if (resolvedRole !== 'super_admin') {
-        console.warn('[RBAC] Forbidden: Super Admin access required. Redirecting to admin.html');
+        if (dashboardRoot) dashboardRoot.remove();
         sessionStorage.setItem('admin_access_denied', 'Forbidden: Super Admin access required');
-        window.location.replace('admin.html');
+        window.location.replace(resolvedRole === 'admin' ? 'admin.html' : 'admin-login.html');
         return;
     }
+
+    // Backend handshake: strictly verify token and role before uncloaking dashboard
+    async function verifySuperAdminBackend() {
+        try {
+            let res = await fetch(`${API_URL}/superadmin/verify`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (res.status === 401 || res.status === 403 || !res.ok) {
+                // Attempt silent refresh before giving up
+                try {
+                    const refreshRes = await fetch(`${API_URL}/admin/refresh`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include'
+                    });
+                    if (refreshRes.ok) {
+                        const refreshData = await refreshRes.json();
+                        if (refreshData && refreshData.user && refreshData.user.role === 'super_admin') {
+                            const newToken = refreshData.accessToken || refreshData.token;
+                            if (newToken) {
+                                token = newToken;
+                                sessionStorage.setItem('token', newToken);
+                                sessionStorage.setItem('accessToken', newToken);
+                                localStorage.setItem('token', newToken);
+                                localStorage.setItem('accessToken', newToken);
+                            }
+                            sessionStorage.setItem('user', JSON.stringify(refreshData.user));
+                            localStorage.setItem('user', JSON.stringify(refreshData.user));
+                            return true;
+                        }
+                    }
+                } catch (rErr) {}
+
+                // Verification failed - destroy DOM and redirect
+                if (dashboardRoot) dashboardRoot.remove();
+                if (res.status === 403) {
+                    sessionStorage.setItem('admin_access_denied', 'Forbidden: Super Admin access required');
+                    window.location.replace('admin.html');
+                } else {
+                    window.location.replace('admin-login.html');
+                }
+                return false;
+            }
+
+            return true;
+        } catch (netErr) {
+            if (dashboardRoot) dashboardRoot.remove();
+            window.location.replace('admin-login.html');
+            return false;
+        }
+    }
+
+    const verified = await verifySuperAdminBackend();
+    if (!verified) return;
+
+    // Reveal verified dashboard and dismiss loading screen
+    if (dashboardRoot) dashboardRoot.style.display = 'block';
+    if (overlay) overlay.remove();
 
     const isSuperAdmin = true;
 

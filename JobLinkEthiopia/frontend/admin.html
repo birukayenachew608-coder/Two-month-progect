@@ -2,6 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!-- Critical Anti-FOUC Shield: Synchronously blocks rendering before DOM is parsed -->
+  <style id="admin-auth-anti-fouc">
+    html {
+      visibility: hidden !important;
+      opacity: 0 !important;
+    }
+    @keyframes adminAuthSpin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+  <script>
+    (function () {
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token') || localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
+        const rawUser = localStorage.getItem('user') || sessionStorage.getItem('user') || localStorage.getItem('admin_user') || sessionStorage.getItem('admin_user');
+        const user = rawUser ? JSON.parse(rawUser) : null;
+        if (!token || !user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+          window.stop && window.stop();
+          window.location.replace('admin-login.html');
+          return;
+        }
+      } catch (e) {
+        window.stop && window.stop();
+        window.location.replace('admin-login.html');
+        return;
+      }
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JobLink Ethiopia - Admin Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,6 +38,15 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+  <!-- Security Handshake Loading Overlay -->
+  <div id="admin-auth-guard-overlay" style="position: fixed; inset: 0; width: 100vw; height: 100vh; background: #0f172a; z-index: 9999999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Inter', -apple-system, sans-serif;">
+    <div style="width: 48px; height: 48px; border: 4px solid rgba(255, 255, 255, 0.15); border-top-color: #0284c7; border-radius: 50%; animation: adminAuthSpin 0.8s linear infinite;"></div>
+    <div style="margin-top: 18px; color: #f8fafc; font-size: 15px; font-weight: 600; letter-spacing: 0.5px;">Verifying Admin Session...</div>
+    <div style="margin-top: 6px; color: #94a3b8; font-size: 12px;">JobLink Ethiopia Security Shield</div>
+  </div>
+
+  <!-- Protected Admin Dashboard Root Container (Hidden until verified) -->
+  <div id="admin-dashboard-root" style="display: none;">
   <!-- Header Navigation -->
   <header class="header">
     <div class="container header-inner flex-between admin-wide-container">
@@ -248,6 +285,9 @@
       </form>
     </div>
   </div>
+
+  </div>
+  <!-- End of Protected Admin Dashboard Root -->
 
   <script src="js/main.js" defer></script>
   <script src="js/admin.js" defer></script>

@@ -36,6 +36,33 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
 
+// Import IP Whitelist and RBAC middleware
+const { checkIpWhitelist, authorizeRole } = require('./middleware/authMiddleware');
+
+// Protected Admin HTML routes (Removed from generic public static folder)
+const protectedPagesPath = path.join(__dirname, 'protected_pages');
+
+// Strict No-Cache Headers for sensitive Admin pages to prevent cached DOM leak (FOUC)
+const setNoCacheHeaders = (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+};
+
+// Apply no-cache headers to all admin endpoints and HTML pages
+app.use(['/admin.html', '/admin-profile.html', '/admin-security.html', '/admin-security', '/admin'], setNoCacheHeaders);
+
+// Strictly protect admin-security.html with backend authorizeRole middleware: super_admin ONLY
+app.get(['/admin-security.html', '/admin-security'], setNoCacheHeaders, authorizeRole('super_admin'), (req, res) => {
+    res.sendFile(path.join(protectedPagesPath, 'admin-security.html'));
+});
+
+// Convenience route to redirect /admin to static /admin.html (auth handled by frontend JS)
+app.get('/admin', setNoCacheHeaders, (req, res) => {
+    res.redirect('/admin.html');
+});
+
 // Serve static files from frontend directory
 const frontendPath = path.join(__dirname, '../frontend');
 app.use(express.static(frontendPath));
@@ -57,29 +84,6 @@ app.use('/public/uploads', express.static(publicUploadsPath));
 
 // Import upload routes
 const uploadRoutes = require('./routes/uploadRoutes');
-
-// Import IP Whitelist and RBAC middleware
-const { checkIpWhitelist, authorizeRole } = require('./middleware/authMiddleware');
-
-// Protected Admin HTML routes (Removed from generic public static folder)
-const protectedPagesPath = path.join(__dirname, 'protected_pages');
-
-const setNoCacheHeaders = (req, res, next) => {
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    next();
-};
-
-// Strictly protect admin-security.html with backend authorizeRole middleware: super_admin ONLY
-app.get(['/admin-security.html', '/admin-security'], setNoCacheHeaders, authorizeRole('super_admin'), (req, res) => {
-    res.sendFile(path.join(protectedPagesPath, 'admin-security.html'));
-});
-
-// Convenience route to redirect /admin to static /admin.html (auth handled by frontend JS)
-app.get('/admin', (req, res) => {
-    res.redirect('/admin.html');
-});
 
 // Import authController for direct OAuth routes
 const authController = require('./controllers/authController');

@@ -1,11 +1,37 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // Check if we are on the admin dashboard
-    if (!document.querySelector('.admin-sections')) return;
+    if (!document.querySelector('.admin-sections') && !document.getElementById('admin-dashboard-root')) return;
 
-    // --- AUTH GUARD WITH SILENT REFRESH ---
+    // 1. Lift initial HTML invisibility to reveal loading overlay
+    const antiFouc = document.getElementById('admin-auth-anti-fouc');
+    if (antiFouc) antiFouc.remove();
+
+    const guardOverlay = document.getElementById('admin-auth-guard-overlay');
+    const dashboardRoot = document.getElementById('admin-dashboard-root');
+
+    function revealDashboard() {
+        if (guardOverlay) guardOverlay.remove();
+        if (dashboardRoot) dashboardRoot.style.display = 'block';
+    }
+
+    function denyAccess() {
+        if (dashboardRoot) dashboardRoot.remove();
+        try {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('admin_user');
+            sessionStorage.clear();
+        } catch (e) {}
+        window.location.replace('admin-login.html');
+    }
+
+    // --- AUTH GUARD WITH BACKEND HANDSHAKE ---
     let isAuthenticated = false;
     let storedToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token') ||
-                      localStorage.getItem('accessToken') || localStorage.getItem('token');
+                      localStorage.getItem('accessToken') || localStorage.getItem('token') ||
+                      localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
 
     try {
         const verifyHeaders = { 'Content-Type': 'application/json' };
@@ -18,7 +44,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             credentials: 'include'
         });
         if (res.ok) {
-            isAuthenticated = true;
+            const data = await res.json();
+            if (data && data.user && (data.user.role === 'admin' || data.user.role === 'super_admin')) {
+                isAuthenticated = true;
+            }
         }
     } catch (e) {
         isAuthenticated = false;
@@ -29,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             if (typeof window.silentRefreshAuth === 'function') {
                 const s = await window.silentRefreshAuth('admin');
-                if (s.success && (s.role === 'admin' || s.role === 'super_admin')) {
+                if (s && s.success && (s.role === 'admin' || s.role === 'super_admin')) {
                     isAuthenticated = true;
                 }
             } else {
@@ -58,9 +87,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (!isAuthenticated) {
-        window.location.href = 'admin-login.html';
+        denyAccess();
         return;
     }
+
+    // Verified successfully: safely reveal dashboard DOM
+    revealDashboard();
     // -------------------------------------
 
     const API_URL = '/api/admin';

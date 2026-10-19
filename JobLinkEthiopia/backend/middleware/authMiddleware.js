@@ -11,13 +11,17 @@ exports.authenticateToken = (req, res, next) => {
             token = req.cookies.seeker_accessToken;
         } else if (token === 'secure_cookie_auth') {
             token = req.cookies.token;
-        } else if (!token) {
+        } else if (!token || token === 'null' || token === 'undefined') {
             token = req.cookies.token || req.cookies.employer_accessToken || req.cookies.seeker_accessToken;
         }
     }
 
-    if (!token) {
-        return res.status(401).json({ message: 'Access denied. No token provided.' });
+    if (!token || token === 'null' || token === 'undefined' || token === 'secure_cookie_auth' || token === 'seeker_secure_cookie' || token === 'employer_secure_cookie') {
+        if (req.cookies && req.cookies.token) {
+            token = req.cookies.token;
+        } else {
+            return res.status(401).json({ status: 401, error: 'Unauthorized', message: 'Access denied. No valid token provided.' });
+        }
     }
 
     try {
@@ -25,7 +29,7 @@ exports.authenticateToken = (req, res, next) => {
         req.user = decoded;
         next();
     } catch (error) {
-        res.status(403).json({ message: 'Invalid or expired token.' });
+        return res.status(401).json({ status: 401, error: 'Unauthorized', message: 'Invalid or expired token.' });
     }
 };
 
@@ -51,7 +55,7 @@ exports.verifySeeker = (req, res, next) => {
         req.user = decoded;
         next();
     } catch (error) {
-        return res.status(403).json({ message: 'Invalid or expired token.' });
+        return res.status(401).json({ message: 'Invalid or expired token.' });
     }
 };
 
@@ -77,7 +81,7 @@ exports.verifyEmployer = (req, res, next) => {
         req.user = decoded;
         next();
     } catch (error) {
-        return res.status(403).json({ message: 'Invalid or expired token.' });
+        return res.status(401).json({ message: 'Invalid or expired token.' });
     }
 };
 
@@ -88,7 +92,7 @@ exports.authorizeRole = (...allowedRoles) => {
             let authHeader = req.headers && req.headers['authorization'];
             let token = authHeader && authHeader.split(' ')[1];
 
-            if (req.cookies && (!token || token.includes('cookie'))) {
+            if (req.cookies && (!token || token.includes('cookie') || token === 'null' || token === 'undefined')) {
                 if ((allowedRoles.includes('admin') || allowedRoles.includes('super_admin')) && req.cookies.token) {
                     token = req.cookies.token;
                 } else if (allowedRoles.includes('job_seeker') && req.cookies.seeker_accessToken) {
@@ -100,27 +104,34 @@ exports.authorizeRole = (...allowedRoles) => {
                 }
             }
 
-            if (token && token !== 'seeker_secure_cookie' && token !== 'employer_secure_cookie' && token !== 'secure_cookie_auth') {
+            if (token && token !== 'seeker_secure_cookie' && token !== 'employer_secure_cookie' && token !== 'secure_cookie_auth' && token !== 'null' && token !== 'undefined') {
                 try {
                     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production');
                     req.user = decoded;
                 } catch (error) {
-                    return res.status(403).json({ message: 'Invalid or expired token.' });
+                    if (req.accepts && req.accepts('html') && !req.xhr && !req.path.startsWith('/api/')) {
+                        return res.redirect('/admin-login.html');
+                    }
+                    return res.status(401).json({ status: 401, error: 'Unauthorized', message: 'Invalid or expired token.' });
                 }
             }
         }
 
         // Check the req.user.role property (extracted from verified access token)
         if (!req.user || !req.user.role) {
-            return res.status(401).json({ message: 'Unauthorized: Authentication required.' });
+            if (req.accepts && req.accepts('html') && !req.xhr && !req.path.startsWith('/api/')) {
+                return res.redirect('/admin-login.html');
+            }
+            return res.status(401).json({ status: 401, error: 'Unauthorized', message: 'Unauthorized: Authentication required.' });
         }
 
         if (!allowedRoles.includes(req.user.role)) {
             if (req.accepts && req.accepts('html') && !req.xhr && !req.path.startsWith('/api/')) {
-                return res.redirect('/admin.html');
+                return res.redirect(req.user.role === 'admin' ? '/admin.html' : '/admin-login.html');
             }
             return res.status(403).json({ 
-                error: 'Forbidden: Super Admin access required',
+                status: 403,
+                error: 'Forbidden',
                 message: `Forbidden: Access requires role ${allowedRoles.join(' or ')}.` 
             });
         }
@@ -131,35 +142,12 @@ exports.authorizeRole = (...allowedRoles) => {
 
 exports.requireRole = exports.authorizeRole;
 
+exports.verifyAdmin = (req, res, next) => {
+    exports.authorizeRole('admin', 'super_admin')(req, res, next);
+};
+
 exports.verifySuperAdmin = (req, res, next) => {
-    // If req.user is not yet populated, extract and verify access token from headers or cookies
-    if (!req.user || !req.user.role) {
-        let authHeader = req.headers && req.headers['authorization'];
-        let token = authHeader && authHeader.split(' ')[1];
-
-        if (req.cookies && (!token || token.includes('cookie'))) {
-            token = req.cookies.token;
-        }
-
-        if (token && token !== 'secure_cookie_auth') {
-            try {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production');
-                req.user = decoded;
-            } catch (error) {
-                return res.status(403).json({ error: 'Forbidden: Super Admin access required', message: 'Invalid or expired token.' });
-            }
-        }
-    }
-
-    if (!req.user || !req.user.role) {
-        return res.status(401).json({ error: 'Unauthorized: Authentication required', message: 'Access denied. No user context.' });
-    }
-    
-    if (req.user.role !== 'super_admin') {
-        return res.status(403).json({ error: 'Forbidden: Super Admin access required', message: 'Forbidden: Super Admin access required' });
-    }
-    
-    next();
+    exports.authorizeRole('super_admin')(req, res, next);
 };
 
 exports.checkIpWhitelist = async (req, res, next) => {
