@@ -1,7 +1,12 @@
 const pool = require('../config/db');
+const fs = require('fs');
+const path = require('path');
 
 exports.uploadCV = async (req, res) => {
-    const { seekerId } = req.body;
+    const seekerId = req.body.seekerId || (req.user && req.user.id);
+    if (!seekerId) {
+        return res.status(400).json({ message: 'Seeker ID is required' });
+    }
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded or invalid file format.' });
     }
@@ -21,7 +26,33 @@ exports.getCV = async (req, res) => {
     const seekerId = req.params.seekerId || req.params.id || (req.user && req.user.id);
     try {
         const [rows] = await pool.query('SELECT resume_file_url FROM job_seekers WHERE id = ?', [seekerId]);
-        res.status(200).json(rows[0] || {});
+        if (!rows || rows.length === 0 || !rows[0].resume_file_url) {
+            return res.status(200).json({});
+        }
+        const fileUrl = rows[0].resume_file_url;
+        const rawFilename = path.basename(fileUrl);
+        const filename = rawFilename.replace(/^\d+-/, '') || rawFilename;
+        let size = null;
+        try {
+            const filePath = path.join(__dirname, '../uploads', rawFilename);
+            if (fs.existsSync(filePath)) {
+                size = fs.statSync(filePath).size;
+            } else {
+                const publicFilePath = path.join(__dirname, '../public/uploads', rawFilename);
+                if (fs.existsSync(publicFilePath)) {
+                    size = fs.statSync(publicFilePath).size;
+                }
+            }
+        } catch (e) {
+            console.warn('Could not read CV file size:', e.message);
+        }
+
+        res.status(200).json({
+            resume_file_url: fileUrl,
+            fileUrl,
+            filename,
+            size
+        });
     } catch (error) {
         res.status(500).json({ message: 'Internal server error' });
     }
@@ -33,6 +64,26 @@ exports.deleteCV = async (req, res) => {
         return res.status(400).json({ message: 'Seeker ID is required' });
     }
     try {
+        const [rows] = await pool.query('SELECT resume_file_url FROM job_seekers WHERE id = ?', [seekerId]);
+        if (rows && rows.length > 0 && rows[0].resume_file_url) {
+            const rawFilename = path.basename(rows[0].resume_file_url);
+            try {
+                const filePath = path.join(__dirname, '../uploads', rawFilename);
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                }
+            } catch (err) {
+                console.warn('Could not delete physical CV file:', err.message);
+            }
+            try {
+                const publicFilePath = path.join(__dirname, '../public/uploads', rawFilename);
+                if (fs.existsSync(publicFilePath)) {
+                    fs.unlinkSync(publicFilePath);
+                }
+            } catch (err) {
+                console.warn('Could not delete public physical CV file:', err.message);
+            }
+        }
         await pool.query('UPDATE job_seekers SET resume_file_url = NULL WHERE id = ?', [seekerId]);
         res.status(200).json({ success: true, message: 'CV deleted successfully' });
     } catch (error) {

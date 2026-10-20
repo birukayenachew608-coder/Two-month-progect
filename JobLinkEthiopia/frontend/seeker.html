@@ -160,33 +160,52 @@
             <p class="dropzone-subtitle">Attach your polished resume for fast 1-click job applications</p>
           </div>
           
-          <div class="active-resume-container" style="display: none;">
-            <div class="active-resume-header">
-              <span class="active-resume-badge-label">
-                <i class="fa-solid fa-circle-check text-emerald-500 mr-1.5"></i> Active Resume
-              </span>
-              <span class="active-resume-status">Available for Employers</span>
-            </div>
+          <!-- Uploaded File Preview Container (Right Side of Upload Box) -->
+          <div class="resume-preview-container" id="cv-preview-container">
+            <!-- Active Resume State (when a CV is uploaded) -->
+            <div class="active-resume-wrapper" id="active-resume-wrapper" style="display: none;">
+              <div class="resume-preview-header">
+                <span class="active-resume-badge-label">
+                  <i class="fa-solid fa-circle-check text-emerald-500 mr-1.5"></i> Uploaded Resume
+                </span>
+                <span class="active-resume-status"><i class="fa-solid fa-bolt mr-1"></i> Active for Applications</span>
+              </div>
 
-            <div class="active-resume-card" id="active-resume-card">
-              <div class="active-resume-info">
-                <div class="resume-doc-icon">
-                  <i class="fa-solid fa-file-pdf"></i>
+              <div class="active-resume-card" id="active-resume-card">
+                <div class="active-resume-info">
+                  <div class="resume-doc-icon" id="preview-doc-icon">
+                    <i class="fa-solid fa-file-pdf"></i>
+                  </div>
+                  <div class="resume-doc-text">
+                    <p class="preview-filename font-bold text-slate-900" id="preview-filename">
+                      <span class="resume-name-text">resume.pdf</span>
+                    </p>
+                    <p class="preview-meta text-xs text-slate-500 mt-0.5" id="preview-meta"></p>
+                  </div>
                 </div>
-                <div class="resume-doc-text">
-                  <p class="preview-filename font-bold text-slate-900" id="preview-filename">
-                    <span class="resume-name-text"></span>
-                  </p>
-                  <p class="preview-meta text-xs text-slate-500 mt-0.5" id="preview-meta"></p>
+                <div class="active-resume-actions">
+                  <button type="button" class="btn btn-outline btn-sm active-resume-btn-view" id="btn-view-cv" data-action="view-cv" title="View Resume in Browser">
+                    <i class="fa-solid fa-eye mr-1.5 text-primary"></i> View
+                  </button>
+                  <button type="button" class="btn btn-outline btn-sm active-resume-btn-download" id="btn-download-cv" data-action="download-cv" title="Download Active Resume">
+                    <i class="fa-solid fa-download mr-1.5 text-primary"></i> Download
+                  </button>
+                  <button type="button" class="btn btn-outline-danger btn-sm active-resume-btn-delete" id="btn-delete-cv" data-action="delete-cv" title="Delete Resume">
+                    <i class="fa-solid fa-trash-can mr-1.5 text-danger"></i> Delete
+                  </button>
                 </div>
               </div>
-              <div class="active-resume-actions">
-                <button type="button" class="btn btn-outline btn-sm active-resume-btn-download" data-action="download-cv" title="Download Active Resume">
-                  <i class="fa-solid fa-download mr-1.5"></i> Download
-                </button>
-                <button type="button" class="btn btn-outline-danger btn-sm active-resume-btn-delete" data-action="delete-cv" title="Delete Active Resume">
-                  <i class="fa-solid fa-trash-can mr-1.5"></i> Delete
-                </button>
+            </div>
+
+            <!-- Empty State Placeholder (when no CV is uploaded yet) -->
+            <div class="empty-resume-wrapper" id="empty-resume-wrapper">
+              <div class="empty-resume-content">
+                <div class="empty-resume-icon">
+                  <i class="fa-regular fa-file-lines"></i>
+                </div>
+                <h4 class="empty-resume-title">No Resume Uploaded</h4>
+                <p class="empty-resume-desc">Upload your CV on the left to preview, view, or manage your active file here.</p>
+                <span class="empty-resume-badge"><i class="fa-solid fa-arrow-left mr-1.5"></i> Awaiting Upload</span>
               </div>
             </div>
           </div>

@@ -7148,18 +7148,35 @@ html[data-theme="dark"] #btn-company-profile * {
   margin: 0;
 }
 
-/* Active Resume Section */
-.active-resume-container {
-  margin-top: 1.75rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--slate-200);
+/* Uploaded Resume Preview & Actions Container */
+.resume-preview-container {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
 }
 
-.active-resume-header {
+/* Active Resume State Wrapper */
+.active-resume-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding: 1.25rem 1.5rem;
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: 1rem;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  transition: all 0.25s ease;
+}
+
+.resume-preview-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--slate-100);
 }
 
 .active-resume-badge-label {
@@ -7178,16 +7195,17 @@ html[data-theme="dark"] #btn-company-profile * {
   border: 1px solid #a7f3d0;
   padding: 0.2rem 0.65rem;
   border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
 }
 
 /* Active Resume File Card */
 .active-resume-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 1.15rem;
   padding: 1rem 1.25rem;
-  background: #ffffff;
+  background: #f8fafc;
   border: 1px solid var(--slate-200);
   border-radius: 0.75rem;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
@@ -7202,22 +7220,37 @@ html[data-theme="dark"] #btn-company-profile * {
 .active-resume-info {
   display: flex;
   align-items: center;
-  gap: 0.875rem;
+  gap: 1rem;
   min-width: 0;
   flex: 1;
 }
 
 .resume-doc-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   background: #fee2e2;
   color: #dc2626;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 1.45rem;
   flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.resume-doc-icon.icon-word {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.resume-doc-icon.icon-generic {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.active-resume-card:hover .resume-doc-icon {
+  transform: scale(1.05);
 }
 
 .resume-doc-text {
@@ -7226,8 +7259,8 @@ html[data-theme="dark"] #btn-company-profile * {
 }
 
 .resume-doc-text .preview-filename {
-  font-size: 0.925rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--slate-900);
   margin: 0;
   white-space: nowrap;
@@ -7235,56 +7268,152 @@ html[data-theme="dark"] #btn-company-profile * {
   text-overflow: ellipsis;
 }
 
+.resume-doc-text .preview-filename a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.resume-doc-text .preview-filename a:hover {
+  color: var(--primary-600);
+  text-decoration: underline;
+}
+
 .resume-doc-text .preview-meta {
   font-size: 0.775rem;
   color: var(--slate-500);
-  margin: 0.15rem 0 0 0;
+  margin: 0.25rem 0 0 0;
+  font-weight: 500;
 }
 
-/* Clean, Compact, Perfectly Aligned Action Buttons */
+/* Action Buttons: View, Download, Delete */
 .active-resume-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--slate-200);
 }
 
+.active-resume-btn-view,
 .active-resume-btn-download,
 .active-resume-btn-delete {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   height: 34px;
-  padding: 0 0.875rem;
-  font-size: 0.8rem;
+  padding: 0 0.85rem;
+  font-size: 0.825rem;
   font-weight: 600;
   border-radius: 0.5rem;
   white-space: nowrap;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s ease;
+}
+
+.active-resume-btn-view {
+  border: 1px solid var(--slate-300);
+  color: var(--slate-700);
+  background: #ffffff;
+}
+
+.active-resume-btn-view:hover {
+  border-color: var(--primary-500);
+  color: var(--primary-600);
+  background: rgba(14, 165, 233, 0.06);
 }
 
 .active-resume-btn-download {
-  border-color: var(--primary-500);
+  border: 1px solid var(--primary-500);
   color: var(--primary-600);
-  background: transparent;
+  background: rgba(14, 165, 233, 0.04);
 }
 
 .active-resume-btn-download:hover {
-  background: var(--primary-500);
+  background: var(--primary-600);
+  border-color: var(--primary-600);
   color: #ffffff;
 }
 
 .active-resume-btn-delete {
-  border-color: #fca5a5;
+  border: 1px solid #fca5a5;
   color: #dc2626;
-  background: transparent;
+  background: rgba(239, 68, 68, 0.04);
 }
 
 .active-resume-btn-delete:hover {
-  background: #ef4444;
+  background: #dc2626;
+  border-color: #dc2626;
   color: #ffffff;
-  border-color: #ef4444;
+}
+
+/* Empty Resume Placeholder */
+.empty-resume-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 220px;
+  padding: 2rem 1.5rem;
+  border: 2px dashed #cbd5e1;
+  border-radius: 1rem;
+  background: #f8fafc;
+  text-align: center;
+  transition: all 0.25s ease;
+}
+
+.empty-resume-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 290px;
+}
+
+.empty-resume-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 0.85rem;
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.empty-resume-wrapper:hover .empty-resume-icon {
+  transform: scale(1.08);
+  background: #cbd5e1;
+  color: var(--slate-800);
+}
+
+.empty-resume-title {
+  font-size: 0.975rem;
+  font-weight: 700;
+  color: var(--slate-800);
+  margin: 0 0 0.35rem 0;
+}
+
+.empty-resume-desc {
+  font-size: 0.8rem;
+  color: var(--slate-500);
+  line-height: 1.45;
+  margin: 0 0 0.85rem 0;
+}
+
+.empty-resume-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--slate-600);
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
 }
 
 /* Social & Portfolio Links in Personal Profile Form */
@@ -7409,8 +7538,14 @@ html[data-theme="dark"] #btn-company-profile * {
   color: #94a3b8;
 }
 
-[data-theme="dark"] .active-resume-container {
-  border-top-color: #334155;
+[data-theme="dark"] .active-resume-wrapper {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .resume-preview-header {
+  border-bottom-color: #334155;
 }
 
 [data-theme="dark"] .active-resume-badge-label {
@@ -7438,6 +7573,16 @@ html[data-theme="dark"] #btn-company-profile * {
   color: #f87171;
 }
 
+[data-theme="dark"] .resume-doc-icon.icon-word {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .resume-doc-icon.icon-generic {
+  background: rgba(14, 165, 233, 0.2);
+  color: #38bdf8;
+}
+
 [data-theme="dark"] .resume-doc-text .preview-filename {
   color: #f8fafc;
 }
@@ -7446,7 +7591,24 @@ html[data-theme="dark"] #btn-company-profile * {
   color: #94a3b8;
 }
 
+[data-theme="dark"] .active-resume-actions {
+  border-top-color: #334155;
+}
+
+[data-theme="dark"] .active-resume-btn-view {
+  background: #0f172a;
+  border-color: #475569;
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .active-resume-btn-view:hover {
+  border-color: #38bdf8;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+}
+
 [data-theme="dark"] .active-resume-btn-download {
+  background: rgba(56, 189, 248, 0.08);
   border-color: #0284c7;
   color: #38bdf8;
 }
@@ -7457,6 +7619,7 @@ html[data-theme="dark"] #btn-company-profile * {
 }
 
 [data-theme="dark"] .active-resume-btn-delete {
+  background: rgba(239, 68, 68, 0.08);
   border-color: #991b1b;
   color: #f87171;
 }
@@ -7465,6 +7628,40 @@ html[data-theme="dark"] #btn-company-profile * {
   background: #dc2626;
   color: #ffffff;
   border-color: #dc2626;
+}
+
+[data-theme="dark"] .empty-resume-wrapper {
+  border-color: #334155;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+[data-theme="dark"] .empty-resume-wrapper:hover {
+  border-color: #475569;
+  background: rgba(15, 23, 42, 0.7);
+}
+
+[data-theme="dark"] .empty-resume-icon {
+  background: #1e293b;
+  color: #64748b;
+}
+
+[data-theme="dark"] .empty-resume-wrapper:hover .empty-resume-icon {
+  background: #334155;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .empty-resume-title {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .empty-resume-desc {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .empty-resume-badge {
+  color: #94a3b8;
+  background: #1e293b;
+  border-color: #334155;
 }
 
 [data-theme="dark"] .profile-social-links-section {
@@ -7593,9 +7790,11 @@ html[data-theme="dark"] #btn-company-profile * {
   margin-bottom: 0;
 }
 
+#cv .resume-preview-container,
 #cv .active-resume-container {
   min-width: 0;
   margin-top: 0;
+  height: 100%;
 }
 
 #alerts .dashboard-grid {

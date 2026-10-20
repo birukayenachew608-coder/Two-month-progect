@@ -1891,7 +1891,68 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // File Upload
+  // Helper to render and synchronize CV Preview and Empty State
+  window.updateSeekerResumeUI = function(resumeData) {
+    const activeWrap = document.getElementById('active-resume-wrapper');
+    const emptyWrap = document.getElementById('empty-resume-wrapper');
+    if (!activeWrap && !emptyWrap) return;
+
+    if (!resumeData || (!resumeData.resume_file_url && !resumeData.fileUrl)) {
+      window.currentSeekerResumeUrl = null;
+      if (activeWrap) activeWrap.style.display = 'none';
+      if (emptyWrap) emptyWrap.style.display = 'flex';
+      return;
+    }
+
+    const fileUrl = resumeData.fileUrl || resumeData.resume_file_url;
+    window.currentSeekerResumeUrl = fileUrl;
+
+    const rawName = resumeData.filename || fileUrl.split('/').pop().replace(/^\d+-/, '') || 'resume.pdf';
+    const cleanName = rawName.replace(/^\d+-/, '');
+
+    // Format file size
+    let sizeText = 'Ready for applications';
+    if (resumeData.size && typeof resumeData.size === 'number' && resumeData.size > 0) {
+      if (resumeData.size >= 1024 * 1024) {
+        sizeText = (resumeData.size / (1024 * 1024)).toFixed(1) + ' MB';
+      } else {
+        sizeText = (resumeData.size / 1024).toFixed(1) + ' KB';
+      }
+    }
+
+    // Set document icon based on file extension
+    const docIconEl = document.getElementById('preview-doc-icon');
+    const ext = cleanName.split('.').pop().toLowerCase();
+    if (docIconEl) {
+      if (ext === 'pdf') {
+        docIconEl.className = 'resume-doc-icon';
+        docIconEl.innerHTML = '<i class="fa-solid fa-file-pdf"></i>';
+      } else if (ext === 'doc' || ext === 'docx') {
+        docIconEl.className = 'resume-doc-icon icon-word';
+        docIconEl.innerHTML = '<i class="fa-solid fa-file-word"></i>';
+      } else {
+        docIconEl.className = 'resume-doc-icon icon-generic';
+        docIconEl.innerHTML = '<i class="fa-solid fa-file-lines"></i>';
+      }
+    }
+
+    // Update filename display
+    const fnameEl = document.getElementById('preview-filename') || document.querySelector('.preview-filename');
+    if (fnameEl) {
+      fnameEl.innerHTML = `<a href="${fileUrl}" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors inline-flex items-center gap-1.5" title="${cleanName}"><i class="fa-solid fa-file-lines text-primary"></i> ${cleanName}</a>`;
+    }
+
+    // Update meta details
+    const metaEl = document.getElementById('preview-meta') || document.querySelector('.preview-meta');
+    if (metaEl) {
+      metaEl.innerHTML = `<span class="font-semibold text-slate-700 dark:text-slate-300">${sizeText}</span> • Active file on record`;
+    }
+
+    if (emptyWrap) emptyWrap.style.display = 'none';
+    if (activeWrap) activeWrap.style.display = 'flex';
+  };
+
+  // CV File Upload Handler & Dropzone Logic
   const cvFileBox = document.getElementById('cv-upload-box');
   const fileInput = document.getElementById('cv-file');
   if (cvFileBox && fileInput) {
@@ -1918,23 +1979,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           showToast('Uploading resume: ' + file.name, 'info');
 
+          const sHeaders = {};
+          if (seekerAuth.token && !seekerAuth.token.includes('cookie')) {
+            sHeaders['Authorization'] = 'Bearer ' + seekerAuth.token;
+          }
+
           fetch('/api/seeker/cv', {
             method: 'POST',
+            headers: sHeaders,
+            credentials: 'include',
             body: formData
           }).then(async res => {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Upload failed');
             return data;
           }).then(data => {
-            window.currentSeekerResumeUrl = data.fileUrl;
+            updateSeekerResumeUI({
+              fileUrl: data.fileUrl,
+              resume_file_url: data.fileUrl,
+              filename: data.filename || file.name,
+              size: data.size || file.size
+            });
             showToast('Resume uploaded successfully!', 'success');
-            // update UI
-            const meta = document.querySelector('.preview-meta');
-            const fname = document.querySelector('.preview-filename');
-            if (fname) {
-              fname.innerHTML = `<a href="${data.fileUrl}" target="_blank" class="text-primary hover:underline font-semibold flex items-center gap-1.5"><i class="fa-solid fa-file-lines text-primary"></i> ${data.filename}</a>`;
-            }
-            if (meta) meta.textContent = (data.size / 1024).toFixed(1) + ' KB • Uploaded just now';
           }).catch(err => {
             showToast(err.message || 'Network error during upload', 'error');
             fileInput.value = '';
@@ -1961,23 +2027,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    // load existing CV on load
+    // Load existing CV on page load
     const seekerAuth = getSeekerAuth();
     if (seekerAuth.user) {
       const user = seekerAuth.user;
       if (user && user.role === 'job_seeker') {
-        fetch(`/api/seeker/cv/${user.id}`).then(res => res.json()).then(data => {
-          if (data.resume_file_url) {
-            window.currentSeekerResumeUrl = data.resume_file_url;
-            const fname = document.querySelector('.preview-filename');
-            const filenameExtracted = data.resume_file_url.split('/').pop().split('-').slice(1).join('-') || data.resume_file_url;
-            if (fname) {
-              fname.innerHTML = `<a href="${data.resume_file_url}" target="_blank" class="text-primary hover:underline font-semibold flex items-center gap-1.5"><i class="fa-solid fa-file-lines text-primary"></i> ${filenameExtracted}</a>`;
-            }
-            const meta = document.querySelector('.preview-meta');
-            if (meta) meta.textContent = 'Active file on record • Ready for 1-click apply';
+        const sHeaders = {};
+        if (seekerAuth.token && !seekerAuth.token.includes('cookie')) {
+          sHeaders['Authorization'] = 'Bearer ' + seekerAuth.token;
+        }
+        fetch(`/api/seeker/cv/${user.id}`, {
+          headers: sHeaders,
+          credentials: 'include'
+        }).then(res => res.json()).then(data => {
+          if (data && (data.resume_file_url || data.fileUrl)) {
+            updateSeekerResumeUI(data);
+          } else {
+            updateSeekerResumeUI(null);
           }
-        }).catch(e => { });
+        }).catch(e => {
+          updateSeekerResumeUI(null);
+        });
       }
     }
   }
@@ -2050,7 +2120,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       case 'view-job':
         showToast('Application details loaded', 'info');
         break;
-      case 'download-cv':
+      case 'view-cv': {
+        e.preventDefault();
+        const fnameEl = document.querySelector('.preview-filename');
+        const linkInside = fnameEl ? fnameEl.querySelector('a') : null;
+        let cvViewUrl = (linkInside && linkInside.getAttribute('href')) || window.currentSeekerResumeUrl;
+        if (cvViewUrl && cvViewUrl !== '#' && !cvViewUrl.includes('placeholder')) {
+          window.open(cvViewUrl, '_blank', 'noopener,noreferrer');
+        } else {
+          showToast('No active resume file found. Please upload one first.', 'info');
+        }
+        break;
+      }
+      case 'download-cv': {
         e.preventDefault();
         const fnameEl = document.querySelector('.preview-filename');
         const linkInside = fnameEl ? fnameEl.querySelector('a') : null;
@@ -2060,7 +2142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const dlAnchor = document.createElement('a');
           dlAnchor.href = cvDownloadUrl;
           dlAnchor.target = '_blank';
-          dlAnchor.download = cvDownloadUrl.split('/').pop() || 'resume.pdf';
+          dlAnchor.download = cvDownloadUrl.split('/').pop().replace(/^\d+-/, '') || 'resume.pdf';
           document.body.appendChild(dlAnchor);
           dlAnchor.click();
           document.body.removeChild(dlAnchor);
@@ -2068,6 +2150,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           showToast('No active resume file found. Please upload one first.', 'info');
         }
         break;
+      }
       case 'remove-role':
         const roleRow = btn.closest('tr');
         if (roleRow) {
@@ -2075,9 +2158,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           showToast('Role removed', 'success');
         }
         break;
-      case 'delete-cv':
+      case 'delete-cv': {
         e.preventDefault();
-        if (confirm('Are you sure you want to remove your uploaded resume?')) {
+        if (confirm('Are you sure you want to delete your resume? This action cannot be undone.')) {
           const seekerAuthData = getSeekerAuth();
           const sHeaders = {};
           if (seekerAuthData.token && !seekerAuthData.token.includes('cookie')) {
@@ -2088,27 +2171,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             headers: sHeaders,
             credentials: 'include'
           })
-            .then(res => res.json())
+            .then(async res => {
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.message || 'Error deleting resume');
+              return data;
+            })
             .then(data => {
               window.currentSeekerResumeUrl = null;
-              const fNameElem = document.querySelector('.preview-filename');
-              const metaElem = document.querySelector('.preview-meta');
-              if (fNameElem) {
-                fNameElem.innerHTML = '<span class="text-slate-400 italic font-normal">No resume uploaded yet</span>';
-              }
-              if (metaElem) {
-                metaElem.textContent = 'Upload your CV above (PDF, DOC, DOCX up to 5MB)';
+              if (typeof window.updateSeekerResumeUI === 'function') {
+                window.updateSeekerResumeUI(null);
               }
               const fileInputEl = document.getElementById('cv-file');
               if (fileInputEl) fileInputEl.value = '';
-              showToast('Resume removed successfully', 'success');
+              showToast('Resume deleted successfully', 'success');
             })
             .catch(err => {
               console.warn('Error deleting CV:', err);
-              showToast('Error removing resume', 'error');
+              showToast(err.message || 'Error deleting resume', 'error');
             });
         }
         break;
+      }
       case 'delete-alert':
         showToast('Alert removed', 'error');
         break;
