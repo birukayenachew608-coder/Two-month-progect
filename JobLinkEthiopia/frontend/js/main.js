@@ -1418,7 +1418,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         </button>`;
 
       authActions.innerHTML = `
-        <button class="btn btn-icon-small btn-outline btn-theme-toggle" data-action="toggle-theme" title="Toggle Dark Mode">
+        <button type="button" class="btn-theme-toggle" data-action="toggle-theme" title="Toggle Dark Mode" aria-label="Toggle Dark Mode">
           <svg class="icon-theme-toggle" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
         </button>
         <div class="nav-user-badge">
@@ -1455,15 +1455,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         </button>`;
 
       authActions.innerHTML = `
-        <button type="button" class="btn btn-outline btn-sm nav-auth-btn nav-login-btn" data-action="open-login" data-mode="login" id="nav-login-btn">
+        <button type="button" class="btn nav-auth-btn nav-login-btn" data-action="open-login" data-mode="login" id="nav-login-btn">
           <i class="fa-solid fa-arrow-right-to-bracket mr-1.5"></i>
           <span>Log In</span>
         </button>
-        <button type="button" class="btn btn-primary btn-sm nav-auth-btn nav-register-btn" data-action="open-login" data-mode="register" id="nav-register-btn">
+        <button type="button" class="btn nav-auth-btn nav-register-btn" data-action="open-login" data-mode="register" id="nav-register-btn">
           <i class="fa-solid fa-user-plus mr-1.5"></i>
           <span>Register</span>
         </button>
-        <button class="btn btn-icon-small btn-outline btn-theme-toggle" data-action="toggle-theme" title="Toggle Dark Mode">
+        <button type="button" class="btn-theme-toggle" data-action="toggle-theme" title="Toggle Dark Mode" aria-label="Toggle Dark Mode">
           <svg class="icon-theme-toggle" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
         </button>
         ${mobileNavBtnHtml}
