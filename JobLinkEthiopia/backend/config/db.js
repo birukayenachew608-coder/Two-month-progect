@@ -1,5 +1,6 @@
 const mysql = require('mysql2/promise');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 // Parse DATABASE_URL / MYSQL_URL if provided by cloud hosting
 let dbConfig = {};

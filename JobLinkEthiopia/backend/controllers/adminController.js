@@ -5,14 +5,36 @@ const crypto = require('crypto');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 
-// Ensure 'profile_photo' column exists in admins table
+const fs = require('fs');
+
+// Helper to convert multer file or buffer to Base64 data URL
+function convertFileToBase64(file) {
+    if (!file) return null;
+    if (file.buffer) {
+        const mime = file.mimetype || 'image/jpeg';
+        return `data:${mime};base64,${file.buffer.toString('base64')}`;
+    }
+    if (file.path && fs.existsSync(file.path)) {
+        try {
+            const buffer = fs.readFileSync(file.path);
+            const mime = file.mimetype || 'image/jpeg';
+            try { fs.unlinkSync(file.path); } catch (_) {}
+            return `data:${mime};base64,${buffer.toString('base64')}`;
+        } catch (_) {}
+    }
+    return null;
+}
+
+// Ensure 'profile_photo' column exists as LONGTEXT in admins table
 pool.query(`
     SELECT COLUMN_NAME 
     FROM INFORMATION_SCHEMA.COLUMNS 
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'admins' AND COLUMN_NAME = 'profile_photo'
 `).then(([rows]) => {
     if (rows.length === 0) {
-        return pool.query("ALTER TABLE admins ADD COLUMN profile_photo VARCHAR(500) DEFAULT NULL");
+        return pool.query("ALTER TABLE admins ADD COLUMN profile_photo LONGTEXT DEFAULT NULL");
+    } else {
+        return pool.query("ALTER TABLE admins MODIFY COLUMN profile_photo LONGTEXT DEFAULT NULL");
     }
 }).catch(err => {
     console.error('Error verifying profile_photo column in admins table:', err.message);
@@ -708,21 +730,41 @@ exports.uploadProfilePhoto = async (req, res) => {
         if (!req.user || !['admin', 'super_admin'].includes(req.user.role)) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
-        if (!req.file) {
+        const file = req.file || (req.files && req.files[0]);
+        let base64Photo = convertFileToBase64(file);
+
+        if (!base64Photo && req.body) {
+            const bodyImg = req.body.profile_picture || req.body.profile_photo || req.body.image || req.body.photo || req.body.avatar;
+            if (typeof bodyImg === 'string' && bodyImg.trim().startsWith('data:image/')) {
+                base64Photo = bodyImg.trim();
+            }
+        }
+
+        if (!base64Photo) {
             return res.status(400).json({ message: 'No image file uploaded or invalid file format.' });
         }
-        const fileUrl = `/uploads/${req.file.filename}`;
-        await pool.query('UPDATE admins SET profile_photo = ? WHERE id = ?', [fileUrl, req.user.id]);
+
+        await pool.query('UPDATE admins SET profile_photo = ? WHERE id = ?', [base64Photo, req.user.id]);
+        await pool.query(
+            'UPDATE users SET profile_picture = ?, profile_photo = ? WHERE id = ? AND role IN (?, ?)',
+            [base64Photo, base64Photo, req.user.id, 'admin', 'super_admin']
+        ).catch(() => {});
+        if (req.user.email) {
+            await pool.query(
+                'UPDATE users SET profile_picture = ?, profile_photo = ? WHERE email = ? AND role IN (?, ?)',
+                [base64Photo, base64Photo, req.user.email, 'admin', 'super_admin']
+            ).catch(() => {});
+        }
 
         res.status(200).json({
             message: 'Profile photo uploaded successfully',
-            profile_photo: fileUrl,
-            profile_photo_url: fileUrl,
-            fileUrl,
+            profile_photo: base64Photo,
+            profile_photo_url: base64Photo,
+            fileUrl: base64Photo,
             user: {
                 id: req.user.id,
                 role: req.user.role,
-                profile_photo: fileUrl
+                profile_photo: base64Photo
             }
         });
     } catch (error) {
@@ -736,10 +778,16 @@ exports.removeProfilePhoto = async (req, res) => {
         if (!req.user || !['admin', 'super_admin'].includes(req.user.role)) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
+        const defaultAvatar = '/uploads/default-avatar.png';
         await pool.query('UPDATE admins SET profile_photo = NULL WHERE id = ?', [req.user.id]);
+        await pool.query(
+            'UPDATE users SET profile_photo = ?, profile_picture = NULL WHERE id = ? AND role IN (?, ?)',
+            [defaultAvatar, req.user.id, 'admin', 'super_admin']
+        ).catch(() => {});
         res.status(200).json({
             message: 'Profile photo removed successfully',
-            profile_photo: null
+            profile_photo: null,
+            profile_photo_url: defaultAvatar
         });
     } catch (error) {
         console.error('Error removing admin profile photo:', error);

@@ -144,7 +144,7 @@ exports.getProfile = async (req, res) => {
         let photo = seeker.profile_photo || seeker.profile_photo_url;
         if (photo && typeof photo === 'string') {
             photo = photo.trim();
-            if (!photo.startsWith('http://') && !photo.startsWith('https://') && !photo.startsWith('/')) {
+            if (!photo.startsWith('http://') && !photo.startsWith('https://') && !photo.startsWith('data:') && !photo.startsWith('/')) {
                 photo = '/' + photo;
             }
         }

@@ -422,7 +422,7 @@ exports.getMe = async (req, res) => {
         // Normalize path: absolute with leading slash or external URL
         if (photo && typeof photo === 'string') {
             photo = photo.trim();
-            if (!photo.startsWith('http://') && !photo.startsWith('https://') && !photo.startsWith('/')) {
+            if (!photo.startsWith('http://') && !photo.startsWith('https://') && !photo.startsWith('data:') && !photo.startsWith('/')) {
                 photo = '/' + photo;
             }
         }
@@ -1151,7 +1151,7 @@ exports.seekerGetMe = async (req, res) => {
         let photo = user.profile_picture || user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png';
         if (typeof photo === 'string') {
             photo = photo.trim();
-            if (!photo.startsWith('http://') && !photo.startsWith('https://') && !photo.startsWith('/')) {
+            if (!photo.startsWith('http://') && !photo.startsWith('https://') && !photo.startsWith('data:') && !photo.startsWith('/')) {
                 photo = '/' + photo;
             }
         }
@@ -1357,7 +1357,7 @@ exports.employerGetMe = async (req, res) => {
         let photo = user.profile_picture || user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png';
         if (typeof photo === 'string') {
             photo = photo.trim();
-            if (!photo.startsWith('http://') && !photo.startsWith('https://') && !photo.startsWith('/')) {
+            if (!photo.startsWith('http://') && !photo.startsWith('https://') && !photo.startsWith('data:') && !photo.startsWith('/')) {
                 photo = '/' + photo;
             }
         }

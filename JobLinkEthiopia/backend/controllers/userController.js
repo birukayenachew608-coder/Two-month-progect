@@ -2,15 +2,40 @@ const pool = require('../config/db');
 const path = require('path');
 const fs = require('fs');
 
+function convertFileToBase64(file) {
+    if (!file) return null;
+    if (file.buffer) {
+        const mime = file.mimetype || 'image/jpeg';
+        return `data:${mime};base64,${file.buffer.toString('base64')}`;
+    }
+    if (file.path && fs.existsSync(file.path)) {
+        try {
+            const buffer = fs.readFileSync(file.path);
+            const mime = file.mimetype || 'image/jpeg';
+            try { fs.unlinkSync(file.path); } catch (_) {}
+            return `data:${mime};base64,${buffer.toString('base64')}`;
+        } catch (_) {}
+    }
+    return null;
+}
+
 /**
  * Handle user profile photo upload
- * Updates the user's profile_photo in `users` and synchronizes with role tables
+ * Converts image to Base64 and saves directly in MySQL LONGTEXT columns (users, job_seekers, employers, admins)
  */
 exports.uploadProfilePhoto = async (req, res) => {
     try {
         const file = req.file || (req.files && req.files[0]);
+        let base64Photo = convertFileToBase64(file);
 
-        if (!file) {
+        if (!base64Photo && req.body) {
+            const bodyImg = req.body.profile_picture || req.body.profile_photo || req.body.image || req.body.photo || req.body.avatar;
+            if (typeof bodyImg === 'string' && bodyImg.trim().startsWith('data:image/')) {
+                base64Photo = bodyImg.trim();
+            }
+        }
+
+        if (!base64Photo) {
             return res.status(400).json({ message: 'No image file uploaded. Please select an image.' });
         }
 
@@ -22,75 +47,62 @@ exports.uploadProfilePhoto = async (req, res) => {
         const userEmail = req.user.email;
         const userRole = req.user.role || 'job_seeker';
 
-        // Statically served path from root
-        const relativeFilePath = `/uploads/${file.filename}`;
-
-        // Ensure file is mirrored to backend/uploads as well for compatibility
-        const mainUploadsPath = path.join(__dirname, '../uploads', file.filename);
-        if (file.path && file.path !== mainUploadsPath) {
-            try {
-                fs.copyFileSync(file.path, mainUploadsPath);
-            } catch (copyErr) {
-                console.warn('Notice: Could not mirror upload to backend/uploads:', copyErr.message);
-            }
-        }
-
         // Strictly route update based on user role to prevent cross-contamination
         if (userRole === 'employer') {
             // 1. Update ONLY employers table
             await pool.query(
                 'UPDATE employers SET profile_picture = ?, profile_photo = ?, profile_photo_url = ? WHERE id = ?',
-                [relativeFilePath, relativeFilePath, relativeFilePath, userId]
+                [base64Photo, base64Photo, base64Photo, userId]
             ).catch(async () => {
                 await pool.query(
                     'UPDATE employers SET profile_photo_url = ?, profile_picture = ? WHERE id = ?',
-                    [relativeFilePath, relativeFilePath, userId]
+                    [base64Photo, base64Photo, userId]
                 ).catch(() => {});
             });
 
             // 2. In users table, strictly include AND role = 'employer'
             await pool.query(
                 'UPDATE users SET profile_picture = ?, profile_photo = ? WHERE id = ? AND role = ?',
-                [relativeFilePath, relativeFilePath, userId, 'employer']
+                [base64Photo, base64Photo, userId, 'employer']
             ).catch(() => {});
             if (userEmail) {
                 await pool.query(
                     'UPDATE users SET profile_picture = ?, profile_photo = ? WHERE email = ? AND role = ?',
-                    [relativeFilePath, relativeFilePath, userEmail, 'employer']
+                    [base64Photo, base64Photo, userEmail, 'employer']
                 ).catch(() => {});
             }
         } else if (userRole === 'job_seeker') {
             // 1. Update ONLY job_seekers table
             await pool.query(
                 'UPDATE job_seekers SET profile_picture = ?, profile_photo = ?, profile_photo_url = ? WHERE id = ?',
-                [relativeFilePath, relativeFilePath, relativeFilePath, userId]
+                [base64Photo, base64Photo, base64Photo, userId]
             ).catch(async () => {
                 await pool.query(
                     'UPDATE job_seekers SET profile_photo_url = ?, profile_picture = ? WHERE id = ?',
-                    [relativeFilePath, relativeFilePath, userId]
+                    [base64Photo, base64Photo, userId]
                 ).catch(() => {});
             });
 
             // 2. In users table, strictly include AND role = 'job_seeker'
             await pool.query(
                 'UPDATE users SET profile_picture = ?, profile_photo = ? WHERE id = ? AND role = ?',
-                [relativeFilePath, relativeFilePath, userId, 'job_seeker']
+                [base64Photo, base64Photo, userId, 'job_seeker']
             ).catch(() => {});
             if (userEmail) {
                 await pool.query(
                     'UPDATE users SET profile_picture = ?, profile_photo = ? WHERE email = ? AND role = ?',
-                    [relativeFilePath, relativeFilePath, userEmail, 'job_seeker']
+                    [base64Photo, base64Photo, userEmail, 'job_seeker']
                 ).catch(() => {});
             }
         } else if (userRole === 'admin' || userRole === 'super_admin') {
             // Update admins table and users table with admin role
             await pool.query(
                 'UPDATE admins SET profile_photo = ? WHERE id = ?',
-                [relativeFilePath, userId]
+                [base64Photo, userId]
             ).catch(() => {});
             await pool.query(
                 'UPDATE users SET profile_picture = ?, profile_photo = ? WHERE id = ? AND role = ?',
-                [relativeFilePath, relativeFilePath, userId, userRole]
+                [base64Photo, base64Photo, userId, userRole]
             ).catch(() => {});
         }
 
@@ -99,8 +111,9 @@ exports.uploadProfilePhoto = async (req, res) => {
             id: userId,
             email: userEmail,
             role: userRole,
-            profile_photo: relativeFilePath,
-            profile_photo_url: relativeFilePath
+            profile_picture: base64Photo,
+            profile_photo: base64Photo,
+            profile_photo_url: base64Photo
         };
 
         const [userRows] = await pool.query(
@@ -108,17 +121,17 @@ exports.uploadProfilePhoto = async (req, res) => {
             [userEmail || '', userId, userRole]
         ).catch(() => [[]]);
         if (userRows.length > 0) {
-            updatedUser = { ...userRows[0], profile_photo_url: userRows[0].profile_photo };
+            updatedUser = { ...userRows[0], profile_photo: base64Photo, profile_photo_url: base64Photo };
         }
 
         res.status(200).json({
             success: true,
             message: 'Profile photo uploaded successfully',
-            profile_picture: relativeFilePath,
-            profile_photo: relativeFilePath,
-            profile_photo_url: relativeFilePath,
-            photoUrl: relativeFilePath,
-            url: relativeFilePath,
+            profile_picture: base64Photo,
+            profile_photo: base64Photo,
+            profile_photo_url: base64Photo,
+            photoUrl: base64Photo,
+            url: base64Photo,
             user: updatedUser
         });
     } catch (error) {
@@ -188,7 +201,7 @@ exports.getProfilePhoto = async (req, res) => {
         // Normalize path: absolute with leading slash or external URL
         if (photo && typeof photo === 'string') {
             photo = photo.trim();
-            if (!photo.startsWith('http://') && !photo.startsWith('https://') && !photo.startsWith('/')) {
+            if (!photo.startsWith('http://') && !photo.startsWith('https://') && !photo.startsWith('data:') && !photo.startsWith('/')) {
                 photo = '/' + photo;
             }
         }

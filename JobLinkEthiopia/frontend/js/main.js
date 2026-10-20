@@ -1080,7 +1080,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof photoUrl === 'string') {
       const clean = photoUrl.trim();
       if (!clean) return defaultAvatar;
-      if (clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('/')) {
+      if (clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('data:') || clean.startsWith('/')) {
         return clean;
       }
       return '/' + clean;

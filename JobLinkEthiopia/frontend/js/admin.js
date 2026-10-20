@@ -343,7 +343,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const hasPhoto = rawPhoto && typeof rawPhoto === 'string' && rawPhoto.trim() !== '' && rawPhoto !== 'null' && rawPhoto !== 'undefined' && !rawPhoto.includes('default-avatar');
 
             let photoSrc = rawPhoto;
-            if (photoSrc && !photoSrc.startsWith('http') && !photoSrc.startsWith('/')) {
+            if (photoSrc && !photoSrc.startsWith('http') && !photoSrc.startsWith('data:') && !photoSrc.startsWith('/')) {
                 photoSrc = '/' + photoSrc;
             }
 
@@ -534,7 +534,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const hasPhoto = rawPhoto && typeof rawPhoto === 'string' && rawPhoto.trim() !== '' && rawPhoto !== 'null' && rawPhoto !== 'undefined' && !rawPhoto.includes('default-avatar');
 
             let photoSrc = rawPhoto;
-            if (photoSrc && !photoSrc.startsWith('http') && !photoSrc.startsWith('/')) {
+            if (photoSrc && !photoSrc.startsWith('http') && !photoSrc.startsWith('data:') && !photoSrc.startsWith('/')) {
                 photoSrc = '/' + photoSrc;
             }
 

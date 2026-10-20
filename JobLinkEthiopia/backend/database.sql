@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS job_seekers (
     location VARCHAR(255) DEFAULT NULL,
     
     -- Profile Photo & Custom Avatars
-    profile_photo VARCHAR(500) DEFAULT NULL,
-    profile_picture VARCHAR(500) DEFAULT NULL,
-    profile_photo_url VARCHAR(500) DEFAULT NULL,
+    profile_photo LONGTEXT DEFAULT NULL,
+    profile_picture LONGTEXT DEFAULT NULL,
+    profile_photo_url LONGTEXT DEFAULT NULL,
     
     professional_title VARCHAR(255) DEFAULT NULL,
     bio TEXT DEFAULT NULL,
@@ -58,9 +58,9 @@ CREATE TABLE IF NOT EXISTS employers (
     bio TEXT DEFAULT NULL,
     
     -- Profile Photo & Custom Avatars
-    profile_photo VARCHAR(500) DEFAULT NULL,
-    profile_picture VARCHAR(500) DEFAULT NULL,
-    profile_photo_url VARCHAR(500) DEFAULT NULL,
+    profile_photo LONGTEXT DEFAULT NULL,
+    profile_picture LONGTEXT DEFAULT NULL,
+    profile_photo_url LONGTEXT DEFAULT NULL,
     
     -- Freemium & Verification
     free_jobs_posted INT NOT NULL DEFAULT 0,
@@ -90,8 +90,8 @@ CREATE TABLE IF NOT EXISTS users (
     role ENUM('job_seeker', 'employer', 'admin', 'super_admin', 'seeker') DEFAULT 'job_seeker',
     is_approved BOOLEAN DEFAULT FALSE,
     google_id VARCHAR(255) UNIQUE DEFAULT NULL,
-    profile_photo VARCHAR(500) DEFAULT '/uploads/default-avatar.png',
-    profile_picture VARCHAR(500) DEFAULT NULL,
+    profile_photo LONGTEXT DEFAULT NULL,
+    profile_picture LONGTEXT DEFAULT NULL,
     account_status ENUM('active', 'banned', 'pending_verification') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS admins (
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     role ENUM('admin', 'super_admin', 'moderator', 'auditor') DEFAULT 'admin',
-    profile_photo VARCHAR(500) DEFAULT NULL,
+    profile_photo LONGTEXT DEFAULT NULL,
     refresh_token VARCHAR(512) DEFAULT NULL,
     two_factor_secret VARCHAR(255) DEFAULT NULL,
     is_2fa_enabled BOOLEAN DEFAULT FALSE,

@@ -11,16 +11,8 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        const ext = path.extname(file.originalname).toLowerCase() || '.png';
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'profile-' + uniqueSuffix + ext);
-    }
-});
+// Use Memory Storage so images are held in memory buffer and converted to Base64 directly
+const storage = multer.memoryStorage();
 
 const upload = multer({
     storage: storage,
@@ -29,7 +21,7 @@ const upload = multer({
         const allowedTypes = /jpeg|jpg|png|gif|webp/;
         const ext = allowedTypes.test(path.extname(file.originalname).toLowerCase());
         const mime = allowedTypes.test(file.mimetype);
-        if (ext && mime) {
+        if (ext || mime) {
             cb(null, true);
         } else {
             cb(new Error('Only image files (JPEG, PNG, GIF, WEBP) are allowed!'));

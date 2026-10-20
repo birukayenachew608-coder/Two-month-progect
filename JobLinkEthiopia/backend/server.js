@@ -28,11 +28,12 @@ const fs = require('fs');
 // Middleware
 app.use(cors());
 app.use(express.json({
+    limit: '15mb',
     verify: (req, res, buf) => {
         req.rawBody = buf;
     }
 }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 app.use(cookieParser());
 app.use(passport.initialize());
 
@@ -140,9 +141,18 @@ async function autoSeedLocalIps() {
     }
 
     try {
-        await pool.query("ALTER TABLE job_seekers ADD COLUMN IF NOT EXISTS profile_picture VARCHAR(500) DEFAULT NULL;").catch(() => {});
-        await pool.query("ALTER TABLE employers ADD COLUMN IF NOT EXISTS profile_picture VARCHAR(500) DEFAULT NULL;").catch(() => {});
-        await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture VARCHAR(500) DEFAULT NULL;").catch(() => {});
+        await pool.query("ALTER TABLE job_seekers ADD COLUMN IF NOT EXISTS profile_picture LONGTEXT;").catch(() => {});
+        await pool.query("ALTER TABLE employers ADD COLUMN IF NOT EXISTS profile_picture LONGTEXT;").catch(() => {});
+        await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture LONGTEXT;").catch(() => {});
+        await pool.query("ALTER TABLE job_seekers MODIFY COLUMN profile_photo LONGTEXT;").catch(() => {});
+        await pool.query("ALTER TABLE job_seekers MODIFY COLUMN profile_picture LONGTEXT;").catch(() => {});
+        await pool.query("ALTER TABLE job_seekers MODIFY COLUMN profile_photo_url LONGTEXT;").catch(() => {});
+        await pool.query("ALTER TABLE employers MODIFY COLUMN profile_photo LONGTEXT;").catch(() => {});
+        await pool.query("ALTER TABLE employers MODIFY COLUMN profile_picture LONGTEXT;").catch(() => {});
+        await pool.query("ALTER TABLE employers MODIFY COLUMN profile_photo_url LONGTEXT;").catch(() => {});
+        await pool.query("ALTER TABLE users MODIFY COLUMN profile_photo LONGTEXT;").catch(() => {});
+        await pool.query("ALTER TABLE users MODIFY COLUMN profile_picture LONGTEXT;").catch(() => {});
+        await pool.query("ALTER TABLE admins MODIFY COLUMN profile_photo LONGTEXT;").catch(() => {});
         await pool.query("ALTER TABLE job_seekers ADD COLUMN IF NOT EXISTS github_url VARCHAR(255) DEFAULT NULL;").catch(() => {});
         await pool.query("ALTER TABLE job_seekers ADD COLUMN IF NOT EXISTS linkedin_url VARCHAR(255) DEFAULT NULL;").catch(() => {});
         await pool.query("ALTER TABLE job_seekers ADD COLUMN IF NOT EXISTS portfolio_url VARCHAR(255) DEFAULT NULL;").catch(() => {});
