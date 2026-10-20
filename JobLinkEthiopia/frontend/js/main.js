@@ -1479,6 +1479,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   function initMobileNav() {
     const header = document.querySelector('.header');
     if (!header) return;
+    if (document.body.classList.contains('auth-page') || window.location.pathname.includes('admin-login.html') || header.querySelector('.btn-back-home')) {
+      return;
+    }
     let navMenu = header.querySelector('.nav-menu');
     if (!navMenu) {
       navMenu = document.createElement('nav');

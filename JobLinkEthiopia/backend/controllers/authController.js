@@ -8,7 +8,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 // Issue access & refresh tokens with sliding session rotation, 15m/7d expiration and HttpOnly cookie
 const issueAuthTokens = async (res, user, role) => {
     const userRole = user.role || role || 'job_seeker';
-    
+
     // Set accessToken expiration to 15m
     const accessToken = jwt.sign(
         { id: user.id, email: user.email, role: userRole },
@@ -124,7 +124,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                         user.google_id = googleId;
                         try {
                             await pool.query('UPDATE users SET google_id = ? WHERE email = ?', [googleId, email]);
-                        } catch (e) {}
+                        } catch (e) { }
                     }
                     return done(null, user);
                 }
@@ -137,7 +137,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                         user.google_id = googleId;
                         try {
                             await pool.query('UPDATE users SET google_id = ? WHERE email = ?', [googleId, email]);
-                        } catch (e) {}
+                        } catch (e) { }
                     }
                     return done(null, user);
                 }
@@ -361,7 +361,7 @@ exports.getMe = async (req, res) => {
         if (role === 'admin' || role === 'super_admin') tableName = 'admins';
 
         let [users] = await pool.query(`SELECT * FROM ${tableName} WHERE id = ?`, [id]);
-        
+
         // Fallback by email if not found by id in role table
         if (users.length === 0 && (email || req.user.email)) {
             [users] = await pool.query(`SELECT * FROM ${tableName} WHERE email = ?`, [email || req.user.email]);
@@ -373,12 +373,12 @@ exports.getMe = async (req, res) => {
         }
 
         if (users.length === 0) return res.status(404).json({ message: 'User not found' });
-        
+
         const user = users[0];
         user.role = role || user.role || 'job_seeker';
 
         let photo = user.profile_picture || user.profile_photo || user.profile_photo_url;
-        
+
         // If not found directly, check strictly role-specific table
         if (!photo) {
             if (user.role === 'job_seeker') {
@@ -457,15 +457,15 @@ exports.githubAuth = (req, res) => {
 exports.githubCallback = async (req, res) => {
     const { code } = req.query;
     if (!code) return res.status(400).send('No code provided');
-    
+
     try {
         let name = 'GitHub User';
         let email = `github_${code}@mock.com`;
         let githubId = `gh_${code}`;
-        
+
         let [users] = await pool.query('SELECT * FROM job_seekers WHERE github_id = ?', [githubId]);
         let user;
-        
+
         if (users.length === 0) {
             [users] = await pool.query('SELECT * FROM job_seekers WHERE email = ?', [email]);
             if (users.length > 0) {
@@ -484,7 +484,7 @@ exports.githubCallback = async (req, res) => {
         }
         user.role = 'job_seeker';
         const { accessToken: token } = await issueAuthTokens(res, user, 'job_seeker');
-        
+
         res.send(`<html><body><script>
             localStorage.setItem('token', '${token}');
             localStorage.setItem('user', JSON.stringify(${JSON.stringify({ id: user.id, name: user.name, email: user.email, role: user.role, account_status: user.account_status || 'active' })}));
@@ -953,22 +953,22 @@ exports.googleCallback = (req, res, next) => {
 <script>
     localStorage.setItem('token', '${token}');
     localStorage.setItem('user', JSON.stringify(${JSON.stringify({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        company_name: user.company_name || null,
-        account_status: user.account_status || 'active'
-    })}));
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                company_name: user.company_name || null,
+                account_status: user.account_status || 'active'
+            })}));
     localStorage.setItem('${rolePrefix}token', '${token}');
     localStorage.setItem('${rolePrefix}user', JSON.stringify(${JSON.stringify({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        company_name: user.company_name || null,
-        account_status: user.account_status || 'active'
-    })}));
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                company_name: user.company_name || null,
+                account_status: user.account_status || 'active'
+            })}));
     window.location.href = '${redirectPage}';
 </script>
 </body>
@@ -985,7 +985,7 @@ const { sendVerificationEmail } = require('../utils/email');
 // --- Seeker Auth ---
 exports.seekerRegister = async (req, res) => {
     const { name, email, password, registrationToken } = req.body;
-    
+
     if (!registrationToken) return res.status(401).json({ message: 'Missing registration token. Please verify email first.' });
 
     try {
@@ -994,7 +994,7 @@ exports.seekerRegister = async (req, res) => {
     } catch (err) {
         return res.status(401).json({ message: 'Invalid or expired registration token. Please verify email again.' });
     }
-    
+
     const passwordRegex = /^(?=.*[0-9])(?=.*[^a-zA-Z0-9]).{8,}$/;
     if (!passwordRegex.test(password)) {
         return res.status(400).json({ message: 'Password must be at least 8 characters long and contain at least one number and one special character.' });
@@ -1005,7 +1005,7 @@ exports.seekerRegister = async (req, res) => {
         if (existingSeekers.length > 0) {
             return res.status(400).json({ message: 'This email is already registered as a Job Seeker.' });
         }
-        
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const [result] = await pool.query(
@@ -1018,13 +1018,13 @@ exports.seekerRegister = async (req, res) => {
             'INSERT INTO users (name, full_name, email, password, password_hash, role, is_approved) VALUES (?, ?, ?, ?, ?, "job_seeker", TRUE) ON DUPLICATE KEY UPDATE full_name = VALUES(full_name), password_hash = VALUES(password_hash)',
             [name, name, email, hashedPassword, hashedPassword]
         ).catch(err => console.warn('Sync to users table on seeker register:', err.message));
-        
+
         const user = { id: result.insertId, name, email, role: 'job_seeker', account_status: 'active' };
         const { accessToken } = await issueAuthTokens(res, user, 'job_seeker');
-        
-        res.status(201).json({ 
-            message: 'Registration successful.', 
-            token: accessToken, 
+
+        res.status(201).json({
+            message: 'Registration successful.',
+            token: accessToken,
             accessToken,
             user
         });
@@ -1039,13 +1039,13 @@ exports.seekerLogin = async (req, res) => {
     try {
         const [users] = await pool.query('SELECT * FROM job_seekers WHERE email = ?', [email]);
         if (users.length === 0) return res.status(401).json({ message: 'Invalid email or password' });
-        
+
         const user = users[0];
-        
+
         if (user.locked_until && new Date(user.locked_until) > new Date()) {
             return res.status(401).json({ message: 'Account locked. Please try again later.' });
         }
-        
+
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             let failedAttempts = (user.failed_login_attempts || 0) + 1;
@@ -1056,23 +1056,23 @@ exports.seekerLogin = async (req, res) => {
             }
             return res.status(401).json({ message: 'Invalid email or password' });
         }
-        
+
         if (user.failed_login_attempts > 0 || user.locked_until) {
             await pool.query('UPDATE job_seekers SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?', [user.id]);
         }
-        
+
         user.role = 'job_seeker';
         const { accessToken } = await issueAuthTokens(res, user, 'job_seeker');
-        
+
         res.status(200).json({
             message: 'Login successful',
             token: accessToken,
             accessToken,
-            user: { 
-                id: user.id, 
-                name: user.name, 
-                email: user.email, 
-                role: 'job_seeker', 
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: 'job_seeker',
                 account_status: user.account_status,
                 profile_photo: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png',
                 profile_photo_url: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png'
@@ -1171,7 +1171,7 @@ exports.seekerGetMe = async (req, res) => {
 // --- Employer Auth ---
 exports.employerRegister = async (req, res) => {
     const { name, email, password, registrationToken } = req.body;
-    
+
     if (!registrationToken) return res.status(401).json({ message: 'Missing registration token. Please verify email first.' });
 
     try {
@@ -1191,7 +1191,7 @@ exports.employerRegister = async (req, res) => {
         if (existingEmployers.length > 0) {
             return res.status(400).json({ message: 'This email is already registered as an Employer.' });
         }
-        
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const [result] = await pool.query(
@@ -1204,15 +1204,15 @@ exports.employerRegister = async (req, res) => {
             'INSERT INTO users (name, full_name, email, password, password_hash, role, is_approved) VALUES (?, ?, ?, ?, ?, "employer", FALSE) ON DUPLICATE KEY UPDATE full_name = VALUES(full_name), password_hash = VALUES(password_hash)',
             [name, name, email, hashedPassword, hashedPassword]
         ).catch(err => console.warn('Sync to users table on employer register:', err.message));
-        
+
         const user = { id: result.insertId, name, email, role: 'employer', account_status: 'active' };
         const { accessToken } = await issueAuthTokens(res, user, 'employer');
 
-        res.status(201).json({ 
-            message: 'Registration successful.', 
-            token: accessToken, 
+        res.status(201).json({
+            message: 'Registration successful.',
+            token: accessToken,
             accessToken,
-            user 
+            user
         });
     } catch (error) {
         console.error('Registration Error:', error);
@@ -1225,9 +1225,9 @@ exports.employerLogin = async (req, res) => {
     try {
         const [users] = await pool.query('SELECT * FROM employers WHERE email = ?', [email]);
         if (users.length === 0) return res.status(401).json({ message: 'Invalid email or password' });
-        
+
         const user = users[0];
-        
+
         if (user.locked_until && new Date(user.locked_until) > new Date()) {
             return res.status(401).json({ message: 'Account locked. Please try again later.' });
         }
@@ -1242,23 +1242,23 @@ exports.employerLogin = async (req, res) => {
             }
             return res.status(401).json({ message: 'Invalid email or password' });
         }
-        
+
         if (user.failed_login_attempts > 0 || user.locked_until) {
             await pool.query('UPDATE employers SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?', [user.id]);
         }
 
         user.role = 'employer';
         const { accessToken } = await issueAuthTokens(res, user, 'employer');
-        
+
         res.status(200).json({
             message: 'Login successful',
             token: accessToken,
             accessToken,
-            user: { 
-                id: user.id, 
-                name: user.name, 
-                email: user.email, 
-                role: 'employer', 
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: 'employer',
                 account_status: user.account_status,
                 company_name: user.company_name,
                 profile_photo: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png',
@@ -1386,18 +1386,18 @@ exports.seekerVerify = async (req, res) => {
     try {
         const [users] = await pool.query('SELECT * FROM job_seekers WHERE email = ?', [email]);
         if (users.length === 0) return res.status(404).json({ message: 'User not found' });
-        
+
         const user = users[0];
-        
+
         if (user.is_email_verified) return res.status(400).json({ message: 'Email is already verified.' });
         if (user.email_verification_code !== code) return res.status(400).json({ message: 'Invalid verification code.' });
         if (new Date() > new Date(user.email_verification_expires)) return res.status(400).json({ message: 'Verification code expired.' });
-        
+
         await pool.query('UPDATE job_seekers SET is_email_verified = true, email_verification_code = NULL, email_verification_expires = NULL WHERE id = ?', [user.id]);
-        
+
         user.role = 'job_seeker';
         const { accessToken } = await issueAuthTokens(res, user, 'job_seeker');
-        
+
         res.status(200).json({
             message: 'Email verified successfully. Logging in...',
             token: accessToken,
@@ -1415,18 +1415,18 @@ exports.employerVerify = async (req, res) => {
     try {
         const [users] = await pool.query('SELECT * FROM employers WHERE email = ?', [email]);
         if (users.length === 0) return res.status(404).json({ message: 'User not found' });
-        
+
         const user = users[0];
-        
+
         if (user.is_email_verified) return res.status(400).json({ message: 'Email is already verified.' });
         if (user.email_verification_code !== code) return res.status(400).json({ message: 'Invalid verification code.' });
         if (new Date() > new Date(user.email_verification_expires)) return res.status(400).json({ message: 'Verification code expired.' });
-        
+
         await pool.query('UPDATE employers SET is_email_verified = true, email_verification_code = NULL, email_verification_expires = NULL WHERE id = ?', [user.id]);
-        
+
         user.role = 'employer';
         const { accessToken } = await issueAuthTokens(res, user, 'employer');
-        
+
         res.status(200).json({
             message: 'Email verified successfully. Logging in...',
             token: accessToken,
@@ -1451,7 +1451,7 @@ exports.sendOtp = async (req, res) => {
         const [existingAdmins] = await pool.query('SELECT id FROM admins WHERE email = ?', [trimmedEmail]);
         const [existingEmployers] = await pool.query('SELECT id FROM employers WHERE email = ?', [trimmedEmail]);
         const [existingSeekers] = await pool.query('SELECT id FROM job_seekers WHERE email = ?', [trimmedEmail]);
-        
+
         if (existingAdmins.length > 0 || existingEmployers.length > 0 || existingSeekers.length > 0) {
             return res.status(400).json({ message: 'This email is already registered in the system.' });
         }
@@ -1469,8 +1469,8 @@ exports.sendOtp = async (req, res) => {
 
         const emailSent = await sendVerificationEmail(trimmedEmail, verificationCode);
         if (!emailSent) {
-            return res.status(500).json({ 
-                message: 'Failed to deliver verification email. Please ensure EMAIL_USER and EMAIL_APP_PASSWORD are configured on the server.' 
+            return res.status(500).json({
+                message: 'Failed to deliver verification email. Please ensure EMAIL_USER and EMAIL_APP_PASSWORD are configured on the server.'
             });
         }
 
@@ -1492,7 +1492,7 @@ exports.verifyOtp = async (req, res) => {
         if (new Date() > new Date(verification.expires_at)) return res.status(400).json({ message: 'Verification code expired.' });
 
         await pool.query('UPDATE pending_verifications SET verified = true WHERE email = ?', [email]);
-        
+
         const registrationToken = jwt.sign(
             { email },
             process.env.JWT_SECRET || 'supersecretkey_change_me_in_production',
@@ -1509,7 +1509,7 @@ exports.verifyOtp = async (req, res) => {
 // --- Refresh Token Rotation (Sliding Sessions) ---
 exports.refreshToken = async (req, res) => {
     const oldRefreshToken = req.cookies?.refreshToken || req.cookies?.seeker_refreshToken || req.cookies?.employer_refreshToken || req.body?.refreshToken;
-    
+
     if (!oldRefreshToken) {
         return res.status(401).json({ message: 'No refresh token provided' });
     }

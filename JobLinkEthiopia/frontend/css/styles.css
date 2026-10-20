@@ -4830,6 +4830,13 @@ body.dark .modal-content .form-input:focus {
   background-color: var(--slate-50);
 }
 
+/* --- Header Right Alignment --- */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 /* --- Admin Login 'Back to Home' Button --- */
 .auth-page .logout-link,
 .auth-page .header .logout-link,
@@ -4839,24 +4846,25 @@ a.btn-back-home {
   align-items: center;
   justify-content: center;
   padding: 8px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--slate-300, #cbd5e1);
   border-radius: 6px;
-  color: #ffffff;
+  color: var(--slate-700, #334155);
+  background-color: transparent;
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.25;
   cursor: pointer;
-  transition: all 0.3s ease-in-out;
+  transition: all 0.25s ease-in-out;
 }
 
 .auth-page .logout-link:hover,
 .auth-page .header .logout-link:hover,
 .btn-back-home:hover,
 a.btn-back-home:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.6);
+  background-color: var(--slate-100, #f1f5f9);
+  color: var(--slate-900, #0f172a);
+  border-color: var(--slate-400, #94a3b8);
   cursor: pointer;
 }
 
@@ -4865,20 +4873,41 @@ a.btn-back-home:hover {
 .btn-back-home:active,
 a.btn-back-home:active {
   transform: scale(0.98);
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: var(--slate-200, #e2e8f0);
+}
+
+/* Dark mode support for Back to Home button */
+[data-theme="dark"] .auth-page .logout-link,
+[data-theme="dark"] .auth-page .header .logout-link,
+[data-theme="dark"] .btn-back-home,
+[data-theme="dark"] a.btn-back-home {
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.25);
+  background-color: transparent;
+}
+
+[data-theme="dark"] .auth-page .logout-link:hover,
+[data-theme="dark"] .auth-page .header .logout-link:hover,
+[data-theme="dark"] .btn-back-home:hover,
+[data-theme="dark"] a.btn-back-home:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* Light mode support for Back to Home button */
 [data-theme="light"] .auth-page .logout-link,
 [data-theme="light"] .auth-page .header .logout-link,
-[data-theme="light"] .btn-back-home {
+[data-theme="light"] .btn-back-home,
+[data-theme="light"] a.btn-back-home {
   color: #1f2937;
   border: 1px solid rgba(0, 0, 0, 0.2);
 }
 
 [data-theme="light"] .auth-page .logout-link:hover,
 [data-theme="light"] .auth-page .header .logout-link:hover,
-[data-theme="light"] .btn-back-home:hover {
+[data-theme="light"] .btn-back-home:hover,
+[data-theme="light"] a.btn-back-home:hover {
   background-color: rgba(0, 0, 0, 0.05);
   border-color: rgba(0, 0, 0, 0.4);
   color: #0f172a;
