@@ -138,6 +138,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     job_type VARCHAR(50) DEFAULT 'Full-time',
+    sector VARCHAR(255) DEFAULT 'Software & Tech',
     location VARCHAR(255) NOT NULL,
     deadline DATE NOT NULL,
     views INT DEFAULT 0,

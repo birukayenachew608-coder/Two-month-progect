@@ -3300,6 +3300,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const locationInput = document.getElementById('job-location');
       const deadlineInput = document.getElementById('job-deadline');
       const descInput = postJobForm.querySelector('textarea');
+      const sectorInput = document.getElementById('job-sector');
       const salaryInput = document.getElementById('job-salary');
       const jobTypeInput = document.getElementById('job-type');
       const applyEmailInput = document.getElementById('job-apply-email');
@@ -3341,7 +3342,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             apply_email: applyEmailInput ? applyEmailInput.value.trim() : '',
             apply_link: applyLinkInput ? applyLinkInput.value.trim() : '',
             contact_email: emailInput ? emailInput.value.trim() : '',
-            job_type: (jobTypeInput && jobTypeInput.value) || 'Full-time'
+            job_type: (jobTypeInput && jobTypeInput.value) || 'Full-time',
+            sector: (sectorInput && sectorInput.value.trim()) || 'Software & Tech'
           })
         });
 

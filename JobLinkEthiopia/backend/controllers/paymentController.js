@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const { initializePayment, verifyTransaction, verifyWebhookSignature } = require('../utils/chapa');
+const { triggerJobAlertNotifications } = require('./jobController');
 
 /**
  * Handle Chapa Webhook Notification
@@ -86,22 +87,14 @@ exports.handleChapaWebhook = async (req, res) => {
 
         console.log(`[CHAPA WEBHOOK] Successfully verified and activated Job #${job.id} ('${job.title}') with payment_status='paid'.`);
 
-        // 5. Trigger background notifications for job alerts
-        pool.query('SELECT * FROM job_alerts').then(([alerts]) => {
-            alerts.forEach(alert => {
-                const isRemote = alert.location && alert.location.toLowerCase() === 'remote';
-                const matchesLocation = !alert.location || isRemote || (job.location && job.location.toLowerCase().includes(alert.location.toLowerCase()));
-                
-                const matchesKeyword = !alert.keyword || 
-                    (job.title && job.title.toLowerCase().includes(alert.keyword.toLowerCase())) || 
-                    (job.description && job.description.toLowerCase().includes(alert.keyword.toLowerCase()));
-
-                if (matchesLocation && matchesKeyword) {
-                    console.log(`\n[BACKGROUND PROCESS] Matching job found for Job Alert (Seeker ID: ${alert.seeker_id})`);
-                    console.log(` -> Triggering Notifications for Paid Job: ${job.title} at ${job.location}`);
-                }
+        // 5. Trigger background notifications for job alerts asynchronously
+        if (typeof triggerJobAlertNotifications === 'function') {
+            setImmediate(() => {
+                triggerJobAlertNotifications(job).catch(err => {
+                    console.error('[CHAPA WEBHOOK] Background job alert error:', err);
+                });
             });
-        }).catch(err => console.error('Error in background alert process:', err));
+        }
 
         return res.status(200).json({
             status: 'success',

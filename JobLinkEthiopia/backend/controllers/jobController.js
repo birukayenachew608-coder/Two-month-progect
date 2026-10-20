@@ -2,6 +2,7 @@ const pool = require('../config/db');
 const jwt = require('jsonwebtoken');
 const reportController = require('./reportController');
 const { initializePayment } = require('../utils/chapa');
+const { sendJobAlertEmail } = require('../utils/email');
 
 // Ensure 'views' column exists and status/payment_status ENUMs support 'pending'
 pool.query(`
@@ -73,7 +74,8 @@ exports.createJob = async (req, res) => {
             return res.status(404).json({ message: 'Employer profile not found. Please log in as an employer.' });
         }
 
-        const { title, location, deadline, description, job_type, salary, apply_email, apply_link, payment_method } = req.body;
+        const { title, location, deadline, description, job_type, salary, apply_email, apply_link, payment_method, sector, job_sector, category } = req.body;
+        const resolvedSector = (sector || job_sector || category || '').trim() || 'Software & Tech';
 
         // Resolve company_name from body or employer profile
         const company_name = (req.body.company_name && req.body.company_name.trim()) || (employer.company_name && employer.company_name.trim()) || '';
@@ -133,38 +135,85 @@ exports.createJob = async (req, res) => {
         // Freemium check: First 2 posts are free. Any subsequent post requires 300 ETB via Chapa.
         if (freeJobsPosted < 2) {
             // Free job post
-            const [result] = await pool.query(
-                `INSERT INTO jobs (employer_id, company_name, contact_email, title, description, job_type, location, deadline, salary, apply_email, apply_link, status, payment_status) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 'free')`,
-                [
-                    employer_id, 
-                    company_name, 
-                    contactEmail, 
-                    title, 
-                    description, 
-                    job_type || 'Full-time', 
-                    location, 
-                    deadline, 
-                    salary || null, 
-                    apply_email || null, 
-                    apply_link || null
-                ]
-            );
+            let insertResult;
+            try {
+                [insertResult] = await pool.query(
+                    `INSERT INTO jobs (employer_id, company_name, contact_email, title, description, job_type, sector, location, deadline, salary, apply_email, apply_link, status, payment_status) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 'free')`,
+                    [
+                        employer_id, 
+                        company_name, 
+                        contactEmail, 
+                        title, 
+                        description, 
+                        job_type || 'Full-time', 
+                        resolvedSector,
+                        location, 
+                        deadline, 
+                        salary || null, 
+                        apply_email || null, 
+                        apply_link || null
+                    ]
+                );
+            } catch (insErr) {
+                // Fallback in case sector column was omitted
+                [insertResult] = await pool.query(
+                    `INSERT INTO jobs (employer_id, company_name, contact_email, title, description, job_type, location, deadline, salary, apply_email, apply_link, status, payment_status) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 'free')`,
+                    [
+                        employer_id, 
+                        company_name, 
+                        contactEmail, 
+                        title, 
+                        description, 
+                        job_type || 'Full-time', 
+                        location, 
+                        deadline, 
+                        salary || null, 
+                        apply_email || null, 
+                        apply_link || null
+                    ]
+                );
+            }
+
+            const newJobId = insertResult.insertId;
 
             // Increment employer's free_jobs_posted count
             const updatedCount = freeJobsPosted + 1;
             await pool.query('UPDATE employers SET free_jobs_posted = ? WHERE id = ?', [updatedCount, employer_id]);
 
-            // Background Process for Job Alerts
-            triggerJobAlertNotifications(title, location, description);
+            // Construct full job object for asynchronous notification
+            const fullJob = {
+                id: newJobId,
+                employer_id,
+                company_name,
+                contact_email: contactEmail,
+                title,
+                description,
+                job_type: job_type || 'Full-time',
+                sector: resolvedSector,
+                location,
+                deadline,
+                salary: salary || null,
+                apply_email: apply_email || null,
+                apply_link: apply_link || null
+            };
+
+            // Trigger matching Job Alerts asynchronously in background via setImmediate
+            // This guarantees the employer response is dispatched immediately without delay!
+            setImmediate(() => {
+                triggerJobAlertNotifications(fullJob).catch(err => {
+                    console.error('[JobAlerts] Background error in triggerJobAlertNotifications:', err);
+                });
+            });
 
             return res.status(201).json({ 
                 success: true,
                 requires_payment: false,
                 payment_required: false,
                 message: 'Job created successfully', 
-                job_id: result.insertId,
-                jobId: result.insertId,
+                job_id: newJobId,
+                jobId: newJobId,
                 payment_status: 'free',
                 is_free: true,
                 free_jobs_posted: updatedCount,
@@ -173,23 +222,45 @@ exports.createJob = async (req, res) => {
         } else {
             // STRICT ENFORCEMENT: If free_jobs_posted >= 2, the job MUST be saved with status = 'pending' and payment_status = 'pending'.
             // It is strictly invisible to job seekers.
-            const [result] = await pool.query(
-                `INSERT INTO jobs (employer_id, company_name, contact_email, title, description, job_type, location, deadline, salary, apply_email, apply_link, status, payment_status) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending')`,
-                [
-                    employer_id, 
-                    company_name, 
-                    contactEmail, 
-                    title, 
-                    description, 
-                    job_type || 'Full-time', 
-                    location, 
-                    deadline, 
-                    salary || null, 
-                    apply_email || null, 
-                    apply_link || null
-                ]
-            );
+            let result;
+            try {
+                [result] = await pool.query(
+                    `INSERT INTO jobs (employer_id, company_name, contact_email, title, description, job_type, sector, location, deadline, salary, apply_email, apply_link, status, payment_status) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending')`,
+                    [
+                        employer_id, 
+                        company_name, 
+                        contactEmail, 
+                        title, 
+                        description, 
+                        job_type || 'Full-time', 
+                        resolvedSector,
+                        location, 
+                        deadline, 
+                        salary || null, 
+                        apply_email || null, 
+                        apply_link || null
+                    ]
+                );
+            } catch (insErr) {
+                [result] = await pool.query(
+                    `INSERT INTO jobs (employer_id, company_name, contact_email, title, description, job_type, location, deadline, salary, apply_email, apply_link, status, payment_status) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending')`,
+                    [
+                        employer_id, 
+                        company_name, 
+                        contactEmail, 
+                        title, 
+                        description, 
+                        job_type || 'Full-time', 
+                        location, 
+                        deadline, 
+                        salary || null, 
+                        apply_email || null, 
+                        apply_link || null
+                    ]
+                );
+            }
 
             const newJobId = result.insertId;
 
@@ -225,29 +296,153 @@ exports.createJob = async (req, res) => {
     }
 };
 
-function triggerJobAlertNotifications(title, location, description) {
-    pool.query('SELECT * FROM job_alerts').then(([alerts]) => {
-        alerts.forEach(alert => {
-            const isRemote = alert.location && alert.location.toLowerCase() === 'remote';
-            const matchesLocation = !alert.location || isRemote || (location && location.toLowerCase().includes(alert.location.toLowerCase()));
-            
-            const matchesKeyword = !alert.keyword || 
-                (title && title.toLowerCase().includes(alert.keyword.toLowerCase())) || 
-                (description && description.toLowerCase().includes(alert.keyword.toLowerCase()));
+/**
+ * Asynchronously query matching job alerts by sector and location and send Brevo email notifications
+ */
+async function triggerJobAlertNotifications(job) {
+    try {
+        if (!job || !job.title) return;
 
-            if (matchesLocation && matchesKeyword) {
-                console.log(`\n[BACKGROUND PROCESS] Matching job found for Job Alert (Seeker ID: ${alert.seeker_id})`);
-                console.log(` -> Triggering Notifications for Job: ${title} at ${location}`);
-                if (alert.frequency === 'daily' || alert.frequency === 'instant') {
-                    console.log(` -> ✅ Sending Email Notification to Seeker ${alert.seeker_id}`);
-                }
-                if (alert.frequency === 'instant') {
-                    console.log(` -> ✅ Sending Telegram Bot Alert to Seeker ${alert.seeker_id}`);
-                }
-                console.log(`[BACKGROUND PROCESS] Successfully completed alert delivery.\n`);
-            }
+        const jobTitle = String(job.title || '').trim();
+        const jobTitleLower = jobTitle.toLowerCase();
+        const jobDescLower = String(job.description || '').toLowerCase();
+        const jobLoc = String(job.location || '').trim();
+        const jobLocLower = jobLoc.toLowerCase();
+        const jobSector = String(job.sector || job.job_sector || job.category || '').trim();
+        const jobSectorLower = jobSector.toLowerCase();
+
+        // 1. Query all active job alerts with email notifications enabled and valid seeker email
+        const [alertRows] = await pool.query(`
+            SELECT 
+                ja.id AS alert_id,
+                ja.job_sector,
+                ja.keyword,
+                ja.location AS alert_location,
+                ja.frequency,
+                COALESCE(NULLIF(TRIM(js.email), ''), NULLIF(TRIM(u.email), '')) AS recipient_email,
+                COALESCE(NULLIF(TRIM(js.name), ''), NULLIF(TRIM(u.name), ''), 'Job Seeker') AS recipient_name
+            FROM job_alerts ja
+            LEFT JOIN job_seekers js ON (ja.job_seeker_id = js.id OR ja.seeker_id = js.id)
+            LEFT JOIN users u ON ((ja.job_seeker_id = u.id OR ja.seeker_id = u.id) AND u.role = 'job_seeker')
+            WHERE ja.email_notification = 1
+        `).catch(err => {
+            console.error('[JobAlerts] Error querying alerts from DB:', err.message);
+            return [[]];
         });
-    }).catch(err => console.error('Error in background alert process:', err));
+
+        if (!alertRows || alertRows.length === 0) {
+            console.log('[JobAlerts] No active email alerts registered in the database.');
+            return;
+        }
+
+        // Sector keyword mappings for smart semantic matching
+        const sectorKeywords = {
+            'software & tech': ['tech', 'software', 'developer', 'engineer', 'programmer', 'frontend', 'backend', 'fullstack', 'full-stack', 'web', 'mobile', 'react', 'node', 'python', 'java', 'it ', 'devops', 'cloud', 'data', 'cyber', 'ai', 'computer', 'database', 'system'],
+            'marketing': ['marketing', 'sales', 'seo', 'social media', 'content', 'advertis', 'brand', 'pr', 'copywriter', 'digital marketing', 'lead', 'promot'],
+            'finance': ['finance', 'account', 'audit', 'bank', 'tax', 'bookkeeper', 'economist', 'invest', 'cashier', 'payroll'],
+            'healthcare': ['health', 'nurse', 'doctor', 'medical', 'clinic', 'pharmacy', 'care', 'hospital', 'lab', 'dentist'],
+            'education': ['teacher', 'education', 'tutor', 'instructor', 'school', 'academic', 'trainer', 'lecturer', 'professor'],
+            'engineering': ['engineer', 'civil', 'mechanical', 'electrical', 'construction', 'architect', 'chemical', 'structural']
+        };
+
+        const matchingRecipients = new Map();
+
+        for (const alert of alertRows) {
+            const email = (alert.recipient_email || '').trim().toLowerCase();
+            if (!email || !email.includes('@')) continue;
+
+            const alertSector = (alert.job_sector || '').trim().toLowerCase();
+            const alertLoc = (alert.alert_location || '').trim().toLowerCase();
+            const alertKeyword = (alert.keyword || '').trim().toLowerCase();
+
+            // --- A. Location Matching ---
+            // Alert matches if:
+            // 1. Alert location is not specified, or is 'all', 'any', or 'flexible'
+            // 2. Alert is 'remote' and job is remote (in location or job_type)
+            // 3. Job is 'remote' (suitable for any seeker)
+            // 4. Alert location is contained in job location (e.g. 'Addis Ababa' in 'Addis Ababa, Bole')
+            // 5. Job location is contained in alert location
+            const isAlertRemote = alertLoc === 'remote' || alertLoc.includes('remote');
+            const isJobRemote = jobLocLower.includes('remote') || (job.job_type && String(job.job_type).toLowerCase().includes('remote'));
+            const isAnyLoc = !alertLoc || ['all', 'any', 'all locations', 'flexible', 'everywhere'].includes(alertLoc);
+
+            const locationMatches = isAnyLoc ||
+                (isAlertRemote && isJobRemote) ||
+                (isJobRemote) ||
+                (alertLoc && jobLocLower.includes(alertLoc)) ||
+                (jobLocLower && alertLoc.includes(jobLocLower));
+
+            if (!locationMatches) continue;
+
+            // --- B. Sector Matching ---
+            // Alert matches if:
+            // 1. Alert sector is not specified or is 'all', 'any', or 'all sectors'
+            // 2. Direct match with job's specified sector
+            // 3. Alert sector text appears in job title or description
+            // 4. Job title or description contains sector-specific synonyms
+            // 5. Custom alert keyword appears in job title or description
+            const isAnySector = !alertSector || ['all', 'any', 'all sectors', 'all categories'].includes(alertSector);
+            let sectorMatches = isAnySector;
+
+            if (!sectorMatches) {
+                // Check direct sector equality/inclusion
+                if (jobSectorLower && (jobSectorLower.includes(alertSector) || alertSector.includes(jobSectorLower))) {
+                    sectorMatches = true;
+                }
+                // Check if alert sector string is directly in job title or description
+                else if (jobTitleLower.includes(alertSector) || jobDescLower.includes(alertSector)) {
+                    sectorMatches = true;
+                }
+                // Check sector keywords/synonyms
+                else {
+                    const synonyms = sectorKeywords[alertSector] || [];
+                    if (synonyms.some(syn => jobTitleLower.includes(syn) || jobDescLower.includes(syn) || jobSectorLower.includes(syn))) {
+                        sectorMatches = true;
+                    }
+                }
+            }
+
+            // Check custom keyword if present
+            if (alertKeyword && alertKeyword !== alertSector && alertKeyword !== 'all') {
+                if (jobTitleLower.includes(alertKeyword) || jobDescLower.includes(alertKeyword)) {
+                    sectorMatches = true;
+                }
+            }
+
+            if (sectorMatches) {
+                if (!matchingRecipients.has(email)) {
+                    matchingRecipients.set(email, {
+                        email,
+                        name: alert.recipient_name || 'Job Seeker',
+                        alertId: alert.alert_id,
+                        frequency: alert.frequency || 'instant'
+                    });
+                }
+            }
+        }
+
+        const recipients = Array.from(matchingRecipients.values());
+        console.log(`[JobAlerts] 🎯 Found ${recipients.length} subscriber(s) matching Job #${job.id || ''} ("${jobTitle}" at "${jobLoc}").`);
+
+        if (recipients.length === 0) return;
+
+        // Asynchronously send emails to each matching subscriber via Brevo
+        for (const recipient of recipients) {
+            try {
+                await sendJobAlertEmail({
+                    to: recipient.email,
+                    recipientName: recipient.name,
+                    job
+                });
+            } catch (err) {
+                console.error(`[JobAlerts] Failed to send email to ${recipient.email}:`, err.message);
+            }
+        }
+
+        console.log(`[JobAlerts] ✨ Finished processing job alert emails for ${recipients.length} subscriber(s).`);
+    } catch (error) {
+        console.error('[JobAlerts] Unexpected error in triggerJobAlertNotifications:', error);
+    }
 }
 
 exports.getJobs = async (req, res) => {
@@ -696,3 +891,6 @@ exports.deleteJob = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+exports.triggerJobAlertNotifications = triggerJobAlertNotifications;
+

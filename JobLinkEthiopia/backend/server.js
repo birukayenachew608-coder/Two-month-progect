@@ -156,6 +156,7 @@ async function autoSeedLocalIps() {
         await pool.query("ALTER TABLE job_seekers ADD COLUMN IF NOT EXISTS github_url VARCHAR(255) DEFAULT NULL;").catch(() => {});
         await pool.query("ALTER TABLE job_seekers ADD COLUMN IF NOT EXISTS linkedin_url VARCHAR(255) DEFAULT NULL;").catch(() => {});
         await pool.query("ALTER TABLE job_seekers ADD COLUMN IF NOT EXISTS portfolio_url VARCHAR(255) DEFAULT NULL;").catch(() => {});
+        await pool.query("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS sector VARCHAR(255) DEFAULT 'Software & Tech';").catch(() => {});
     } catch (colErr) {
         // Ignored if columns already present
     }
