@@ -2566,6 +2566,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (lnBtnEmployerModal) {
       lnBtnEmployerModal.setAttribute('data-role', roleState);
     }
+    const socialList = document.querySelector('#login-modal .auth-social-list');
+    const authDivider = document.querySelector('#login-modal .auth-divider');
+    if (socialList) {
+      socialList.style.display = (isRegisterMode && registerStep > 1) ? 'none' : 'flex';
+    }
+    if (authDivider) {
+      authDivider.style.display = (isRegisterMode && registerStep > 1) ? 'none' : 'flex';
+    }
 
     const switchSignIn = document.getElementById('auth-switch-signin');
     const switchRegister = document.getElementById('auth-switch-register');

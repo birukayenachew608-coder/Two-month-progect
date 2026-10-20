@@ -4010,7 +4010,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: flex !important;
   flex-direction: column !important;
   gap: 0.75rem !important;
-  margin-bottom: 0.85rem !important;
+  margin-bottom: 0 !important;
 }
 
 #login-modal .flex.flex-col.gap-3 .btn,
@@ -4044,7 +4044,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border-color: #94a3b8 !important;
 }
 
-/* 'Or email' Divider Spacing (Default / Light Mode) */
+/* 'Or continue with' Divider Spacing (Default / Light Mode) */
 #login-modal .flex.items-center.gap-3,
 #login-modal .auth-divider,
 .auth-modal .auth-divider-wrap,
@@ -4052,7 +4052,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: flex !important;
   align-items: center !important;
   gap: 0.75rem !important;
-  margin-bottom: 0.85rem !important;
+  margin-top: 1.15rem !important;
+  margin-bottom: 1.15rem !important;
 }
 
 #login-modal .flex.items-center.gap-3 .border-t,
@@ -5338,12 +5339,13 @@ html[data-theme="dark"] #btn-save svg {
 
 .auth-social-list {
   gap: 0.75rem;
-  margin-bottom: 0.85rem;
+  margin-bottom: 0;
 }
 
 .auth-divider-wrap {
   gap: 0.75rem;
-  margin-bottom: 0.85rem;
+  margin-top: 1.15rem;
+  margin-bottom: 1.15rem;
 }
 
 .auth-form-group {
@@ -5362,13 +5364,13 @@ html[data-theme="dark"] #btn-save svg {
 }
 
 .auth-footer-text {
-  margin-top: 0.85rem;
+  margin-top: 1.15rem;
 }
 
 /* Auth Switch Links (Register <-> Sign In) */
 .auth-switch-text {
   text-align: center;
-  margin-top: 15px;
+  margin-top: 1.15rem;
   font-size: 0.9rem;
   color: var(--slate-600, #475569);
   line-height: 1.5;
