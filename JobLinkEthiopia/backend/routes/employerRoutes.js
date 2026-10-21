@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jobController = require('../controllers/jobController');
-const { authenticateToken, authorizeRole } = require('../middleware/authMiddleware');
+const { requireEmployer } = require('../middleware/authMiddleware');
 
 const userController = require('../controllers/userController');
 const authController = require('../controllers/authController');
@@ -9,8 +9,11 @@ const employerController = require('../controllers/employerController');
 const seekerController = require('../controllers/seekerController');
 const { handleImageUpload } = require('./userRoutes');
 
-// Secure all routes under /api/employer with authorizeRole('employer', 'admin', 'super_admin')
-router.use(authenticateToken, authorizeRole('employer', 'admin', 'super_admin'));
+// Public Employer Profiles (no auth required)
+router.get('/public/:id', userController.getPublicEmployerProfile);
+
+// Secure all employer dashboard routes strictly with requireEmployer
+router.use(requireEmployer);
 
 router.get('/stats', jobController.getEmployerStats);
 router.get('/jobs', jobController.getEmployerJobs);
@@ -40,9 +43,7 @@ router.get('/seeker/:id', seekerController.getProfile);
 router.get('/seekers/:id', seekerController.getProfile);
 router.get('/cv/:seekerId', seekerController.getCV);
 
-// Public Employer Profiles
-router.get('/public/:id', userController.getPublicEmployerProfile);
+// Fallback for public employer profile
 router.get('/:id', userController.getPublicEmployerProfile);
 
 module.exports = router;
-

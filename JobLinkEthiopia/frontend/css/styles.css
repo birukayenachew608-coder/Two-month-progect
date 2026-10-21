@@ -2628,19 +2628,41 @@ a[href="index.html"].nav-link.active:hover {
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
+  gap: 1.25rem;
   margin-bottom: 2rem;
 }
 
 @media (min-width: 768px) {
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (min-width: 1024px) {
   .stats-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.admin-wide-container .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .admin-wide-container .stats-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1.25rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-wide-container .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
   }
 }
 

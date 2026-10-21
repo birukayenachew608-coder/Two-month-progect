@@ -3,63 +3,128 @@
  * JobLink Ethiopia - Full-Stack Seeker Management
  */
 (function() {
-  function verifySeekerRole() {
+  function decodeToken(t) {
+    try {
+      if (!t || typeof t !== 'string') return null;
+      var parts = t.split('.');
+      if (parts.length !== 3) return null;
+      var base64Url = parts[1];
+      var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      var jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function verifySeekerRole() {
+    let seekerToken = localStorage.getItem('seeker_token') || localStorage.getItem('accessToken') || localStorage.getItem('token') ||
+                      sessionStorage.getItem('accessToken') || sessionStorage.getItem('seeker_token') || sessionStorage.getItem('token');
     let seekerUser = null;
     let employerUser = null;
 
     try {
-      seekerUser = JSON.parse(localStorage.getItem('seeker_user') || localStorage.getItem('user'));
+      seekerUser = JSON.parse(localStorage.getItem('seeker_user') || localStorage.getItem('user') || sessionStorage.getItem('seeker_user') || sessionStorage.getItem('user'));
     } catch (e) {}
 
     try {
-      employerUser = JSON.parse(localStorage.getItem('employer_user'));
+      employerUser = JSON.parse(localStorage.getItem('employer_user') || sessionStorage.getItem('employer_user'));
     } catch (e) {}
 
-    // Check if an Employer attempts to open seeker.html
-    if (employerUser && employerUser.role === 'employer' && (!seekerUser || seekerUser.role !== 'job_seeker')) {
+    const payload = decodeToken(seekerToken);
+    const role = (payload && payload.role) || (seekerUser && seekerUser.role) || (employerUser && employerUser.role);
+
+    // 1. Immediate Client-Side Role Redirection
+    if (role === 'employer') {
       console.warn('[RBAC] Employer detected on Job Seeker Dashboard. Redirecting to employer.html...');
       window.location.replace('employer.html');
       return;
     }
 
-    if (seekerUser && seekerUser.role && seekerUser.role !== 'job_seeker') {
-      console.warn(`[RBAC] Unauthorized role '${seekerUser.role}' on Job Seeker Dashboard.`);
-      if (seekerUser.role === 'employer') {
-        window.location.replace('employer.html');
-      } else {
-        window.location.replace('index.html');
-      }
+    if (role === 'admin' || role === 'super_admin') {
+      window.location.replace('admin.html');
       return;
     }
 
-    // Call /api/auth/me to validate session on the backend
-    const seekerToken = localStorage.getItem('seeker_token') || localStorage.getItem('token');
+    if (!seekerToken && !seekerUser) {
+      console.warn('[RBAC] Unauthenticated user on Job Seeker Dashboard. Redirecting to login...');
+      window.location.replace('index.html?login=seeker');
+      return;
+    }
+
+    if (role && role !== 'job_seeker' && role !== 'seeker') {
+      window.location.replace('index.html?login=seeker');
+      return;
+    }
+
+    // 2. Authoritative Backend Validation via /api/auth/me
     const headers = {};
     if (seekerToken && !seekerToken.includes('cookie')) {
       headers['Authorization'] = 'Bearer ' + seekerToken;
     }
 
-    fetch('/api/auth/me', { headers, credentials: 'include' })
-      .then(res => {
-        if (!res.ok) {
-          throw new Error('Session invalid');
-        }
-        return res.json();
-      })
-      .then(data => {
-        const validatedUser = data.user || data;
-        if (validatedUser && validatedUser.role && validatedUser.role !== 'job_seeker') {
-          console.warn(`[RBAC] Server validated role is '${validatedUser.role}'. Redirecting...`);
-          if (validatedUser.role === 'employer') {
-            window.location.replace('employer.html');
-          } else {
-            window.location.replace('index.html');
+    try {
+      let res = await fetch('/api/auth/me', { headers, credentials: 'include' });
+      
+      // If unauthorized, attempt silent refresh before redirecting
+      if (!res.ok) {
+        if (typeof window.silentRefreshAuth === 'function') {
+          const refreshed = await window.silentRefreshAuth('job_seeker');
+          if (refreshed && refreshed.success) {
+            seekerToken = localStorage.getItem('seeker_token') || localStorage.getItem('token');
+            if (seekerToken && !seekerToken.includes('cookie')) {
+              headers['Authorization'] = 'Bearer ' + seekerToken;
+            }
+            res = await fetch('/api/auth/me', { headers, credentials: 'include' });
           }
         }
-      })
-      .catch(() => {
-        // Fallback or unauthenticated state handled by main modal
-      });
+      }
+
+      if (!res.ok) {
+        throw new Error('Unauthenticated or session expired');
+      }
+
+      const data = await res.json();
+      const validatedUser = data.user || data;
+
+      if (!validatedUser || !validatedUser.role) {
+        throw new Error('Invalid user profile');
+      }
+
+      if (validatedUser.role === 'employer') {
+        console.warn('[RBAC] Server confirmed Employer role. Redirecting to employer.html...');
+        window.location.replace('employer.html');
+        return;
+      }
+
+      if (validatedUser.role === 'admin' || validatedUser.role === 'super_admin') {
+        window.location.replace('admin.html');
+        return;
+      }
+
+      if (validatedUser.role !== 'job_seeker' && validatedUser.role !== 'seeker') {
+        window.location.replace('index.html?login=seeker');
+        return;
+      }
+
+      // Validated successfully: cache fresh user
+      localStorage.setItem('user', JSON.stringify(validatedUser));
+      localStorage.setItem('seeker_user', JSON.stringify(validatedUser));
+
+      // Remove anti-fouc shield if present
+      const antiFouc = document.getElementById('seeker-auth-anti-fouc');
+      if (antiFouc) antiFouc.remove();
+
+    } catch (err) {
+      console.warn('[RBAC] Seeker authentication failed on server:', err.message);
+      try {
+        localStorage.removeItem('seeker_token');
+        localStorage.removeItem('seeker_user');
+      } catch (e) {}
+      window.location.replace('index.html?login=seeker');
+    }
   }
 
   // Execute verification immediately on script execution and on DOM load

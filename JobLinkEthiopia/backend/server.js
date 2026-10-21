@@ -51,8 +51,8 @@ const setNoCacheHeaders = (req, res, next) => {
     next();
 };
 
-// Apply no-cache headers to all admin endpoints and HTML pages
-app.use(['/admin.html', '/admin-profile.html', '/admin-security.html', '/admin-security', '/admin'], setNoCacheHeaders);
+// Apply no-cache headers to protected dashboard HTML pages and admin endpoints
+app.use(['/seeker.html', '/employer.html', '/admin.html', '/admin-profile.html', '/admin-security.html', '/admin-security', '/admin'], setNoCacheHeaders);
 
 // Strictly protect admin-security.html with backend authorizeRole middleware: super_admin ONLY
 app.get(['/admin-security.html', '/admin-security'], setNoCacheHeaders, authorizeRole('super_admin'), (req, res) => {

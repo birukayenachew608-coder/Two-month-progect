@@ -1,31 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const applicationController = require('../controllers/applicationController');
-const { verifySeeker, verifyEmployer } = require('../middleware/authMiddleware');
+const { requireSeeker, requireEmployer, requireRole } = require('../middleware/authMiddleware');
 
 // Seeker applies for a job
-router.post('/apply', verifySeeker, applicationController.applyForJob);
+router.post('/apply', requireSeeker, applicationController.applyForJob);
 
-// Employer fetches applications
-router.get('/employer/:employerId', verifyEmployer, applicationController.getEmployerApplications);
+// Employer fetches applications for their company/job
+router.get('/employer/:employerId', requireEmployer, applicationController.getEmployerApplications);
 
-// Seeker fetches applications
-router.get('/seeker/:seekerId', (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    const hasToken = (token && !token.includes('cookie')) || 
-                     (req.cookies && (req.cookies.seeker_accessToken || req.cookies.token));
-    if (hasToken) {
-        return verifySeeker(req, res, next);
-    }
-    // Allow reading seeker applications by seekerId in dev / local environment
-    next();
-}, applicationController.getSeekerApplications);
+// Seeker fetches their own applications (accessible by Job Seeker or Admins)
+router.get('/seeker/:seekerId', requireRole('job_seeker', 'admin', 'super_admin'), applicationController.getSeekerApplications);
 
 // Withdraw application (seeker action)
-router.delete('/:id', verifySeeker, applicationController.withdrawApplication);
+router.delete('/:id', requireSeeker, applicationController.withdrawApplication);
 
-// Update status (employer action)
-router.put('/:id/status', verifyEmployer, applicationController.updateApplicationStatus);
+// Update application status (employer action)
+router.put('/:id/status', requireEmployer, applicationController.updateApplicationStatus);
 
 module.exports = router;

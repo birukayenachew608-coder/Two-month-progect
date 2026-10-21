@@ -83,12 +83,9 @@ router.post('/login', adminAuthLimiter, adminController.login);
 router.post('/refresh', adminController.refresh);
 
 // 2FA Routes
-const { authenticateToken, authorizeRole } = require('../middleware/authMiddleware');
+const { authenticateToken, requireAdmin, authorizeRole } = require('../middleware/authMiddleware');
 router.post('/2fa/verify', adminAuthLimiter, adminController.verify2FA);
 router.post('/verify-2fa', adminAuthLimiter, adminController.verify2FA);
-
-// Strict Authentication and Role Guard for all admin endpoints below
-const requireAdmin = [authenticateToken, authorizeRole('admin', 'super_admin')];
 
 // 2FA Setup
 router.get('/2fa/setup', requireAdmin, adminController.setup2FA);

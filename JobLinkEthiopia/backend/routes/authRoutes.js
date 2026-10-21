@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { authenticateToken, verifySeeker, verifyEmployer, authorizeRole } = require('../middleware/authMiddleware');
+const { authenticateToken, requireSeeker, requireEmployer, requireAdmin, authorizeRole } = require('../middleware/authMiddleware');
 const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 
 // Ensure req.body is defined for safety with custom keyGenerators
@@ -37,7 +37,7 @@ router.post('/seeker/login', jobSeekerLoginLimiter, authController.seekerLogin);
 router.post('/seeker/refresh', authController.seekerRefresh);
 router.post('/seeker/verify', authController.seekerVerify);
 router.post('/seeker/logout', authController.seekerLogout);
-router.get('/seeker/me', verifySeeker, authController.seekerGetMe);
+router.get('/seeker/me', requireSeeker, authController.seekerGetMe);
 
 // Employer Routes - strictly separated
 router.post('/employer/register', authController.employerRegister);
@@ -45,7 +45,7 @@ router.post('/employer/login', employerLoginLimiter, authController.employerLogi
 router.post('/employer/refresh', authController.employerRefresh);
 router.post('/employer/verify', authController.employerVerify);
 router.post('/employer/logout', authController.employerLogout);
-router.get('/employer/me', verifyEmployer, authController.employerGetMe);
+router.get('/employer/me', requireEmployer, authController.employerGetMe);
 
 // General auth routes (supporting both Job Seekers and Employers)
 router.post('/login', authController.login);
@@ -63,7 +63,7 @@ router.post('/switch-role', authenticateToken, authController.switchRole);
 router.get('/me', authenticateToken, authController.getMe);
 
 // Lightweight admin validation endpoint requested by frontend guard
-router.get('/verify-admin', authorizeRole('admin', 'super_admin'), (req, res) => {
+router.get('/verify-admin', requireAdmin, (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.status(200).json({
         valid: true,

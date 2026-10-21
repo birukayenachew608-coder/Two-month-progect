@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const seekerController = require('../controllers/seekerController');
-const { authenticateToken, authorizeRole } = require('../middleware/authMiddleware');
+const { authenticateToken, requireSeeker, requireRole } = require('../middleware/authMiddleware');
 
 // Authenticate all routes under /api/seeker and /api/seekers
 router.use(authenticateToken);
@@ -33,35 +33,35 @@ const upload = multer({
 });
 
 // CV Management (Seekers upload/delete their own CV; Employers & Admins can read applicant CVs)
-router.post('/cv', authorizeRole('job_seeker'), upload.single('cvFile'), seekerController.uploadCV);
-router.get('/cv/:seekerId', authorizeRole('job_seeker', 'employer', 'admin', 'super_admin'), seekerController.getCV);
-router.get('/cv', authorizeRole('job_seeker', 'employer', 'admin', 'super_admin'), seekerController.getCV);
-router.delete('/cv/:seekerId', authorizeRole('job_seeker', 'admin', 'super_admin'), seekerController.deleteCV);
-router.delete('/cv', authorizeRole('job_seeker'), seekerController.deleteCV);
+router.post('/cv', requireSeeker, upload.single('cvFile'), seekerController.uploadCV);
+router.get('/cv/:seekerId', requireRole('job_seeker', 'employer', 'admin', 'super_admin'), seekerController.getCV);
+router.get('/cv', requireRole('job_seeker', 'employer', 'admin', 'super_admin'), seekerController.getCV);
+router.delete('/cv/:seekerId', requireRole('job_seeker', 'admin', 'super_admin'), seekerController.deleteCV);
+router.delete('/cv', requireSeeker, seekerController.deleteCV);
 
 // Alerts (Job Seeker specific)
 const alertController = require('../controllers/alertController');
-router.post('/alerts', authorizeRole('job_seeker'), alertController.createAlert);
-router.get('/alerts', authorizeRole('job_seeker'), alertController.getAlerts);
-router.get('/alerts/:seekerId', authorizeRole('job_seeker', 'admin', 'super_admin'), alertController.getAlerts);
-router.delete('/alerts/:id', authorizeRole('job_seeker', 'admin', 'super_admin'), alertController.deleteAlert);
+router.post('/alerts', requireSeeker, alertController.createAlert);
+router.get('/alerts', requireSeeker, alertController.getAlerts);
+router.get('/alerts/:seekerId', requireRole('job_seeker', 'admin', 'super_admin'), alertController.getAlerts);
+router.delete('/alerts/:id', requireRole('job_seeker', 'admin', 'super_admin'), alertController.deleteAlert);
 
 // Profile Endpoints
 const authController = require('../controllers/authController');
-router.get('/profile/me', authorizeRole('job_seeker'), authController.seekerGetMe);
-router.get('/me', authorizeRole('job_seeker'), authController.seekerGetMe);
+router.get('/profile/me', requireSeeker, authController.seekerGetMe);
+router.get('/me', requireSeeker, authController.seekerGetMe);
 
 // Candidate / Seeker Profile Reading (Accessible by Job Seeker, Employer reviewing candidates, and Admins)
-router.get('/profile/:seekerId', authorizeRole('job_seeker', 'employer', 'admin', 'super_admin'), seekerController.getProfile);
-router.get('/profile/:id', authorizeRole('job_seeker', 'employer', 'admin', 'super_admin'), seekerController.getProfile);
-router.get('/:id', authorizeRole('job_seeker', 'employer', 'admin', 'super_admin'), seekerController.getProfile);
-router.get('/:seekerId', authorizeRole('job_seeker', 'employer', 'admin', 'super_admin'), seekerController.getProfile);
+router.get('/profile/:seekerId', requireRole('job_seeker', 'employer', 'admin', 'super_admin'), seekerController.getProfile);
+router.get('/profile/:id', requireRole('job_seeker', 'employer', 'admin', 'super_admin'), seekerController.getProfile);
+router.get('/:id', requireRole('job_seeker', 'employer', 'admin', 'super_admin'), seekerController.getProfile);
+router.get('/:seekerId', requireRole('job_seeker', 'employer', 'admin', 'super_admin'), seekerController.getProfile);
 
 // Profile Updates
 const userController = require('../controllers/userController');
 const { handleImageUpload } = require('./userRoutes');
-router.put('/profile', authorizeRole('job_seeker'), userController.updateProfile);
-router.put('/profile/:seekerId', authorizeRole('job_seeker', 'admin', 'super_admin'), userController.updateProfile);
-router.post('/profile-photo', authorizeRole('job_seeker'), handleImageUpload, userController.uploadProfilePhoto);
+router.put('/profile', requireSeeker, userController.updateProfile);
+router.put('/profile/:seekerId', requireRole('job_seeker', 'admin', 'super_admin'), userController.updateProfile);
+router.post('/profile-photo', requireSeeker, handleImageUpload, userController.uploadProfilePhoto);
 
 module.exports = router;

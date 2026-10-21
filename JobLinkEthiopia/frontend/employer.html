@@ -2,6 +2,81 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!-- Critical Anti-FOUC & Immediate RBAC Shield: Prevents unauthorized DOM flash -->
+  <style id="employer-auth-anti-fouc">
+    html {
+      visibility: hidden !important;
+      opacity: 0 !important;
+    }
+  </style>
+  <script>
+    (function () {
+      function decodeToken(t) {
+        try {
+          if (!t || typeof t !== 'string') return null;
+          var parts = t.split('.');
+          if (parts.length !== 3) return null;
+          var base64Url = parts[1];
+          var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          var jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          return JSON.parse(jsonPayload);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      try {
+        var token = localStorage.getItem('employer_token') || localStorage.getItem('accessToken') || localStorage.getItem('token') ||
+                    sessionStorage.getItem('accessToken') || sessionStorage.getItem('employer_token') || sessionStorage.getItem('token');
+        var rawUser = localStorage.getItem('employer_user') || localStorage.getItem('user') ||
+                      sessionStorage.getItem('employer_user') || sessionStorage.getItem('user');
+        var rawSeeker = localStorage.getItem('seeker_user') || sessionStorage.getItem('seeker_user');
+
+        var payload = decodeToken(token);
+        var user = rawUser ? JSON.parse(rawUser) : null;
+        var seeker = rawSeeker ? JSON.parse(rawSeeker) : null;
+
+        var role = (payload && payload.role) || (user && user.role) || (seeker && seeker.role);
+
+        // Instant RBAC Redirects:
+        // If a job seeker tries to access employer.html -> instantly redirect to seeker.html
+        if (role === 'job_seeker' || role === 'seeker') {
+          window.stop && window.stop();
+          window.location.replace('seeker.html');
+          return;
+        }
+
+        if (role === 'admin' || role === 'super_admin') {
+          window.stop && window.stop();
+          window.location.replace('admin.html');
+          return;
+        }
+
+        // Unauthenticated user -> instantly redirect to login page
+        if (!token && !user) {
+          window.stop && window.stop();
+          window.location.replace('index.html?login=employer');
+          return;
+        }
+
+        // Role mismatch -> redirect to login page
+        if (role && role !== 'employer') {
+          window.stop && window.stop();
+          window.location.replace('index.html?login=employer');
+          return;
+        }
+
+        // Valid employer session: reveal DOM immediately
+        var s = document.getElementById('employer-auth-anti-fouc');
+        if (s) s.remove();
+      } catch (err) {
+        window.stop && window.stop();
+        window.location.replace('index.html?login=employer');
+      }
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JobLink Ethiopia - Employer Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">

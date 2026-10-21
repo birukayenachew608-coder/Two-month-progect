@@ -3,73 +3,139 @@
  * JobLink Ethiopia
  */
 (function() {
-  function verifyEmployerRole() {
+  function decodeToken(t) {
+    try {
+      if (!t || typeof t !== 'string') return null;
+      var parts = t.split('.');
+      if (parts.length !== 3) return null;
+      var base64Url = parts[1];
+      var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      var jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function verifyEmployerRole() {
+    let employerToken = localStorage.getItem('employer_token') || localStorage.getItem('accessToken') || localStorage.getItem('token') ||
+                        sessionStorage.getItem('accessToken') || sessionStorage.getItem('employer_token') || sessionStorage.getItem('token');
     let employerUser = null;
     let seekerUser = null;
 
     try {
-      employerUser = JSON.parse(localStorage.getItem('employer_user') || localStorage.getItem('user'));
+      employerUser = JSON.parse(localStorage.getItem('employer_user') || localStorage.getItem('user') || sessionStorage.getItem('employer_user') || sessionStorage.getItem('user'));
     } catch (e) {}
 
     try {
-      seekerUser = JSON.parse(localStorage.getItem('seeker_user'));
+      seekerUser = JSON.parse(localStorage.getItem('seeker_user') || sessionStorage.getItem('seeker_user'));
     } catch (e) {}
 
-    // Check if a Job Seeker attempts to open employer.html
-    if (seekerUser && seekerUser.role === 'job_seeker' && (!employerUser || employerUser.role !== 'employer')) {
+    const payload = decodeToken(employerToken);
+    const role = (payload && payload.role) || (employerUser && employerUser.role) || (seekerUser && seekerUser.role);
+
+    // 1. Immediate Client-Side Role Redirection
+    if (role === 'job_seeker' || role === 'seeker') {
       console.warn('[RBAC] Job Seeker detected on Employer Dashboard. Redirecting to seeker.html...');
       window.location.replace('seeker.html');
       return;
     }
 
-    if (employerUser && employerUser.role && employerUser.role !== 'employer') {
-      console.warn(`[RBAC] Unauthorized role '${employerUser.role}' on Employer Dashboard.`);
-      if (employerUser.role === 'job_seeker') {
-        window.location.replace('seeker.html');
-      } else {
-        window.location.replace('index.html');
-      }
+    if (role === 'admin' || role === 'super_admin') {
+      window.location.replace('admin.html');
       return;
     }
 
-    // Call /api/auth/me to validate session on the backend
-    const employerToken = localStorage.getItem('employer_token') || localStorage.getItem('token');
+    if (!employerToken && !employerUser) {
+      console.warn('[RBAC] Unauthenticated user on Employer Dashboard. Redirecting to login...');
+      window.location.replace('index.html?login=employer');
+      return;
+    }
+
+    if (role && role !== 'employer') {
+      window.location.replace('index.html?login=employer');
+      return;
+    }
+
+    // 2. Authoritative Backend Validation via /api/auth/me
     const headers = {};
     if (employerToken && !employerToken.includes('cookie')) {
       headers['Authorization'] = 'Bearer ' + employerToken;
     }
 
-    fetch('/api/auth/me', { headers, credentials: 'include' })
-      .then(res => {
-        if (!res.ok) {
-          throw new Error('Session invalid');
-        }
-        return res.json();
-      })
-      .then(data => {
-        const validatedUser = data.user || data;
-        if (validatedUser && validatedUser.role && validatedUser.role !== 'employer') {
-          console.warn(`[RBAC] Server validated role is '${validatedUser.role}'. Redirecting...`);
-          if (validatedUser.role === 'job_seeker') {
-            window.location.replace('seeker.html');
-          } else {
-            window.location.replace('index.html');
-          }
-        } else {
-          if (typeof window.loadEmployerStats === 'function') {
-            window.loadEmployerStats();
-          }
-          if (typeof window.loadEmployerApplications === 'function') {
-            window.loadEmployerApplications();
-          }
-          if (typeof window.loadEmployerJobs === 'function') {
-            window.loadEmployerJobs();
+    try {
+      let res = await fetch('/api/auth/me', { headers, credentials: 'include' });
+
+      // If unauthorized, attempt silent refresh before redirecting
+      if (!res.ok) {
+        if (typeof window.silentRefreshAuth === 'function') {
+          const refreshed = await window.silentRefreshAuth('employer');
+          if (refreshed && refreshed.success) {
+            employerToken = localStorage.getItem('employer_token') || localStorage.getItem('token');
+            if (employerToken && !employerToken.includes('cookie')) {
+              headers['Authorization'] = 'Bearer ' + employerToken;
+            }
+            res = await fetch('/api/auth/me', { headers, credentials: 'include' });
           }
         }
-      })
-      .catch(() => {
-        // Fallback or unauthenticated state handled by main modal
-      });
+      }
+
+      if (!res.ok) {
+        throw new Error('Unauthenticated or session expired');
+      }
+
+      const data = await res.json();
+      const validatedUser = data.user || data;
+
+      if (!validatedUser || !validatedUser.role) {
+        throw new Error('Invalid user profile');
+      }
+
+      if (validatedUser.role === 'job_seeker' || validatedUser.role === 'seeker') {
+        console.warn('[RBAC] Server confirmed Job Seeker role. Redirecting to seeker.html...');
+        window.location.replace('seeker.html');
+        return;
+      }
+
+      if (validatedUser.role === 'admin' || validatedUser.role === 'super_admin') {
+        window.location.replace('admin.html');
+        return;
+      }
+
+      if (validatedUser.role !== 'employer') {
+        window.location.replace('index.html?login=employer');
+        return;
+      }
+
+      // Validated successfully: cache fresh user
+      localStorage.setItem('user', JSON.stringify(validatedUser));
+      localStorage.setItem('employer_user', JSON.stringify(validatedUser));
+
+      // Remove anti-fouc shield if present
+      const antiFouc = document.getElementById('employer-auth-anti-fouc');
+      if (antiFouc) antiFouc.remove();
+
+      // Proceed with dashboard loading functions
+      if (typeof window.loadEmployerStats === 'function') {
+        window.loadEmployerStats();
+      }
+      if (typeof window.loadEmployerApplications === 'function') {
+        window.loadEmployerApplications();
+      }
+      if (typeof window.loadEmployerJobs === 'function') {
+        window.loadEmployerJobs();
+      }
+
+    } catch (err) {
+      console.warn('[RBAC] Employer authentication failed on server:', err.message);
+      try {
+        localStorage.removeItem('employer_token');
+        localStorage.removeItem('employer_user');
+      } catch (e) {}
+      window.location.replace('index.html?login=employer');
+    }
   }
 
   // Execute verification immediately on script execution and on DOM load

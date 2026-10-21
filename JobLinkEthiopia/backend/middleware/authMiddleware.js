@@ -1,27 +1,54 @@
 const jwt = require('jsonwebtoken');
 
-exports.authenticateToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
+// Helper to reliably extract JWT token from Authorization header or cookies
+function extractToken(req, targetRole) {
+    let authHeader = req.headers && req.headers['authorization'];
     let token = authHeader && authHeader.split(' ')[1];
-    
+
+    if (token === 'null' || token === 'undefined') {
+        token = null;
+    }
+
     if (req.cookies) {
-        if (token === 'employer_secure_cookie') {
-            token = req.cookies.employer_accessToken;
-        } else if (token === 'seeker_secure_cookie') {
-            token = req.cookies.seeker_accessToken;
-        } else if (token === 'secure_cookie_auth') {
-            token = req.cookies.token;
-        } else if (!token || token === 'null' || token === 'undefined') {
-            token = req.cookies.token || req.cookies.employer_accessToken || req.cookies.seeker_accessToken;
+        if (token === 'employer_secure_cookie' || (targetRole === 'employer' && (!token || token.includes('cookie')))) {
+            token = req.cookies.employer_accessToken || req.cookies.token || token;
+        } else if (token === 'seeker_secure_cookie' || ((targetRole === 'job_seeker' || targetRole === 'seeker') && (!token || token.includes('cookie')))) {
+            token = req.cookies.seeker_accessToken || req.cookies.token || token;
+        } else if (token === 'secure_cookie_auth' || ((targetRole === 'admin' || targetRole === 'super_admin') && (!token || token.includes('cookie')))) {
+            token = req.cookies.token || token;
+        } else if (!token || token.includes('cookie')) {
+            if (targetRole === 'employer') {
+                token = req.cookies.employer_accessToken || req.cookies.token;
+            } else if (targetRole === 'job_seeker' || targetRole === 'seeker') {
+                token = req.cookies.seeker_accessToken || req.cookies.token;
+            } else if (targetRole === 'admin' || targetRole === 'super_admin') {
+                token = req.cookies.token;
+            } else {
+                token = req.cookies.token || req.cookies.employer_accessToken || req.cookies.seeker_accessToken;
+            }
         }
     }
 
-    if (!token || token === 'null' || token === 'undefined' || token === 'secure_cookie_auth' || token === 'seeker_secure_cookie' || token === 'employer_secure_cookie') {
-        if (req.cookies && req.cookies.token) {
-            token = req.cookies.token;
+    if (token === 'seeker_secure_cookie' || token === 'employer_secure_cookie' || token === 'secure_cookie_auth') {
+        if (req.cookies) {
+            token = req.cookies.token || req.cookies.employer_accessToken || req.cookies.seeker_accessToken || null;
         } else {
-            return res.status(401).json({ status: 401, error: 'Unauthorized', message: 'Access denied. No valid token provided.' });
+            token = null;
         }
+    }
+
+    return token;
+}
+
+// 1. General JWT Authentication Middleware
+exports.authenticateToken = (req, res, next) => {
+    const token = extractToken(req);
+    if (!token) {
+        return res.status(401).json({ 
+            status: 401, 
+            error: 'Unauthorized', 
+            message: 'Access denied. No valid token provided.' 
+        });
     }
 
     try {
@@ -29,109 +56,52 @@ exports.authenticateToken = (req, res, next) => {
         req.user = decoded;
         next();
     } catch (error) {
-        return res.status(401).json({ status: 401, error: 'Unauthorized', message: 'Invalid or expired token.' });
+        return res.status(401).json({ 
+            status: 401, 
+            error: 'Unauthorized', 
+            message: 'Invalid or expired token.' 
+        });
     }
 };
 
-exports.verifySeeker = (req, res, next) => {
-    let authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
-
-    if (req.cookies) {
-        if (token === 'seeker_secure_cookie' || !token) {
-            token = req.cookies.seeker_accessToken || (!authHeader ? req.cookies.token : null) || token;
-        }
-    }
-
-    if (!token || token === 'seeker_secure_cookie' || token === 'employer_secure_cookie') {
-        return res.status(401).json({ message: 'Access denied. No valid Job Seeker token provided.' });
-    }
-
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production');
-        if (decoded.role !== 'job_seeker') {
-            return res.status(403).json({ message: 'Forbidden: Job Seeker access required.' });
-        }
-        req.user = decoded;
-        next();
-    } catch (error) {
-        return res.status(401).json({ message: 'Invalid or expired token.' });
-    }
-};
-
-exports.verifyEmployer = (req, res, next) => {
-    let authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
-
-    if (req.cookies) {
-        if (token === 'employer_secure_cookie' || !token) {
-            token = req.cookies.employer_accessToken || (!authHeader ? req.cookies.token : null) || token;
-        }
-    }
-
-    if (!token || token === 'seeker_secure_cookie' || token === 'employer_secure_cookie') {
-        return res.status(401).json({ message: 'Access denied. No valid Employer token provided.' });
-    }
-
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production');
-        if (decoded.role !== 'employer') {
-            return res.status(403).json({ message: 'Forbidden: Employer access required.' });
-        }
-        req.user = decoded;
-        next();
-    } catch (error) {
-        return res.status(401).json({ message: 'Invalid or expired token.' });
-    }
-};
-
-exports.authorizeRole = (...allowedRoles) => {
+// 2. Generic Role Authorization Middleware
+exports.requireRole = (...allowedRoles) => {
     return (req, res, next) => {
-        // If req.user is not yet populated, extract and verify access token from headers or cookies
-        if (!req.user || !req.user.role) {
-            let authHeader = req.headers && req.headers['authorization'];
-            let token = authHeader && authHeader.split(' ')[1];
+        const normalizedAllowed = allowedRoles.map(r => (r === 'seeker' ? 'job_seeker' : r));
+        if (normalizedAllowed.includes('admin') && !normalizedAllowed.includes('super_admin')) {
+            normalizedAllowed.push('super_admin');
+        }
 
-            if (req.cookies && (!token || token.includes('cookie') || token === 'null' || token === 'undefined')) {
-                if ((allowedRoles.includes('admin') || allowedRoles.includes('super_admin')) && req.cookies.token) {
-                    token = req.cookies.token;
-                } else if (allowedRoles.includes('job_seeker') && req.cookies.seeker_accessToken) {
-                    token = req.cookies.seeker_accessToken;
-                } else if (allowedRoles.includes('employer') && req.cookies.employer_accessToken) {
-                    token = req.cookies.employer_accessToken;
-                } else {
-                    token = req.cookies.token || req.cookies.employer_accessToken || req.cookies.seeker_accessToken;
-                }
+        const targetHint = normalizedAllowed.length === 1 ? normalizedAllowed[0] : null;
+
+        // If req.user is not yet populated by authenticateToken, verify token here
+        if (!req.user || !req.user.role) {
+            const token = extractToken(req, targetHint);
+            if (!token) {
+                return res.status(401).json({ 
+                    status: 401, 
+                    error: 'Unauthorized', 
+                    message: 'Access denied. Authentication required.' 
+                });
             }
 
-            if (token && token !== 'seeker_secure_cookie' && token !== 'employer_secure_cookie' && token !== 'secure_cookie_auth' && token !== 'null' && token !== 'undefined') {
-                try {
-                    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production');
-                    req.user = decoded;
-                } catch (error) {
-                    if (req.accepts && req.accepts('html') && !req.xhr && !req.path.startsWith('/api/')) {
-                        return res.redirect('/admin-login.html');
-                    }
-                    return res.status(401).json({ status: 401, error: 'Unauthorized', message: 'Invalid or expired token.' });
-                }
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretkey_change_me_in_production');
+                req.user = decoded;
+            } catch (error) {
+                return res.status(401).json({ 
+                    status: 401, 
+                    error: 'Unauthorized', 
+                    message: 'Invalid or expired token.' 
+                });
             }
         }
 
-        // Check the req.user.role property (extracted from verified access token)
-        if (!req.user || !req.user.role) {
-            if (req.accepts && req.accepts('html') && !req.xhr && !req.path.startsWith('/api/')) {
-                return res.redirect('/admin-login.html');
-            }
-            return res.status(401).json({ status: 401, error: 'Unauthorized', message: 'Unauthorized: Authentication required.' });
-        }
-
-        if (!allowedRoles.includes(req.user.role)) {
-            if (req.accepts && req.accepts('html') && !req.xhr && !req.path.startsWith('/api/')) {
-                return res.redirect(req.user.role === 'admin' ? '/admin.html' : '/admin-login.html');
-            }
+        const userRole = req.user.role === 'seeker' ? 'job_seeker' : req.user.role;
+        if (!normalizedAllowed.includes(userRole)) {
             return res.status(403).json({ 
-                status: 403,
-                error: 'Forbidden',
+                status: 403, 
+                error: 'Forbidden', 
                 message: `Forbidden: Access requires role ${allowedRoles.join(' or ')}.` 
             });
         }
@@ -139,19 +109,34 @@ exports.authorizeRole = (...allowedRoles) => {
         next();
     };
 };
+exports.authorizeRole = exports.requireRole;
 
-exports.requireRole = exports.authorizeRole;
-
-exports.verifyAdmin = (req, res, next) => {
-    exports.authorizeRole('admin', 'super_admin')(req, res, next);
+// 3. Strict Role-Specific Middleware: Job Seeker
+exports.requireSeeker = (req, res, next) => {
+    exports.requireRole('job_seeker')(req, res, next);
 };
+exports.verifySeeker = exports.requireSeeker;
 
-exports.verifySuperAdmin = (req, res, next) => {
-    exports.authorizeRole('super_admin')(req, res, next);
+// 4. Strict Role-Specific Middleware: Employer
+exports.requireEmployer = (req, res, next) => {
+    exports.requireRole('employer')(req, res, next);
 };
+exports.verifyEmployer = exports.requireEmployer;
 
+// 5. Strict Role-Specific Middleware: Admin & Super Admin
+exports.requireAdmin = (req, res, next) => {
+    exports.requireRole('admin', 'super_admin')(req, res, next);
+};
+exports.verifyAdmin = exports.requireAdmin;
+
+// 6. Strict Role-Specific Middleware: Super Admin Only
+exports.requireSuperAdmin = (req, res, next) => {
+    exports.requireRole('super_admin')(req, res, next);
+};
+exports.verifySuperAdmin = exports.requireSuperAdmin;
+
+// 7. IP Whitelist Middleware (for Admin routes)
 exports.checkIpWhitelist = async (req, res, next) => {
-    // If strict IP whitelisting is not explicitly enabled, allow access (prevents blocking admins on cloud deployments like Render)
     if (process.env.ENABLE_STRICT_IP_WHITELIST !== 'true') {
         return next();
     }
@@ -160,20 +145,15 @@ exports.checkIpWhitelist = async (req, res, next) => {
         const pool = require('../config/db');
         const [ips] = await pool.query('SELECT ip_address FROM whitelisted_ips');
         
-        // If no IPs are whitelisted, allow access (Strict Mode is effectively disabled)
         if (ips.length === 0) {
             return next();
         }
         
         const clientIp = req.ip || req.connection.remoteAddress;
-        // Normalize IPv6 mapped IPv4 (e.g. ::ffff:127.0.0.1)
         const normalizedIp = clientIp.includes('::ffff:') ? clientIp.split('::ffff:')[1] : clientIp;
         
-        // Some rudimentary support for subnet masking (e.g. 10.0.1.0/24) could go here. 
-        // For strict exact matching:
         const isWhitelisted = ips.some(row => {
             if (row.ip_address === normalizedIp || row.ip_address === clientIp) return true;
-            // Basic subnet handling for the demo (like 10.0.1.0/24 -> matches 10.0.1.*)
             if (row.ip_address.includes('/24')) {
                 const base = row.ip_address.split('/')[0].split('.').slice(0,3).join('.');
                 return normalizedIp.startsWith(base + '.');

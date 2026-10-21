@@ -17,6 +17,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     function denyAccess() {
         if (dashboardRoot) dashboardRoot.remove();
         try {
+            let role = null;
+            const rawUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+            if (rawUser) {
+                const u = JSON.parse(rawUser);
+                if (u && u.role) role = u.role;
+            }
+            if (role === 'job_seeker' || role === 'seeker') {
+                window.location.replace('seeker.html');
+                return;
+            } else if (role === 'employer') {
+                window.location.replace('employer.html');
+                return;
+            }
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             localStorage.removeItem('accessToken');
@@ -259,7 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // so we will update based on the titles or existing IDs.
                 // Assuming we can select the .stat-value inside the appropriate stat-card
                 const statCards = document.querySelectorAll('.stat-card');
-                if (statCards.length >= 4) {
+                if (statCards.length >= 3) {
                     statCards[0].querySelector('.stat-value').textContent = data.registeredEmployers || 0;
                     
                     statCards[1].querySelector('.stat-value').textContent = data.reportedJobs || 0;
@@ -280,12 +293,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const growthSign = data.activeJobsGrowth > 0 ? '+' : '';
                         activeGrowthBadge.textContent = `${growthSign}${data.activeJobsGrowth}% this week`;
                         activeGrowthBadge.className = data.activeJobsGrowth >= 0 ? 'badge badge-green' : 'badge badge-red';
-                    }
-
-                    statCards[3].querySelector('.stat-value').textContent = (data.verifiedEmployers || 0).toLocaleString();
-                    const employersTodayBadge = statCards[3].querySelector('.badge');
-                    if (employersTodayBadge && data.newVerifiedEmployersToday !== undefined) {
-                        employersTodayBadge.textContent = `+${data.newVerifiedEmployersToday} new today`;
                     }
                 }
             }
