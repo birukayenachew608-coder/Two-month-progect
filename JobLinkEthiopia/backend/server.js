@@ -121,6 +121,18 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
+// Catch-all middleware route to serve 404.html for unmatched routes (app.use catch-all, Express 5 compatible)
+app.use((req, res) => {
+    if (req.originalUrl.startsWith('/api/')) {
+        return res.status(404).json({
+            status: 404,
+            error: 'Not Found',
+            message: `API endpoint not found: ${req.originalUrl}`
+        });
+    }
+    res.status(404).sendFile(path.join(frontendPath, '404.html'));
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
