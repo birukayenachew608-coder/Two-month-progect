@@ -27,7 +27,7 @@ exports.applyForJob = async (req, res) => {
             [job_id, seeker_id]
         );
         if (existing.length > 0) {
-            return res.status(400).json({ message: 'You have already applied for this job' });
+            return res.status(400).json({ message: 'You have already submitted an application for this position.' });
         }
 
         // Insert application with message and default status 'pending'

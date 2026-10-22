@@ -857,7 +857,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const rawErrorMsg = urlParams.get('error');
       const errorMsg = rawErrorMsg ? decodeURIComponent(rawErrorMsg) : '';
       if (errorMsg) {
-        showToast(errorMsg, 'error');
+        const isWarning = errorMsg.toLowerCase().includes('already registered') || errorMsg.toLowerCase().includes('already exists') || errorMsg.toLowerCase().includes('already applied');
+        showToast(errorMsg, isWarning ? 'warning' : 'error');
       }
 
       const openAuth = urlParams.get('openAuth');
@@ -5557,8 +5558,29 @@ window.viewProfile = function (seekerId) {
   });
 };
 
-// Toast Notification System
-function showToast(message, type = 'success') {
+// Toast Notification System (Distinct Visuals, Icons, Titles & Auto-Categorization)
+function showToast(message, type = 'success', customDuration = null) {
+  if (!message) return;
+
+  const rawMsg = String(message).trim();
+  const lowerMsg = rawMsg.toLowerCase();
+
+  // Intelligent type refinement based on message content
+  let resolvedType = type;
+  const isAlreadyRegistered = lowerMsg.includes('already registered') || lowerMsg.includes('already exists') || lowerMsg.includes('already applied') || lowerMsg.includes('already submitted');
+  const isBanned = lowerMsg.includes('banned') || lowerMsg.includes('suspended') || lowerMsg.includes('restricted');
+  const isAuthDenied = lowerMsg.includes('access denied') || lowerMsg.includes('unauthorized') || lowerMsg.includes('invalid credentials') || lowerMsg.includes('no employer account') || lowerMsg.includes('no job seeker account');
+
+  if (isAlreadyRegistered && resolvedType !== 'success') {
+    resolvedType = 'warning';
+  } else if (isBanned) {
+    resolvedType = 'error';
+  } else if (resolvedType === 'warn') {
+    resolvedType = 'warning';
+  } else if (resolvedType === 'danger') {
+    resolvedType = 'error';
+  }
+
   let container = document.getElementById('toast-container');
   if (!container) {
     container = document.createElement('div');
@@ -5568,47 +5590,95 @@ function showToast(message, type = 'success') {
     // Keep container at the end of body so it stays above any dynamically added modals
     document.body.appendChild(container);
   }
-  container.style.position = 'fixed';
-  container.style.bottom = '20px';
-  container.style.right = '20px';
-  container.style.zIndex = '99999';
 
   const toast = document.createElement('div');
-  const typeClass = type === 'success' ? 'toast-success' : type === 'error' ? 'toast-error' : 'toast-info';
+  const typeClass = (resolvedType === 'success') ? 'toast-success' :
+                    (resolvedType === 'warning') ? 'toast-warning' :
+                    (resolvedType === 'error')   ? 'toast-error'   : 'toast-info';
 
   toast.className = `toast ${typeClass}`;
-  toast.style.zIndex = '99999';
 
+  // Distinct SVGs and Titles based on message category
   let iconSvg = '';
-  if (type === 'success') {
-    iconSvg = `<svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
-  } else if (type === 'error') {
-    iconSvg = `<svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
+  let toastTitle = '';
+
+  if (resolvedType === 'success') {
+    toastTitle = 'Success';
+    iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+  } else if (resolvedType === 'warning') {
+    toastTitle = isAlreadyRegistered ? 'Already Registered' : 'Attention';
+    iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
+  } else if (resolvedType === 'error') {
+    if (isBanned) {
+      toastTitle = 'Account Restricted';
+      iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>`;
+    } else if (isAuthDenied) {
+      toastTitle = 'Access Denied';
+      iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 15v2m0 0v2m0-2h2m-2 0H10m11-3.5a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+    } else {
+      toastTitle = 'Action Failed';
+      iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+    }
   } else {
-    iconSvg = `<svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+    toastTitle = 'Information';
+    iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
   }
 
-  toast.innerHTML = `${iconSvg} <span>${message}</span>`;
+  // Safe message escaping
+  const escapedMsg = rawMsg
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+  toast.innerHTML = `
+    <div class="toast-icon-wrap">${iconSvg}</div>
+    <div class="toast-body">
+      <span class="toast-title">${toastTitle}</span>
+      <div class="toast-message">${escapedMsg}</div>
+    </div>
+    <button type="button" class="toast-close-btn" title="Dismiss">&times;</button>
+  `;
+
+  // Manual dismiss
+  const closeBtn = toast.querySelector('.toast-close-btn');
+  let dismissTimeout = null;
+
+  function dismissToast() {
+    if (dismissTimeout) clearTimeout(dismissTimeout);
+    toast.classList.remove('active');
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(110%)';
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 320);
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dismissToast();
+    });
+  }
+
   container.appendChild(toast);
 
   // Animate in
   const animFrame = (typeof requestAnimationFrame === 'function') ? requestAnimationFrame : (cb => setTimeout(cb, 16));
   animFrame(() => {
     toast.classList.add('active');
-    toast.style.opacity = '1';
   });
 
-  // Remove after delay
-  setTimeout(() => {
-    toast.classList.remove('active');
-    toast.style.opacity = '0';
-    setTimeout(() => {
-      if (toast.parentNode) {
-        toast.parentNode.removeChild(toast);
-      }
-    }, 300);
-  }, 3500);
+  // Display duration: 6000ms for errors/warnings/banned, 4000ms for success/info
+  const duration = customDuration || (resolvedType === 'error' || resolvedType === 'warning' ? 6000 : 4000);
+  dismissTimeout = setTimeout(dismissToast, duration);
 }
+
+// Ensure global accessibility across all pages and scripts
+window.showToast = showToast;
 
 // Tab Switching Logic for Dashboards
 function switchTab(tabId) {

@@ -268,7 +268,12 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 
             if (existingEmployers.length > 0 || existingSeekers.length > 0 || existingAdmins.length > 0) {
                 console.warn(`[Google Strategy - Register] Registration rejected. Email ${email} already exists in system (employers=${existingEmployers.length}, seekers=${existingSeekers.length}, admins=${existingAdmins.length}).`);
-                return done(null, false, { message: 'This email is already registered. Please log in.' });
+                const specificMsg = existingEmployers.length > 0
+                    ? 'This email is already registered as an Employer. Please log in.'
+                    : (existingSeekers.length > 0
+                        ? 'This email is already registered as a Job Seeker. Please log in.'
+                        : 'This email is already registered. Please log in.');
+                return done(null, false, { message: specificMsg });
             }
 
             // User does not exist in either table; proceed with registration for intendedRole
@@ -343,8 +348,14 @@ exports.register = async (req, res) => {
         const [existingEmployers] = await pool.query(`SELECT id FROM employers WHERE email = ?`, [cleanEmail]);
         const [existingSeekers] = await pool.query(`SELECT id FROM job_seekers WHERE email = ?`, [cleanEmail]);
 
-        if (existingAdmins.length > 0 || existingEmployers.length > 0 || existingSeekers.length > 0) {
-            return res.status(400).json({ message: 'This email is already registered. Please log in.' });
+        if (existingEmployers.length > 0) {
+            return res.status(400).json({ message: 'This email is already registered as an Employer. Please log in to your account.' });
+        }
+        if (existingSeekers.length > 0) {
+            return res.status(400).json({ message: 'This email is already registered as a Job Seeker. Please log in to your account.' });
+        }
+        if (existingAdmins.length > 0) {
+            return res.status(400).json({ message: 'This email is already registered as an Administrator. Please log in to your account.' });
         }
 
         // Hash password
@@ -396,22 +407,22 @@ exports.login = async (req, res) => {
         if (normalizedRole === 'employer') {
             if (employers.length === 0) {
                 if (seekers.length > 0) {
-                    return res.status(401).json({ message: 'No employer account found with this email.' });
+                    return res.status(401).json({ message: 'No employer account found with this email. This email is registered as a Job Seeker. Please switch tabs to log in.' });
                 }
-                return res.status(401).json({ message: 'Invalid credentials' });
+                return res.status(401).json({ message: 'Invalid email or password. Please verify your credentials and try again.' });
             }
             candidateList.push({ data: employers[0], role: 'employer', table: 'employers' });
         } else if (normalizedRole === 'job_seeker' || normalizedRole === 'seeker' || normalizedRole === 'jobseeker') {
             if (seekers.length === 0) {
                 if (employers.length > 0) {
-                    return res.status(401).json({ message: 'No job seeker account found with this email.' });
+                    return res.status(401).json({ message: 'No job seeker account found with this email. This email is registered as an Employer. Please switch tabs to log in.' });
                 }
-                return res.status(401).json({ message: 'Invalid credentials' });
+                return res.status(401).json({ message: 'Invalid email or password. Please verify your credentials and try again.' });
             }
             candidateList.push({ data: seekers[0], role: 'job_seeker', table: 'job_seekers' });
         } else if (normalizedRole === 'admin' || normalizedRole === 'super_admin') {
             if (admins.length === 0) {
-                return res.status(401).json({ message: 'Invalid credentials' });
+                return res.status(401).json({ message: 'Invalid email or password. Please verify your credentials and try again.' });
             }
             candidateList.push({ data: admins[0], role: admins[0].role || 'admin', table: 'admins' });
         } else {
@@ -452,7 +463,7 @@ exports.login = async (req, res) => {
                     await pool.query(`UPDATE ${first.table} SET failed_login_attempts = ? WHERE id = ?`, [failed, first.data.id]);
                 }
             }
-            return res.status(401).json({ message: 'Invalid credentials' });
+            return res.status(401).json({ message: 'Invalid email or password. Please verify your credentials and try again.' });
         }
 
         const user = matchedCandidate.data;
@@ -467,9 +478,8 @@ exports.login = async (req, res) => {
             }
         }
 
-        // Banned check: Banned employers or admins cannot log in; banned job seekers CAN log in to view dashboard
         if (user.account_status === 'banned' && userRole !== 'job_seeker') {
-            return res.status(403).json({ message: 'Your account has been suspended. Please contact support.' });
+            return res.status(403).json({ message: 'Access Restricted: Your account has been suspended or banned. Please contact support.' });
         }
 
         // Issue access & refresh tokens
@@ -1250,8 +1260,14 @@ exports.seekerRegister = async (req, res) => {
         const [existingEmployers] = await pool.query('SELECT id FROM employers WHERE email = ?', [cleanEmail]);
         const [existingSeekers] = await pool.query('SELECT id FROM job_seekers WHERE email = ?', [cleanEmail]);
 
-        if (existingAdmins.length > 0 || existingEmployers.length > 0 || existingSeekers.length > 0) {
-            return res.status(400).json({ message: 'This email is already registered. Please log in.' });
+        if (existingEmployers.length > 0) {
+            return res.status(400).json({ message: 'This email is already registered as an Employer. Please log in to your employer account.' });
+        }
+        if (existingSeekers.length > 0) {
+            return res.status(400).json({ message: 'This email is already registered as a Job Seeker. Please log in to your account.' });
+        }
+        if (existingAdmins.length > 0) {
+            return res.status(400).json({ message: 'This email is already registered as an Administrator. Please log in to your account.' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -1452,8 +1468,14 @@ exports.employerRegister = async (req, res) => {
         const [existingEmployers] = await pool.query('SELECT id FROM employers WHERE email = ?', [cleanEmail]);
         const [existingSeekers] = await pool.query('SELECT id FROM job_seekers WHERE email = ?', [cleanEmail]);
 
-        if (existingAdmins.length > 0 || existingEmployers.length > 0 || existingSeekers.length > 0) {
-            return res.status(400).json({ message: 'This email is already registered. Please log in.' });
+        if (existingSeekers.length > 0) {
+            return res.status(400).json({ message: 'This email is already registered as a Job Seeker. Please log in to your job seeker account.' });
+        }
+        if (existingEmployers.length > 0) {
+            return res.status(400).json({ message: 'This email is already registered as an Employer. Please log in to your account.' });
+        }
+        if (existingAdmins.length > 0) {
+            return res.status(400).json({ message: 'This email is already registered as an Administrator. Please log in to your account.' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -1729,8 +1751,14 @@ exports.sendOtp = async (req, res) => {
         const [existingEmployers] = await pool.query('SELECT id FROM employers WHERE email = ?', [trimmedEmail]);
         const [existingSeekers] = await pool.query('SELECT id FROM job_seekers WHERE email = ?', [trimmedEmail]);
 
-        if (existingAdmins.length > 0 || existingEmployers.length > 0 || existingSeekers.length > 0) {
-            return res.status(400).json({ message: 'This email is already registered. Please log in.' });
+        if (existingEmployers.length > 0) {
+            return res.status(400).json({ message: 'This email is already registered as an Employer. Please log in.' });
+        }
+        if (existingSeekers.length > 0) {
+            return res.status(400).json({ message: 'This email is already registered as a Job Seeker. Please log in.' });
+        }
+        if (existingAdmins.length > 0) {
+            return res.status(400).json({ message: 'This email is already registered as an Administrator. Please log in.' });
         }
 
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();

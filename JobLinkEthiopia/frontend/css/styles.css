@@ -1591,87 +1591,144 @@ a[href="index.html"].nav-link.active:hover {
   transform: translateY(0);
 }
 
-/* Toasts */
+/* Toasts System - Distinct, Modern & User-Friendly */
 #toast-container {
   position: fixed !important;
-  bottom: 20px !important;
-  right: 20px !important;
+  bottom: 24px !important;
+  right: 24px !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 0.75rem !important;
-  z-index: 99999 !important;
+  z-index: 999999 !important;
   pointer-events: none !important;
-  max-width: calc(100vw - 40px) !important;
+  max-width: 440px !important;
+  width: calc(100vw - 32px) !important;
 }
 
 .toast {
-  padding: 0.875rem 1.25rem !important;
-  border-radius: 0.5rem !important;
+  padding: 0.95rem 1.15rem !important;
+  border-radius: 0.75rem !important;
   color: #ffffff !important;
   font-size: 0.875rem !important;
-  font-weight: 600 !important;
+  line-height: 1.45 !important;
   display: flex !important;
-  align-items: center !important;
-  gap: 0.75rem !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4) !important;
+  align-items: flex-start !important;
+  gap: 0.85rem !important;
+  box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.45), 0 4px 12px -2px rgba(0, 0, 0, 0.25) !important;
   pointer-events: auto !important;
-  transform: translateY(100%);
+  transform: translateX(110%);
   opacity: 0;
-  z-index: 99999 !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 999999 !important;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease !important;
+  position: relative !important;
+  overflow: hidden !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid transparent !important;
 }
 
 .toast.active {
-  transform: translateY(0) !important;
+  transform: translateX(0) !important;
   opacity: 1 !important;
 }
 
+/* 1. Success Toast - Vibrant Emerald Green */
 .toast-success {
-  background-color: #10b981 !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background: linear-gradient(135deg, #065f46 0%, #059669 100%) !important;
+  border-color: rgba(52, 211, 153, 0.4) !important;
+  box-shadow: 0 12px 30px -4px rgba(5, 150, 105, 0.5), 0 4px 12px -2px rgba(0, 0, 0, 0.25) !important;
 }
 
+/* 2. Warning Toast - Vibrant Amber / Golden Yellow */
+.toast-warning {
+  background: linear-gradient(135deg, #92400e 0%, #d97706 100%) !important;
+  border-color: rgba(251, 191, 36, 0.45) !important;
+  box-shadow: 0 12px 30px -4px rgba(217, 119, 6, 0.5), 0 4px 12px -2px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* 3. Error / Danger Toast - Vibrant Crimson / Scarlet Red */
+.toast-error,
+.toast-danger {
+  background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%) !important;
+  border-color: rgba(248, 113, 113, 0.45) !important;
+  box-shadow: 0 12px 30px -4px rgba(220, 38, 38, 0.55), 0 4px 12px -2px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* 4. Info Toast - Vibrant Sapphire Blue */
 .toast-info {
-  background-color: #0284c7 !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
+  border-color: rgba(96, 165, 250, 0.4) !important;
+  box-shadow: 0 12px 30px -4px rgba(37, 99, 235, 0.5), 0 4px 12px -2px rgba(0, 0, 0, 0.25) !important;
 }
 
-.toast-error {
-  background-color: #e74c3c !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+/* Toast Inner Elements */
+.toast-icon-wrap {
+  flex-shrink: 0 !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 0.5rem !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-top: 1px !important;
 }
 
-.toast span,
-.toast p,
-[data-theme="dark"] .toast,
-[data-theme="dark"] .toast span,
-[data-theme="dark"] .toast p {
-  color: #ffffff !important;
-  font-weight: 600 !important;
-}
-
-.toast svg,
-[data-theme="dark"] .toast svg {
+.toast-icon-wrap svg {
+  width: 18px !important;
+  height: 18px !important;
   stroke: #ffffff !important;
   color: #ffffff !important;
 }
 
-[data-theme="dark"] .toast-error {
-  background-color: #e74c3c !important;
+.toast-body {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+.toast-title {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  opacity: 0.9 !important;
+  margin-bottom: 2px !important;
+  display: block !important;
   color: #ffffff !important;
 }
 
-[data-theme="dark"] .toast-success {
-  background-color: #10b981 !important;
+.toast-message,
+.toast span,
+.toast p {
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
   color: #ffffff !important;
+  word-break: break-word !important;
+  margin: 0 !important;
+  line-height: 1.4 !important;
 }
 
-[data-theme="dark"] .toast-info {
-  background-color: #0284c7 !important;
+.toast-close-btn {
+  flex-shrink: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  cursor: pointer !important;
+  font-size: 1.25rem !important;
+  line-height: 1 !important;
+  padding: 0 4px !important;
+  margin-top: -3px !important;
+  border-radius: 4px !important;
+  transition: color 0.15s, transform 0.15s !important;
+}
+
+.toast-close-btn:hover {
   color: #ffffff !important;
+  transform: scale(1.15) !important;
+}
+
+[data-theme="dark"] .toast {
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.7) !important;
 }
 
 /* Utility Classes */
@@ -6605,19 +6662,13 @@ html[data-theme="dark"] #btn-company-profile * {
 
 /* Toast Notification Global High-Priority Stacking & Margin */
 #toast-container {
-  position: fixed !important;
-  bottom: 20px !important;
-  right: 20px !important;
-  z-index: 99999 !important;
+  z-index: 999999 !important;
   pointer-events: none !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 10px !important;
 }
 
 #toast-container .toast,
 .toast {
-  z-index: 99999 !important;
+  z-index: 999999 !important;
   pointer-events: auto !important;
 }
 

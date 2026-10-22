@@ -57,7 +57,7 @@ ensureTables();
 exports.getEmployerMessages = async (req, res) => {
     try {
         if (!req.user || req.user.role !== 'employer') {
-            return res.status(403).json({ message: 'Forbidden: Employer access required.' });
+            return res.status(403).json({ message: 'Access Denied: Employer authorization required to perform this action.' });
         }
 
         const employerId = req.user.id;
@@ -126,7 +126,7 @@ exports.getEmployerMessages = async (req, res) => {
 exports.markMessageAsRead = async (req, res) => {
     try {
         if (!req.user || req.user.role !== 'employer') {
-            return res.status(403).json({ message: 'Forbidden: Employer access required.' });
+            return res.status(403).json({ message: 'Access Denied: Employer authorization required to perform this action.' });
         }
 
         const employerId = req.user.id;
@@ -156,7 +156,7 @@ exports.markMessageAsRead = async (req, res) => {
 exports.markAllMessagesAsRead = async (req, res) => {
     try {
         if (!req.user || req.user.role !== 'employer') {
-            return res.status(403).json({ message: 'Forbidden: Employer access required.' });
+            return res.status(403).json({ message: 'Access Denied: Employer authorization required to perform this action.' });
         }
 
         const employerId = req.user.id;
@@ -185,7 +185,7 @@ exports.markAllMessagesAsRead = async (req, res) => {
 exports.deleteEmployerMessage = async (req, res) => {
     try {
         if (!req.user || req.user.role !== 'employer') {
-            return res.status(403).json({ message: 'Forbidden: Employer access required.' });
+            return res.status(403).json({ message: 'Access Denied: Employer authorization required to perform this action.' });
         }
 
         const employerId = req.user.id;

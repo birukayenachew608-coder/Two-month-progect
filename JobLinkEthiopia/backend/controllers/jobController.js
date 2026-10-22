@@ -822,7 +822,7 @@ exports.closeJob = async (req, res) => {
     try {
         const [jobCheck] = await pool.query('SELECT * FROM jobs WHERE id = ? AND employer_id = ?', [id, employerId]);
         if (jobCheck.length === 0) {
-            return res.status(403).json({ message: 'Forbidden or job not found' });
+            return res.status(404).json({ message: 'Job posting not found or you do not have permission to manage this listing.' });
         }
 
         // FR-7: Update status to 'closed'
@@ -842,7 +842,7 @@ exports.updateJob = async (req, res) => {
     try {
         const [jobCheck] = await pool.query('SELECT * FROM jobs WHERE id = ? AND employer_id = ?', [id, employerId]);
         if (jobCheck.length === 0) {
-            return res.status(403).json({ message: 'Forbidden or job not found' });
+            return res.status(404).json({ message: 'Job posting not found or you do not have permission to edit this listing.' });
         }
 
         const existingJob = jobCheck[0];

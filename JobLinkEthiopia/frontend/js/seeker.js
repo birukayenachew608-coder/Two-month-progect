@@ -280,7 +280,7 @@
 
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        showNotification(data.message || 'Alert deleted successfully', 'info');
+        showNotification(data.message || 'Job alert deleted successfully.', 'info');
 
         // Animate out and remove card
         const card = document.getElementById(`alert-${id}`) || (btnElement ? btnElement.closest('.alert-card') : null);
@@ -311,11 +311,11 @@
           loadActiveAlerts();
         }
       } else {
-        showNotification(data.message || 'Failed to delete alert', 'error');
+        showNotification(data.message || 'Unable to delete alert. Please try again.', 'error');
       }
     } catch (err) {
       console.error('Error deleting alert:', err);
-      showNotification('Network error while deleting alert', 'error');
+      showNotification('Network connection error while deleting alert.', 'error');
     }
   }
 
@@ -379,15 +379,15 @@
         const data = await res.json().catch(() => ({}));
 
         if (res.ok) {
-          showNotification(data.message || 'Alert preferences saved successfully!', 'success');
+          showNotification(data.message || 'Job alert preferences saved successfully!', 'success');
           // Automatically fetch and display saved alert details in Active Alerts panel
           await loadActiveAlerts();
         } else {
-          showNotification(data.message || 'Failed to save alert preferences', 'error');
+          showNotification(data.message || 'Unable to save alert preferences. Please check your inputs.', 'error');
         }
       } catch (err) {
         console.error('Error saving alert preferences:', err);
-        showNotification('Network error while saving alert preferences', 'error');
+        showNotification('Network connection error while saving alert preferences.', 'error');
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;

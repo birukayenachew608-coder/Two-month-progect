@@ -315,13 +315,19 @@
         renderNotificationsList();
       }
 
-      await fetch(`/api/employer/messages/${id}/read`, {
+      const res = await fetch(`/api/employer/messages/${id}/read`, {
         method: 'PUT',
         headers,
         credentials: 'include'
       });
+      if (res.ok && typeof window.showToast === 'function') {
+        window.showToast('Notification marked as read.', 'success');
+      }
     } catch (err) {
       console.error('Error marking notification read:', err);
+      if (typeof window.showToast === 'function') {
+        window.showToast('Unable to update notification status.', 'error');
+      }
       loadEmployerNotifications();
     }
   }
@@ -339,13 +345,19 @@
       updateNotifBadges(currentNotifications);
       renderNotificationsList();
 
-      await fetch('/api/employer/messages/read-all', {
+      const res = await fetch('/api/employer/messages/read-all', {
         method: 'PUT',
         headers,
         credentials: 'include'
       });
+      if (res.ok && typeof window.showToast === 'function') {
+        window.showToast('All administrative notifications marked as read.', 'success');
+      }
     } catch (err) {
       console.error('Error marking all notifications read:', err);
+      if (typeof window.showToast === 'function') {
+        window.showToast('Unable to mark all notifications as read.', 'error');
+      }
       loadEmployerNotifications();
     }
   }
@@ -360,13 +372,19 @@
       updateNotifBadges(currentNotifications);
       renderNotificationsList();
 
-      await fetch(`/api/employer/messages/${id}`, {
+      const res = await fetch(`/api/employer/messages/${id}`, {
         method: 'DELETE',
         headers,
         credentials: 'include'
       });
+      if (res.ok && typeof window.showToast === 'function') {
+        window.showToast('Notification dismissed.', 'info');
+      }
     } catch (err) {
       console.error('Error deleting notification:', err);
+      if (typeof window.showToast === 'function') {
+        window.showToast('Unable to dismiss notification.', 'error');
+      }
       loadEmployerNotifications();
     }
   }

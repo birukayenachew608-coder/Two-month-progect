@@ -99,10 +99,11 @@ exports.requireRole = (...allowedRoles) => {
 
         const userRole = req.user.role === 'seeker' ? 'job_seeker' : req.user.role;
         if (!normalizedAllowed.includes(userRole)) {
+            const roleLabels = allowedRoles.map(r => r === 'job_seeker' ? 'Job Seeker' : (r === 'employer' ? 'Employer' : 'Administrator'));
             return res.status(403).json({ 
                 status: 403, 
                 error: 'Forbidden', 
-                message: `Forbidden: Access requires role ${allowedRoles.join(' or ')}.` 
+                message: `Access Denied: This operation requires ${roleLabels.join(' or ')} privileges.` 
             });
         }
 
