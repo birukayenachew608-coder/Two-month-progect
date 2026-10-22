@@ -53,6 +53,7 @@ router.post('/register', authController.register);
 router.post('/refresh-token', authController.refreshToken);
 router.post('/refresh', authController.refreshToken);
 router.post('/logout', authController.logout);
+router.get('/logout', authController.logout);
 
 // OTP Routes for Registration
 router.post('/send-otp', authController.sendOtp);

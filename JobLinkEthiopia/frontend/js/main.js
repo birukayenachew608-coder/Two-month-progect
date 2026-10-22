@@ -122,7 +122,9 @@ function clearAuthSessionData() {
     'token', 'accessToken', 'user',
     'seeker_token', 'seeker_user',
     'employer_token', 'employer_user',
-    'admin_token', 'admin_user'
+    'admin_token', 'admin_user',
+    'role', 'userRole', 'auth_role',
+    'admin_access_denied', 'loginRedirectUrl', 'pendingAuthToast'
   ];
   authKeys.forEach(k => {
     try {
@@ -130,6 +132,15 @@ function clearAuthSessionData() {
       sessionStorage.removeItem(k);
     } catch (e) {}
   });
+  if (typeof clearSeekerAuth === 'function') {
+    try { clearSeekerAuth(); } catch (e) {}
+  }
+  if (typeof clearEmployerAuth === 'function') {
+    try { clearEmployerAuth(); } catch (e) {}
+  }
+  try {
+    window.selectedAuthRole = null;
+  } catch (e) {}
 }
 window.clearAuthSessionData = clearAuthSessionData;
 
@@ -386,90 +397,74 @@ function timeSince(date) {
 }
 window.timeSince = timeSince;
 
-// Unified & Isolated Logout Functions
-async function logoutSeeker(e) {
-  if (e && e.preventDefault) e.preventDefault();
-  clearSeekerAuth();
+// Unified & Complete Logout Function across all dashboards (Employer, Seeker, Admin)
+async function logoutUser(e) {
+  if (e) {
+    if (e._logoutHandled) return;
+    e._logoutHandled = true;
+    if (e.preventDefault) e.preventDefault();
+    if (e.stopPropagation) e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+  }
+
+  console.log('[Logout] Complete session wipe initiated across localStorage, sessionStorage, and HTTP-only cookies...');
+
+  // 1. Immediately wipe all localStorage and sessionStorage tokens
   try {
-    await fetch('/api/auth/seeker/logout', {
+    clearAuthSessionData();
+  } catch (err) {
+    console.error('[Logout] Error during clearAuthSessionData:', err);
+  }
+
+  // 2. Call backend /api/auth/logout endpoint to clear any HTTP-only cookies
+  try {
+    await fetch('/api/auth/logout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       keepalive: true
     });
   } catch (err) {
-    console.warn('Seeker logout API notice:', err);
+    console.warn('[Logout] Backend cookie clear error:', err);
   }
-  if (typeof showToast === 'function') {
-    showToast('Job Seeker logged out successfully', 'info');
-  }
-  window.location.href = 'index.html';
-}
 
-async function logoutEmployer(e) {
-  if (e && e.preventDefault) e.preventDefault();
-  clearEmployerAuth();
+  // Secondary role-specific cookie cleanup endpoints (safe fallback)
   try {
-    await fetch('/api/auth/employer/logout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      keepalive: true
-    });
-  } catch (err) {
-    console.warn('Employer logout API notice:', err);
-  }
+    await Promise.allSettled([
+      fetch('/api/auth/seeker/logout', { method: 'POST', credentials: 'include', keepalive: true }),
+      fetch('/api/auth/employer/logout', { method: 'POST', credentials: 'include', keepalive: true }),
+      fetch('/api/admin/logout', { method: 'POST', credentials: 'include', keepalive: true })
+    ]);
+  } catch (err) {}
+
+  // 3. User feedback toast
   if (typeof showToast === 'function') {
-    showToast('Employer logged out successfully', 'info');
+    try {
+      showToast('Logged out successfully', 'info');
+    } catch (err) {}
   }
-  window.location.href = 'index.html';
+
+  // 4. Instantly redirect the user back to index.html
+  window.location.replace('index.html');
 }
 
-window.logoutSeeker = logoutSeeker;
-window.logoutEmployer = logoutEmployer;
-window.logout = logoutEmployer;
+window.logoutUser = logoutUser;
+window.logout = logoutUser;
+window.logoutSeeker = logoutUser;
+window.logoutEmployer = logoutUser;
+window.adminLogout = logoutUser;
 
 // Universal Delegated Click Handler for Logout (Capture Phase to guarantee interception)
 document.addEventListener('click', (e) => {
-  const logoutTarget = e.target.closest('#employer-logout-btn, #seeker-logout-btn, #logout-btn, [data-action="logout-employer"], [data-action="logout-seeker"], [data-action="logout"], .logout-link');
+  const logoutTarget = e.target.closest('#employer-logout-btn, #seeker-logout-btn, #admin-logout-btn, #admin-profile-logout-btn, #admin-security-logout-btn, #logout-btn, [data-action="logout-employer"], [data-action="logout-seeker"], [data-action="logout"], .logout-link');
   if (logoutTarget) {
-    if (logoutTarget.classList.contains('btn-back-home')) return;
+    if (logoutTarget.classList.contains('btn-back-home') || logoutTarget.id === 'btn-back-home') return;
 
     if (e.preventDefault) e.preventDefault();
     if (e.stopPropagation) e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
 
-    const action = logoutTarget.getAttribute('data-action');
-    const isEmployer = (action === 'logout-employer' || logoutTarget.id === 'employer-logout-btn' || window.location.pathname.includes('employer.html') || (typeof currentPage !== 'undefined' && currentPage === 'employer.html'));
-    const isSeeker = (action === 'logout-seeker' || logoutTarget.id === 'seeker-logout-btn' || window.location.pathname.includes('seeker.html') || (typeof currentPage !== 'undefined' && currentPage === 'seeker.html'));
-
-    if (isEmployer) {
-      if (typeof window.logoutEmployer === 'function') {
-        window.logoutEmployer(e);
-      } else {
-        logoutEmployer(e);
-      }
-    } else if (isSeeker) {
-      if (typeof window.logoutSeeker === 'function') {
-        window.logoutSeeker(e);
-      } else {
-        logoutSeeker(e);
-      }
-    } else {
-      const empAuth = typeof getEmployerAuth === 'function' ? getEmployerAuth() : {};
-      if (empAuth && (empAuth.token || empAuth.user)) {
-        if (typeof window.logoutEmployer === 'function') {
-          window.logoutEmployer(e);
-        } else {
-          logoutEmployer(e);
-        }
-      } else {
-        if (typeof window.logoutSeeker === 'function') {
-          window.logoutSeeker(e);
-        } else {
-          logoutSeeker(e);
-        }
-      }
-    }
+    logoutUser(e);
   }
 }, true);
 
@@ -2440,26 +2435,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         break;
       case 'logout-seeker':
-        e.preventDefault();
-        logoutSeeker();
-        break;
       case 'logout-employer':
-        e.preventDefault();
-        logoutEmployer();
-        break;
       case 'logout':
         e.preventDefault();
-        if (currentPage === 'employer.html') {
-          logoutEmployer();
-        } else if (currentPage === 'seeker.html') {
-          logoutSeeker();
-        } else {
-          if (currentRole === 'employer') {
-            logoutEmployer();
-          } else {
-            logoutSeeker();
-          }
-        }
+        logoutUser(e);
+        break;
       case 'toggle-auth':
       case 'switch-to-register':
       case 'switch-to-login':
@@ -2545,20 +2525,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Direct listeners for Logout buttons
+  // Direct listeners for Logout buttons across all dashboards
   const directEmployerLogout = document.getElementById('employer-logout-btn');
   if (directEmployerLogout) {
-    directEmployerLogout.addEventListener('click', (e) => {
-      e.preventDefault();
-      logoutEmployer(e);
-    });
+    directEmployerLogout.addEventListener('click', (e) => logoutUser(e));
   }
   const directSeekerLogout = document.getElementById('seeker-logout-btn');
   if (directSeekerLogout) {
-    directSeekerLogout.addEventListener('click', (e) => {
-      e.preventDefault();
-      logoutSeeker(e);
-    });
+    directSeekerLogout.addEventListener('click', (e) => logoutUser(e));
+  }
+  const directAdminLogout = document.getElementById('admin-logout-btn');
+  if (directAdminLogout) {
+    directAdminLogout.addEventListener('click', (e) => logoutUser(e));
   }
 
   // Delegated capture listener for Google OAuth buttons to guarantee dynamic role interception

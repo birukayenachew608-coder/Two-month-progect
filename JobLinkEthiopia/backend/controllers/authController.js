@@ -1792,12 +1792,18 @@ exports.logout = async (req, res) => {
             console.error('Error clearing refresh token in DB:', e);
         }
     }
-    res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
-    res.clearCookie('seeker_accessToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
-    res.clearCookie('seeker_refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
-    res.clearCookie('employer_accessToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
-    res.clearCookie('employer_refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
-    res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.clearCookie('refreshToken', { httpOnly: true, secure: isProd, sameSite: 'lax', path: '/' });
+    res.clearCookie('refreshToken', { httpOnly: true, secure: isProd, sameSite: 'strict', path: '/' });
+    res.clearCookie('seeker_accessToken', { httpOnly: true, secure: isProd, sameSite: 'strict', path: '/' });
+    res.clearCookie('seeker_refreshToken', { httpOnly: true, secure: isProd, sameSite: 'strict', path: '/' });
+    res.clearCookie('employer_accessToken', { httpOnly: true, secure: isProd, sameSite: 'strict', path: '/' });
+    res.clearCookie('employer_refreshToken', { httpOnly: true, secure: isProd, sameSite: 'strict', path: '/' });
+    res.clearCookie('token', { httpOnly: true, secure: isProd, sameSite: 'strict', path: '/' });
+    
+    if (req.query && req.query.redirect) {
+        return res.redirect('/index.html');
+    }
     res.status(200).json({ message: 'Logged out successfully' });
 };
 

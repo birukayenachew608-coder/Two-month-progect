@@ -481,12 +481,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (logoutLink) {
         logoutLink.addEventListener('click', async (e) => {
             e.preventDefault();
+            if (typeof window.logoutUser === 'function') {
+                return window.logoutUser(e);
+            }
+            if (typeof clearAuthSessionData === 'function') {
+                clearAuthSessionData();
+            } else {
+                ['token', 'accessToken', 'user', 'admin_token', 'admin_user', 'role', 'userRole'].forEach(k => {
+                    try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch (e) {}
+                });
+            }
             try {
-                await fetch('/api/admin/logout', { method: 'POST', credentials: 'include' });
+                await fetch('/api/auth/logout', { method: 'POST', credentials: 'include', keepalive: true });
+                await fetch('/api/admin/logout', { method: 'POST', credentials: 'include', keepalive: true });
             } catch (err) {}
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/';
+            window.location.replace('index.html');
         });
     }
 });

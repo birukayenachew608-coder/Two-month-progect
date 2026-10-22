@@ -92,6 +92,7 @@ const authController = require('./controllers/authController');
 // Direct OAuth routes requested for Google & LinkedIn Sign In
 app.get('/auth/google', authController.googleAuth);
 app.get('/auth/google/callback', authController.googleCallback);
+app.all('/auth/logout', authController.logout);
 // LinkedIn OAuth temporarily disabled per mentor advice
 // app.get('/auth/linkedin', authController.linkedinAuth);
 // app.get('/auth/linkedin/callback', authController.linkedinCallback);
