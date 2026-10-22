@@ -116,6 +116,15 @@ app.use('/api/employers', employerRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/payments', paymentRoutes);
 
+// Public informational pages
+app.get(['/terms', '/terms.html'], (req, res) => {
+    res.sendFile(path.join(frontendPath, 'terms.html'));
+});
+
+app.get(['/privacy', '/privacy.html'], (req, res) => {
+    res.sendFile(path.join(frontendPath, 'privacy.html'));
+});
+
 // Fallback to index.html for root route
 app.get('/', (req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));

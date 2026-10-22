@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy | JobLink Ethiopia</title>
+  <meta name="description" content="Privacy Policy for JobLink Ethiopia - Learn how we collect, protect, and handle your data and career information.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="css/styles.css">
+  
+  <style>
+    /* Privacy Documentation Page Styling */
+    body.legal-page {
+      background-color: #0b0f19;
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    [data-theme="light"] body.legal-page {
+      background-color: #f8fafc;
+      color: #1e293b;
+    }
+
+    .legal-hero {
+      position: relative;
+      padding: 4.5rem 1.5rem 3.5rem;
+      text-align: center;
+      background: radial-gradient(circle at 50% 20%, rgba(16, 185, 129, 0.15) 0%, transparent 60%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    [data-theme="light"] .legal-hero {
+      background: radial-gradient(circle at 50% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 60%);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    }
+
+    .legal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      margin-bottom: 1.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    [data-theme="light"] .legal-badge {
+      color: #059669;
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(16, 185, 129, 0.2);
+    }
+
+    .legal-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 2.75rem;
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    [data-theme="light"] .legal-title {
+      background: linear-gradient(135deg, #0f172a 30%, #334155 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .legal-meta {
+      font-size: 0.925rem;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    [data-theme="light"] .legal-meta {
+      color: #64748b;
+    }
+
+    .legal-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 3rem;
+      align-items: start;
+    }
+
+    @media (max-width: 960px) {
+      .legal-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+    }
+
+    /* Sidebar Navigation */
+    .legal-sidebar {
+      position: sticky;
+      top: 6rem;
+      background: rgba(17, 24, 39, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 1rem;
+      padding: 1.5rem;
+    }
+
+    [data-theme="light"] .legal-sidebar {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(226, 232, 240, 0.9);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .legal-sidebar-title {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #94a3b8;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    [data-theme="light"] .legal-sidebar-title {
+      color: #64748b;
+      border-bottom-color: rgba(226, 232, 240, 0.8);
+    }
+
+    .legal-toc-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .legal-toc-link {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.875rem;
+      color: #94a3b8;
+      text-decoration: none;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      transition: all 0.2s ease;
+      line-height: 1.35;
+    }
+
+    .legal-toc-link:hover {
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.1);
+      transform: translateX(3px);
+    }
+
+    [data-theme="light"] .legal-toc-link {
+      color: #64748b;
+    }
+
+    [data-theme="light"] .legal-toc-link:hover {
+      color: #059669;
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    /* Content Area */
+    .legal-content {
+      background: rgba(17, 24, 39, 0.5);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 1.25rem;
+      padding: 3rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    [data-theme="light"] .legal-content {
+      background: #ffffff;
+      border-color: rgba(226, 232, 240, 0.9);
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05);
+    }
+
+    @media (max-width: 640px) {
+      .legal-content {
+        padding: 1.75rem 1.25rem;
+      }
+    }
+
+    .legal-lead {
+      font-size: 1.05rem;
+      line-height: 1.75;
+      color: #cbd5e1;
+      margin-bottom: 2.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    [data-theme="light"] .legal-lead {
+      color: #334155;
+      border-bottom-color: rgba(226, 232, 240, 0.9);
+    }
+
+    .legal-section {
+      margin-bottom: 3rem;
+      scroll-margin-top: 6.5rem;
+    }
+
+    .legal-section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .legal-section-num {
+      width: 2rem;
+      height: 2rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      flex-shrink: 0;
+    }
+
+    [data-theme="light"] .legal-section-num {
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669;
+      border-color: rgba(16, 185, 129, 0.25);
+    }
+
+    .legal-section-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0;
+    }
+
+    [data-theme="light"] .legal-section-title {
+      color: #0f172a;
+    }
+
+    .legal-section p {
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: #94a3b8;
+      margin-bottom: 1rem;
+    }
+
+    [data-theme="light"] .legal-section p {
+      color: #475569;
+    }
+
+    .legal-section ul,
+    .legal-section ol {
+      margin: 1rem 0 1.5rem 1.5rem;
+      padding: 0;
+      color: #94a3b8;
+      font-size: 0.95rem;
+      line-height: 1.75;
+    }
+
+    [data-theme="light"] .legal-section ul,
+    [data-theme="light"] .legal-section ol {
+      color: #475569;
+    }
+
+    .legal-section li {
+      margin-bottom: 0.5rem;
+    }
+
+    .legal-callout {
+      margin: 1.5rem 0;
+      padding: 1.25rem 1.5rem;
+      border-radius: 0.75rem;
+      background: rgba(16, 185, 129, 0.1);
+      border-left: 4px solid #10b981;
+      color: #e2e8f0;
+      font-size: 0.925rem;
+      line-height: 1.65;
+    }
+
+    [data-theme="light"] .legal-callout {
+      background: rgba(16, 185, 129, 0.06);
+      color: #1e293b;
+    }
+
+    .contact-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 0.875rem;
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    [data-theme="light"] .contact-card {
+      background: #f8fafc;
+      border-color: #e2e8f0;
+    }
+
+    .contact-card-item {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.925rem;
+      color: #cbd5e1;
+    }
+
+    [data-theme="light"] .contact-card-item {
+      color: #334155;
+    }
+
+    .contact-card-item i {
+      color: #34d399;
+      width: 1.25rem;
+    }
+
+    [data-theme="light"] .contact-card-item i {
+      color: #059669;
+    }
+  </style>
+</head>
+
+<body class="legal-page">
+
+  <!-- Header Navigation -->
+  <header class="header">
+    <div class="container header-inner flex-between">
+      <!-- Logo -->
+      <a href="index.html" class="logo-link">
+        <div class="logo-container">
+          <img src="logo.png" alt="JobLink Ethiopia Logo" class="nav-logo" />
+        </div>
+        <span class="logo-text brand-text">
+          <span class="brand-joblink">JobLink</span>
+          <span class="brand-ethiopia">Ethiopia</span>
+        </span>
+      </a>
+
+      <!-- Nav Menu -->
+      <nav class="nav-menu" id="nav-menu">
+        <a href="index.html" class="nav-link nav-home-link">
+          <i class="fa-solid fa-house mr-1.5"></i>
+          <span>Home</span>
+        </a>
+        <a href="index.html#search-keyword" class="nav-link">
+          <i class="fa-solid fa-magnifying-glass mr-1.5"></i>
+          <span>Browse Jobs</span>
+        </a>
+        <a href="employer.html" class="nav-link">
+          <i class="fa-solid fa-briefcase mr-1.5"></i>
+          <span>For Employers</span>
+        </a>
+      </nav>
+
+      <!-- Auth Actions -->
+      <div class="auth-actions flex items-center gap-2">
+        <a href="index.html?login=seeker" class="btn nav-auth-btn nav-login-btn" id="nav-login-btn">
+          <i class="fa-solid fa-arrow-right-to-bracket mr-1.5"></i>
+          <span>Log In</span>
+        </a>
+        <a href="index.html?register=seeker" class="btn nav-auth-btn nav-register-btn" id="nav-register-btn">
+          <i class="fa-solid fa-user-plus mr-1.5"></i>
+          <span>Register</span>
+        </a>
+        <button type="button" class="btn-theme-toggle" id="theme-toggle-btn" title="Toggle Theme" aria-label="Toggle Dark Mode">
+          <i class="fa-solid fa-sun" id="theme-toggle-icon"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="legal-hero">
+    <div class="container">
+      <div class="legal-badge">
+        <i class="fa-solid fa-user-shield"></i>
+        <span>Data Protection & Privacy</span>
+      </div>
+      <h1 class="legal-title">Privacy Policy</h1>
+      <div class="legal-meta">
+        <span><i class="fa-regular fa-calendar-check mr-1.5"></i> Effective: October 1, 2026</span>
+        <span>•</span>
+        <span><i class="fa-solid fa-rotate mr-1.5"></i> Last Updated: October 2026</span>
+        <span>•</span>
+        <span><i class="fa-solid fa-shield-halved mr-1.5"></i> JobLink Ethiopia Trust & Safety</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Legal Container -->
+  <main class="legal-container">
+    <!-- Quick Jump Sidebar -->
+    <aside class="legal-sidebar">
+      <div class="legal-sidebar-title">Table of Contents</div>
+      <ul class="legal-toc-list">
+        <li><a href="#intro" class="legal-toc-link"><i class="fa-solid fa-chevron-right text-xs"></i> 1. Introduction & Scope</a></li>
+        <li><a href="#collection" class="legal-toc-link"><i class="fa-solid fa-chevron-right text-xs"></i> 2. Information We Collect</a></li>
+        <li><a href="#usage" class="legal-toc-link"><i class="fa-solid fa-chevron-right text-xs"></i> 3. How We Use Information</a></li>
+        <li><a href="#sharing" class="legal-toc-link"><i class="fa-solid fa-chevron-right text-xs"></i> 4. Sharing & Disclosure</a></li>
+        <li><a href="#security" class="legal-toc-link"><i class="fa-solid fa-chevron-right text-xs"></i> 5. Data Security Standards</a></li>
+        <li><a href="#retention" class="legal-toc-link"><i class="fa-solid fa-chevron-right text-xs"></i> 6. Data Retention & Deletion</a></li>
+        <li><a href="#rights" class="legal-toc-link"><i class="fa-solid fa-chevron-right text-xs"></i> 7. Your Privacy Rights</a></li>
+        <li><a href="#cookies" class="legal-toc-link"><i class="fa-solid fa-chevron-right text-xs"></i> 8. Cookies & Local Storage</a></li>
+        <li><a href="#third-parties" class="legal-toc-link"><i class="fa-solid fa-chevron-right text-xs"></i> 9. Third-Party Integrations</a></li>
+        <li><a href="#children" class="legal-toc-link"><i class="fa-solid fa-chevron-right text-xs"></i> 10. Children's Privacy</a></li>
+        <li><a href="#updates" class="legal-toc-link"><i class="fa-solid fa-chevron-right text-xs"></i> 11. Policy Updates</a></li>
+        <li><a href="#contact" class="legal-toc-link"><i class="fa-solid fa-chevron-right text-xs"></i> 12. Contact Data Protection</a></li>
+      </ul>
+      
+      <div class="mt-6 pt-4 border-t border-slate-700/40">
+        <a href="terms.html" class="flex items-center gap-2 text-xs text-emerald-400 hover:text-emerald-300 transition-colors">
+          <i class="fa-solid fa-scale-balanced"></i>
+          <span>View Terms of Service &rarr;</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Content Column -->
+    <article class="legal-content">
+      <div class="legal-lead">
+        At <strong>JobLink Ethiopia</strong>, we take your trust and privacy seriously. This Privacy Policy describes how JobLink Ethiopia collects, utilizes, stores, and safeguards personal information provided by job seekers, employers, recruiters, and website visitors across our digital platform and services.
+      </div>
+
+      <!-- Section 1 -->
+      <section id="intro" class="legal-section">
+        <div class="legal-section-header">
+          <span class="legal-section-num">1</span>
+          <h2 class="legal-section-title">Introduction & Scope</h2>
+        </div>
+        <p>
+          This policy applies to all users interacting with the <strong>JobLink Ethiopia</strong> website (<a href="https://joblink-ethiopia.onrender.com" class="text-emerald-400 hover:underline">joblink-ethiopia.onrender.com</a>), applicant tracking tools, employer management dashboards, and communication channels.
+        </p>
+        <p>
+          By creating an account or using JobLink Ethiopia, you consent to the data practices described in this document. If you do not agree with any part of this policy, please refrain from submitting personal records or using our services.
+        </p>
+      </section>
+
+      <!-- Section 2 -->
+      <section id="collection" class="legal-section">
+        <div class="legal-section-header">
+          <span class="legal-section-num">2</span>
+          <h2 class="legal-section-title">Information We Collect</h2>
+        </div>
+        <p>
+          We collect personal and business information necessary to facilitate employment matching and maintain system security:
+        </p>
+        <ul>
+          <li><strong>Job Seeker Information:</strong> Full legal name, email address, telephone contact, physical address or region in Ethiopia, profile avatar, curriculum vitae (CV/resume), academic qualifications, professional history, skills list, portfolio website, GitHub profile, and LinkedIn URL.</li>
+          <li><strong>Employer & Recruiter Information:</strong> Company name, registered business address, employer representative name, business email, official phone number, company logo, industry sector, corporate website, and verification credentials.</li>
+          <li><strong>Job Application Details:</strong> Cover letters, custom questionnaire responses, application submission timestamps, and hiring status records.</li>
+          <li><strong>Financial & Transactional Records:</strong> Transaction IDs, payment amounts, timestamp data, and payment channels (such as Telebirr, CBE Birr, or Chapa). <em>Note: JobLink Ethiopia never stores complete credit card numbers or bank account PINs.</em></li>
+          <li><strong>Technical & Usage Telemetry:</strong> IP addresses, browser specifications, operating system details, device characteristics, referrer headers, and navigation access logs.</li>
+        </ul>
+      </section>
+
+      <!-- Section 3 -->
+      <section id="usage" class="legal-section">
+        <div class="legal-section-header">
+          <span class="legal-section-num">3</span>
+          <h2 class="legal-section-title">How We Use Your Information</h2>
+        </div>
+        <p>
+          JobLink Ethiopia processes your data for specific, lawful purposes:
+        </p>
+        <ul>
+          <li><strong>Connecting Candidates with Vacancies:</strong> Enabling job seekers to apply directly to vacancies, build and maintain digital resumes, and receive customized job recommendation alerts;</li>
+          <li><strong>Employer Recruitment Operations:</strong> Allowing verified employers to review applicant submissions, manage candidate pipelines, and communicate interview invitations;</li>
+          <li><strong>Account Verification & Security:</strong> Enforcing Role-Based Access Control (RBAC), multi-factor authentication (2FA/TOTP) for administrators, IP whitelisting, and detecting unauthorized intrusion attempts;</li>
+          <li><strong>Notifications & Communications:</strong> Transmitting job match alerts, application status updates, system security notifications, and critical operational notices;</li>
+          <li><strong>Platform Performance & Research:</strong> Analyzing aggregated employment trends and improving interface accessibility for Ethiopian youth.</li>
+        </ul>
+      </section>
+
+      <!-- Section 4 -->
+      <section id="sharing" class="legal-section">
+        <div class="legal-section-header">
+          <span class="legal-section-num">4</span>
+          <h2 class="legal-section-title">Information Sharing & Disclosure</h2>
+        </div>
+        <p>
+          JobLink Ethiopia does <strong>NOT</strong> sell, rent, or trade your personal information to third-party data brokers or marketing agencies. We disclose data solely in the following limited circumstances:
+        </p>
+        <ul>
+          <li><strong>With Employers You Apply To:</strong> When you submit an application through JobLink Ethiopia, your resume, contact details, and application materials are made accessible to the prospective employer.</li>
+          <li><strong>Trusted Infrastructure Partners:</strong> We engage verified cloud hosting, database hosting, and email transmission providers (e.g., Aiven Cloud MySQL, Render, Nodemailer) bound by strict confidentiality obligations.</li>
+          <li><strong>Payment Processors:</strong> For employer subscription or featured job fees, transactional records are processed securely through certified payment gateways including Chapa, Telebirr, and Commercial Bank of Ethiopia.</li>
+          <li><strong>Legal Requirements:</strong> We may disclose records if required by Ethiopian statutory mandates, court subpoenas, or law enforcement orders to prevent fraudulent conduct or protect public safety.</li>
+        </ul>
+      </section>
+
+      <!-- Section 5 -->
+      <section id="security" class="legal-section">
+        <div class="legal-section-header">
+          <span class="legal-section-num">5</span>
+          <h2 class="legal-section-title">Data Security Standards</h2>
+        </div>
+        <p>
+          We employ robust organizational and technical safeguards designed to prevent unauthorized access, data alteration, disclosure, or destruction:
+        </p>
+        <ul>
+          <li><strong>Bcrypt Password Hashing:</strong> Passwords are never stored in plain text and are salted and hashed using modern bcrypt cryptographic standards;</li>
+          <li><strong>Encrypted Transport:</strong> All data transmitted between your browser and JobLink Ethiopia servers is protected using Secure Sockets Layer / Transport Layer Security (TLS/HTTPS);</li>
+          <li><strong>Strict Role-Based Access Control (RBAC):</strong> Server-side middleware verifies user roles on every privileged request, preventing unauthorized cross-role dashboard access;</li>
+          <li><strong>Administrative IP Whitelisting & 2FA:</strong> Sensitive administrative controls and system metrics are restricted to whitelisted IP addresses and protected by two-factor authentication;</li>
+          <li><strong>Anti-FOUC & Session Shields:</strong> Dashboards employ immediate authentication verifications to protect cached user documents from unauthorized local viewing.</li>
+        </ul>
+      </section>
+
+      <!-- Section 6 -->
+      <section id="retention" class="legal-section">
+        <div class="legal-section-header">
+          <span class="legal-section-num">6</span>
+          <h2 class="legal-section-title">Data Retention & Deletion</h2>
+        </div>
+        <p>
+          We retain your account profile, job applications, and CV documents for as long as your account remains active or as needed to deliver our services.
+        </p>
+        <p>
+          If you choose to delete your account, your profile data, CV, and active job alerts will be permanently erased or anonymized from active operational databases within thirty (30) days, except where retention of specific records is required by Ethiopian tax, accounting, or audit laws.
+        </p>
+      </section>
+
+      <!-- Section 7 -->
+      <section id="rights" class="legal-section">
+        <div class="legal-section-header">
+          <span class="legal-section-num">7</span>
+          <h2 class="legal-section-title">Your Privacy Rights & Choices</h2>
+        </div>
+        <p>
+          As a JobLink Ethiopia user, you have full control over your personal data:
+        </p>
+        <ul>
+          <li><strong>Review & Update:</strong> You may edit your personal details, work history, skills, contact numbers, and CV at any time via your Seeker or Employer dashboard;</li>
+          <li><strong>Alert Preferences:</strong> You may modify or delete automated job alert subscriptions anytime via the "Job Alerts" tab;</li>
+          <li><strong>Account Closure & Data Erasure:</strong> You may request full account deletion by submitting a verified request to <a href="mailto:support@joblinkethiopia.com" class="text-emerald-400 hover:underline">support@joblinkethiopia.com</a>;</li>
+          <li><strong>Data Portability:</strong> You may download a copy of your stored CV and application history directly from your dashboard.</li>
+        </ul>
+      </section>
+
+      <!-- Section 8 -->
+      <section id="cookies" class="legal-section">
+        <div class="legal-section-header">
+          <span class="legal-section-num">8</span>
+          <h2 class="legal-section-title">Cookies & Local Storage</h2>
+        </div>
+        <p>
+          JobLink Ethiopia utilizes local browser storage (<code>localStorage</code> and <code>sessionStorage</code>) and essential session cookies to deliver core functionality:
+        </p>
+        <ul>
+          <li><strong>Authentication Tokens:</strong> Secure JWT tokens are stored to maintain your authenticated session as you navigate dashboard features;</li>
+          <li><strong>Theme Preferences:</strong> Your dark mode or light mode visual preference is saved locally to provide seamless rendering across page loads;</li>
+          <li><strong>Session State:</strong> Transient form values and search filters are cached temporarily to enhance user experience.</li>
+        </ul>
+        <p>
+          We do not use intrusive cross-site tracking cookies or third-party behavioral advertising pixels.
+        </p>
+      </section>
+
+      <!-- Section 9 -->
+      <section id="third-parties" class="legal-section">
+        <div class="legal-section-header">
+          <span class="legal-section-num">9</span>
+          <h2 class="legal-section-title">Third-Party Integrations & External Links</h2>
+        </div>
+        <p>
+          JobLink Ethiopia may contain links to external corporate websites, LinkedIn profiles, GitHub repositories, or external applicant tracking systems specified by employers.
+        </p>
+        <p>
+          Please note that once you leave our Platform, your data is governed by the privacy practices of the destination third party. We encourage you to review their respective privacy statements before providing personal records.
+        </p>
+      </section>
+
+      <!-- Section 10 -->
+      <section id="children" class="legal-section">
+        <div class="legal-section-header">
+          <span class="legal-section-num">10</span>
+          <h2 class="legal-section-title">Children's Privacy</h2>
+        </div>
+        <p>
+          Our services are directed to individuals of legal working age (minimum 18 years of age or eligible working age under Ethiopian law). We do not knowingly solicit or collect personal records from individuals under the age of 18. If we discover that personal details of a minor have been collected without parental consent, we will promptly purge the data from our servers.
+        </p>
+      </section>
+
+      <!-- Section 11 -->
+      <section id="updates" class="legal-section">
+        <div class="legal-section-header">
+          <span class="legal-section-num">11</span>
+          <h2 class="legal-section-title">Changes to this Privacy Policy</h2>
+        </div>
+        <p>
+          We may revise this Privacy Policy periodically to reflect technological advancements, legal developments, or operational updates. When revisions occur, the updated policy will be published here with a renewed "Last Updated" timestamp. We encourage you to review this page periodically to stay informed about how we protect your information.
+        </p>
+      </section>
+
+      <!-- Section 12 -->
+      <section id="contact" class="legal-section">
+        <div class="legal-section-header">
+          <span class="legal-section-num">12</span>
+          <h2 class="legal-section-title">Contact Our Data Protection Team</h2>
+        </div>
+        <p>
+          If you have questions, complaints, or inquiries regarding this Privacy Policy or wish to exercise your data rights, please contact our team:
+        </p>
+
+        <div class="contact-card">
+          <div class="contact-card-item">
+            <i class="fa-solid fa-building"></i>
+            <span><strong>JobLink Ethiopia</strong> — Privacy & Compliance Office</span>
+          </div>
+          <div class="contact-card-item">
+            <i class="fa-solid fa-envelope"></i>
+            <span>Email: <a href="mailto:support@joblinkethiopia.com" class="text-emerald-400 hover:underline">support@joblinkethiopia.com</a></span>
+          </div>
+          <div class="contact-card-item">
+            <i class="fa-solid fa-phone"></i>
+            <span>Phone: +251 96 360 4232 / +251 92 236 7801</span>
+          </div>
+          <div class="contact-card-item">
+            <i class="fa-solid fa-location-dot"></i>
+            <span>Address: DBU University, Mehal Meda, Ethiopia</span>
+          </div>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="footer footer-dark">
+    <div class="container footer-content">
+      <div class="footer-grid">
+        <!-- Brand -->
+        <div class="footer-brand">
+          <a href="index.html" class="logo-link mb-6 block">
+            <div class="flex items-center gap-3">
+              <div class="logo-box footer-logo-box">JL</div>
+              <span class="logo-text brand-text"><span class="brand-joblink">JobLink</span> <span class="brand-ethiopia">Ethiopia</span></span>
+            </div>
+          </a>
+          <p class="text-slate-400 mb-6 text-sm leading-relaxed max-w-sm">
+            Empowering Ethiopian Youth. Connect with top employers, build your dream team, and accelerate your career journey with JobLink.
+          </p>
+        </div>
+
+        <!-- Resources -->
+        <div class="footer-links footer-resources">
+          <h4 class="text-white font-semibold mb-6 text-base tracking-wide uppercase">Resources</h4>
+          <ul class="flex flex-col gap-3 text-sm text-slate-400">
+            <li><a href="index.html#search-keyword" id="footer-search-jobs" class="hover:text-primary-400 transition-colors">Search Jobs</a></li>
+            <li><a href="seeker.html#cv" id="footer-create-cv" class="hover:text-primary-400 transition-colors">Create CV</a></li>
+            <li><a href="seeker.html#alerts" id="footer-job-alerts" class="hover:text-primary-400 transition-colors">Job Alerts</a></li>
+            <li><a href="seeker.html#saved-jobs" id="footer-saved-jobs" class="hover:text-primary-400 transition-colors">Saved Jobs</a></li>
+          </ul>
+        </div>
+
+        <!-- Company -->
+        <div class="footer-links footer-company">
+          <h4 class="text-white font-semibold mb-6 text-base tracking-wide uppercase">Company</h4>
+          <ul class="flex flex-col gap-3 text-sm text-slate-400">
+            <li><a href="employer.html" id="footer-post-job" class="hover:text-primary-400 transition-colors">Post a Job</a></li>
+            <li><a href="terms.html" id="footer-terms" class="hover:text-primary-400 transition-colors">Terms of Service</a></li>
+            <li><a href="privacy.html" id="footer-privacy" class="hover:text-primary-400 transition-colors font-semibold text-emerald-400">Privacy Policy</a></li>
+            <li><a href="mailto:support@joblinkethiopia.com" id="footer-contact-support" class="hover:text-primary-400 transition-colors">Contact Support</a></li>
+          </ul>
+        </div>
+
+        <!-- Contact Us -->
+        <div class="footer-contact">
+          <h4 class="text-white font-semibold mb-6 text-base tracking-wide uppercase">Contact Us</h4>
+          <ul class="flex flex-col gap-4 text-sm text-slate-400">
+            <li class="flex gap-3 items-start">
+              <i class="fa-solid fa-phone text-emerald-400 mt-1"></i>
+              <span>
+                <a href="tel:+251963604232" class="hover:text-primary-400 transition-colors block">+251 96 360 4232</a>
+                <a href="tel:+251922367801" class="hover:text-primary-400 transition-colors block">+251 92 236 7801</a>
+              </span>
+            </li>
+            <li class="flex gap-3 items-center">
+              <i class="fa-solid fa-envelope text-emerald-400"></i>
+              <a href="mailto:support@joblinkethiopia.com" class="hover:text-primary-400 transition-colors">support@joblinkethiopia.com</a>
+            </li>
+            <li class="flex gap-3 items-start">
+              <i class="fa-solid fa-location-dot text-emerald-400 mt-1"></i>
+              <span>DBU university, mehal meda, Ethiopia</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Footer Bottom -->
+      <div class="footer-bottom">
+        <div class="footer-bottom-inner">
+          <span>&copy; 2026 JobLink Ethiopia. All rights reserved.</span>
+          <div class="footer-bottom-links">
+            <a href="terms.html" class="transition-colors hover:text-primary-400">Terms of Service</a>
+            <a href="privacy.html" class="transition-colors hover:text-primary-400 text-emerald-400 font-medium">Privacy Policy</a>
+            <span>Made with love in Ethiopia</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Theme Toggle Script & Cursor -->
+  <script>
+    (function () {
+      const storedTheme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', storedTheme);
+      
+      const themeBtn = document.getElementById('theme-toggle-btn');
+      const themeIcon = document.getElementById('theme-toggle-icon');
+
+      function updateThemeIcon(theme) {
+        if (!themeIcon) return;
+        if (theme === 'dark') {
+          themeIcon.className = 'fa-solid fa-sun text-amber-400';
+        } else {
+          themeIcon.className = 'fa-solid fa-moon text-slate-700';
+        }
+      }
+
+      updateThemeIcon(storedTheme);
+
+      if (themeBtn) {
+        themeBtn.addEventListener('click', function () {
+          const current = document.documentElement.getAttribute('data-theme') || 'dark';
+          const next = current === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateThemeIcon(next);
+        });
+      }
+    })();
+  </script>
+  <script src="js/cursor.js" defer></script>
+</body>
+
+</html>
