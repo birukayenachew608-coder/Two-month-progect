@@ -116,6 +116,24 @@ window.getEmployerAuth = getEmployerAuth;
 window.setEmployerAuth = setEmployerAuth;
 window.clearEmployerAuth = clearEmployerAuth;
 
+// Global Auth Role State & Active Toggle Helper
+window.selectedAuthRole = (typeof window !== 'undefined' && window.location.pathname.includes('employer.html')) ? 'employer' : 'job_seeker';
+function getActiveRoleToggle() {
+  const activeBtn = document.querySelector('#auth-role-switch .role-switch-btn.active, .role-switch-btn.active');
+  if (activeBtn) {
+    const r = activeBtn.getAttribute('data-role');
+    if (r === 'employer' || r === 'job_seeker') return r;
+  }
+  if (typeof selectedAuthRole !== 'undefined' && (selectedAuthRole === 'employer' || selectedAuthRole === 'job_seeker')) {
+    return selectedAuthRole;
+  }
+  if (window.selectedAuthRole === 'employer' || window.selectedAuthRole === 'job_seeker') {
+    return window.selectedAuthRole;
+  }
+  return 'job_seeker';
+}
+window.getActiveRoleToggle = getActiveRoleToggle;
+
 // Helper: Open Modal by ID
 window.openModal = function (modalId) {
   const modal = document.getElementById(modalId);
@@ -140,7 +158,10 @@ window.openRegisterModal = function (e, role) {
     if (e.preventDefault) e.preventDefault();
     if (e.stopPropagation) e.stopPropagation();
   }
-  if (role) selectedAuthRole = role;
+  if (role) {
+    selectedAuthRole = role;
+    window.selectedAuthRole = role;
+  }
   if (typeof window.setAuthModalMode === 'function') {
     window.setAuthModalMode(null, true, role);
   } else {
@@ -168,7 +189,10 @@ window.openLoginModal = function (e, role) {
     if (e.preventDefault) e.preventDefault();
     if (e.stopPropagation) e.stopPropagation();
   }
-  if (role) selectedAuthRole = role;
+  if (role) {
+    selectedAuthRole = role;
+    window.selectedAuthRole = role;
+  }
   if (typeof window.setAuthModalMode === 'function') {
     window.setAuthModalMode(null, false, role);
   } else {
@@ -924,6 +948,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let isRegisterMode = false;
   let selectedAuthRole = (currentPage === 'employer.html') ? 'employer' : 'job_seeker';
+  window.selectedAuthRole = selectedAuthRole;
   let loginRedirectUrl = (currentPage === 'employer.html') ? 'employer.html' : 'seeker.html';
 
   // Ensure <main> content is visible and never render-blocked
@@ -2067,10 +2092,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         break;
       case 'google-auth':
         e.preventDefault();
+        const activeGoogleRole = getActiveRoleToggle();
         const currentMode = isRegisterMode ? 'register' : (btn.getAttribute('data-action-mode') || 'login');
-        const isEmpRole = (selectedAuthRole === 'employer' || btn.getAttribute('data-role') === 'employer' || loginRedirectUrl === 'employer.html' || currentPage === 'employer.html');
-        const targetAuthRole = isEmpRole ? 'employer' : 'job_seeker';
-        window.location.href = `/auth/google?action=${currentMode}&role=${targetAuthRole}&state=${currentMode}:${targetAuthRole}`;
+        window.location.href = `/auth/google?action=${currentMode}&role=${activeGoogleRole}&state=${currentMode}:${activeGoogleRole}`;
         break;
       case 'linkedin-auth':
         if (btn) {
@@ -2315,6 +2339,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.preventDefault();
         const chosenRole = btn.getAttribute('data-role') || 'job_seeker';
         selectedAuthRole = chosenRole;
+        window.selectedAuthRole = chosenRole;
         loginRedirectUrl = (chosenRole === 'employer') ? 'employer.html' : 'seeker.html';
         updateAuthModalUI();
         break;
@@ -2323,13 +2348,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         const roleAttr = btn.getAttribute('data-role');
         if (roleAttr === 'employer' || redirectAttr === 'employer.html') {
           selectedAuthRole = 'employer';
+          window.selectedAuthRole = 'employer';
           loginRedirectUrl = 'employer.html';
         } else if (roleAttr === 'job_seeker' || redirectAttr === 'seeker.html') {
           selectedAuthRole = 'job_seeker';
+          window.selectedAuthRole = 'job_seeker';
           loginRedirectUrl = 'seeker.html';
         } else if (!selectedAuthRole) {
           selectedAuthRole = (currentPage === 'employer.html') ? 'employer' : 'job_seeker';
+          window.selectedAuthRole = selectedAuthRole;
           loginRedirectUrl = (selectedAuthRole === 'employer') ? 'employer.html' : 'seeker.html';
+        } else {
+          window.selectedAuthRole = selectedAuthRole;
         }
 
         if (selectedAuthRole === 'employer') {
@@ -2488,10 +2518,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('#btn-google-auth, #btn-google-auth-employer, [data-action="google-auth"]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
+      const activeGoogleRole = getActiveRoleToggle();
       const currentMode = isRegisterMode ? 'register' : (btn.getAttribute('data-action-mode') || 'login');
-      const isEmpRole = (selectedAuthRole === 'employer' || btn.getAttribute('data-role') === 'employer' || loginRedirectUrl === 'employer.html' || currentPage === 'employer.html');
-      const targetRole = isEmpRole ? 'employer' : 'job_seeker';
-      window.location.href = `/auth/google?action=${currentMode}&role=${targetRole}&state=${currentMode}:${targetRole}`;
+      window.location.href = `/auth/google?action=${currentMode}&role=${activeGoogleRole}&state=${currentMode}:${activeGoogleRole}`;
     });
   });
 
@@ -2500,10 +2529,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const googleBtn = e.target.closest('#btn-google-auth, #btn-google-auth-employer, [data-action="google-auth"]');
     if (googleBtn) {
       e.preventDefault();
+      const activeGoogleRole = getActiveRoleToggle();
       const currentMode = isRegisterMode ? 'register' : (googleBtn.getAttribute('data-action-mode') || 'login');
-      const isEmpRole = (selectedAuthRole === 'employer' || googleBtn.getAttribute('data-role') === 'employer' || loginRedirectUrl === 'employer.html' || currentPage === 'employer.html');
-      const targetRole = isEmpRole ? 'employer' : 'job_seeker';
-      window.location.href = `/auth/google?action=${currentMode}&role=${targetRole}&state=${currentMode}:${targetRole}`;
+      window.location.href = `/auth/google?action=${currentMode}&role=${activeGoogleRole}&state=${currentMode}:${activeGoogleRole}`;
     }
   });
 
@@ -2590,7 +2618,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       emailGroup.insertAdjacentElement('afterend', otpGroup);
     }
 
-    const isEmployerRole = (selectedAuthRole === 'employer' || loginRedirectUrl === 'employer.html' || currentPage === 'employer.html');
+    const activeToggleRole = (typeof selectedAuthRole !== 'undefined' && selectedAuthRole) ? selectedAuthRole : getActiveRoleToggle();
+    const isEmployerRole = (activeToggleRole === 'employer');
     const roleText = isEmployerRole ? 'Employer' : 'Job Seeker';
     const normalizedRole = isEmployerRole ? 'employer' : 'job_seeker';
     const currentAction = isRegisterMode ? 'register' : 'login';
@@ -2600,7 +2629,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const roleButtons = document.querySelectorAll('.role-switch-btn');
     roleButtons.forEach(btn => {
       const btnRole = btn.getAttribute('data-role');
-      if (btnRole === (isEmployerRole ? 'employer' : 'job_seeker')) {
+      if (btnRole === normalizedRole) {
         btn.classList.add('active');
         btn.setAttribute('aria-selected', 'true');
       } else {
@@ -2626,13 +2655,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const googleEmployerBtn = document.getElementById('btn-google-auth-employer');
     if (googleEmployerBtn) {
-      const empGoogleUrl = `/auth/google?action=${currentAction}&role=employer&state=${currentAction}:employer`;
-      googleEmployerBtn.setAttribute('href', empGoogleUrl);
-      googleEmployerBtn.setAttribute('data-role', 'employer');
+      googleEmployerBtn.setAttribute('href', googleAuthUrl);
+      googleEmployerBtn.setAttribute('data-role', normalizedRole);
       googleEmployerBtn.setAttribute('data-action-mode', currentAction);
       const googleSpan = googleEmployerBtn.querySelector('span');
       if (googleSpan) {
-        googleSpan.textContent = isRegisterMode ? 'Sign up with Google as Employer' : 'Continue with Google';
+        googleSpan.textContent = isRegisterMode ? `Sign up with Google as ${roleText}` : 'Continue with Google';
       }
     }
 
@@ -2716,10 +2744,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.setAuthModalMode = function (redirectUrl, isRegister = false, role = null) {
     if (role) {
       selectedAuthRole = role;
+      window.selectedAuthRole = role;
     } else if (redirectUrl === 'employer.html') {
       selectedAuthRole = 'employer';
+      window.selectedAuthRole = 'employer';
     } else if (redirectUrl === 'seeker.html') {
       selectedAuthRole = 'job_seeker';
+      window.selectedAuthRole = 'job_seeker';
     }
     loginRedirectUrl = redirectUrl || (selectedAuthRole === 'employer' ? 'employer.html' : 'seeker.html');
     isRegisterMode = isRegister;
@@ -2734,6 +2765,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       e.preventDefault();
       const chosenRole = roleBtn.getAttribute('data-role') || 'job_seeker';
       selectedAuthRole = chosenRole;
+      window.selectedAuthRole = chosenRole;
       loginRedirectUrl = (chosenRole === 'employer') ? 'employer.html' : 'seeker.html';
       updateAuthModalUI();
     }
@@ -2749,8 +2781,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const password = document.getElementById('auth-password').value;
       const name = document.getElementById('auth-name').value;
 
-      const isEmployerRole = (selectedAuthRole === 'employer' || loginRedirectUrl === 'employer.html' || currentPage === 'employer.html');
-      const determinedRole = isEmployerRole ? 'employer' : 'job_seeker';
+      // Active role selected on toggle tab
+      const activeRole = getActiveRoleToggle();
 
       if (isRegisterMode) {
         if (registerStep === 1) {
@@ -2797,7 +2829,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           return;
         } else if (registerStep === 3) {
           // Complete Registration
-          const endpoint = determinedRole === 'employer' ? '/api/auth/employer/register' : '/api/auth/seeker/register';
+          const endpoint = activeRole === 'employer' ? '/api/auth/employer/register' : '/api/auth/seeker/register';
           try {
             const res = await fetch(endpoint, {
               method: 'POST',
@@ -2807,21 +2839,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = await res.json();
             if (res.ok) {
               showToast('Registration successful!', 'success');
-              if (determinedRole === 'employer') {
-                setEmployerAuth(data.token, data.user);
+              const actualRole = (data.user && data.user.role) || activeRole;
+              const token = data.token || data.accessToken;
+              if (actualRole === 'employer') {
+                clearSeekerAuth();
+                setEmployerAuth(token, data.user);
               } else {
-                setSeekerAuth(data.token, data.user);
+                clearEmployerAuth();
+                setSeekerAuth(token, data.user);
               }
+              const targetRedirect = data.redirectUrl || (actualRole === 'employer' ? '/employer.html' : '/seeker.html');
               setTimeout(() => {
-                if (determinedRole === 'employer') {
-                  window.location.href = 'employer.html';
+                if (actualRole === 'employer') {
+                  window.location.href = targetRedirect;
                 } else {
                   const pendingJobId = sessionStorage.getItem('pendingApplyJobId');
                   if (pendingJobId) {
                     sessionStorage.removeItem('pendingApplyJobId');
                     window.location.href = `job-details.html?id=${pendingJobId}`;
                   } else {
-                    window.location.href = 'seeker.html';
+                    window.location.href = targetRedirect;
                   }
                 }
               }, 1000);
@@ -2835,9 +2872,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
 
-      // Normal Login Logic
-      const endpoint = determinedRole === 'employer' ? '/api/auth/employer/login' : '/api/auth/seeker/login';
-      const payload = { email, password };
+      // Normal Login Logic: unified login endpoint passing active toggle role hint
+      const endpoint = '/api/auth/login';
+      const payload = { email, password, role: activeRole };
 
       try {
         const response = await fetch(endpoint, {
@@ -2850,27 +2887,39 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (response.ok) {
           showToast('Logged in successfully!', 'success');
-          if (data.token && data.user) {
-            if (determinedRole === 'employer') {
-              setEmployerAuth(data.token, data.user);
-            } else {
-              setSeekerAuth(data.token, data.user);
-            }
+
+          // Retrieve authentic user role from the database response
+          const actualRole = (data.user && data.user.role) || (data.redirectUrl && data.redirectUrl.includes('employer') ? 'employer' : 'job_seeker');
+          const token = data.token || data.accessToken;
+          const userObj = data.user;
+
+          // Clear stale opposite role data to prevent dashboard redirect collisions
+          if (actualRole === 'employer') {
+            clearSeekerAuth();
+            setEmployerAuth(token, userObj);
+          } else if (actualRole === 'job_seeker') {
+            clearEmployerAuth();
+            setSeekerAuth(token, userObj);
+          } else {
+            // Admin role
+            if (token) localStorage.setItem('token', token);
+            if (userObj) localStorage.setItem('user', JSON.stringify(userObj));
           }
 
+          // Follow the backend's dynamic redirect URL
+          const dynamicRedirect = data.redirectUrl || (actualRole === 'employer' ? '/employer.html' : (actualRole === 'admin' || actualRole === 'super_admin' ? '/admin.html' : '/seeker.html'));
+
           setTimeout(() => {
-            if (determinedRole === 'employer') {
-              window.location.href = 'employer.html';
-            } else {
+            if (actualRole === 'job_seeker') {
               const pendingJobId = sessionStorage.getItem('pendingApplyJobId');
               if (pendingJobId) {
                 sessionStorage.removeItem('pendingApplyJobId');
                 window.location.href = `job-details.html?id=${pendingJobId}`;
-              } else {
-                window.location.href = 'seeker.html';
+                return;
               }
             }
-          }, 1000);
+            window.location.href = dynamicRedirect;
+          }, 800);
         } else {
           showToast(data.message || 'Authentication failed', 'error');
         }

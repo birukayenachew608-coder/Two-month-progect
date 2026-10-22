@@ -80,21 +80,17 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                 return done(new Error('Google did not return user email or ID'), null);
             }
 
-            // Retrieve the state parameter to know intended action and role
+            // Retrieve the state parameter to know intended role from frontend toggle
             const rawState = (req.query && req.query.state) ? String(req.query.state).trim() : '';
-            let authAction = 'login';
             let intendedRole = 'job_seeker';
 
             if (rawState.includes(':')) {
                 const parts = rawState.split(':');
-                authAction = parts[0].toLowerCase().trim() === 'register' ? 'register' : 'login';
                 intendedRole = parts[1].toLowerCase().trim() === 'employer' ? 'employer' : 'job_seeker';
             } else if (rawState.includes('|')) {
                 const parts = rawState.split('|');
-                authAction = parts[0].toLowerCase().trim() === 'register' ? 'register' : 'login';
                 intendedRole = parts[1].toLowerCase().trim() === 'employer' ? 'employer' : 'job_seeker';
             } else {
-                if (rawState.toLowerCase().includes('register')) authAction = 'register';
                 if (rawState.toLowerCase().includes('employer')) intendedRole = 'employer';
             }
 
@@ -103,93 +99,78 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             const [seekers] = await pool.query('SELECT * FROM job_seekers WHERE google_id = ? OR email = ?', [googleId, email]);
             const [admins] = await pool.query('SELECT * FROM admins WHERE email = ?', [email]);
 
-            const userExists = (employers.length > 0 || seekers.length > 0 || admins.length > 0);
+            // 1. If administrator account exists
+            if (admins.length > 0) {
+                return done(null, false, { message: 'Administrator accounts must sign in using email and password' });
+            }
 
-            // --- 1. SIGN IN FLOW (authAction === 'login') ---
-            if (authAction === 'login') {
-                if (!userExists) {
-                    // Refactor requirement: DO NOT create account on login if email doesn't exist in DB
-                    return done(null, false, { message: 'Account not found. Please register first.' });
+            // 2. EXISTING USER: Check if user exists in employers table (regardless of toggle state)
+            if (employers.length > 0) {
+                const user = employers[0];
+                user.role = 'employer';
+                if (!user.google_id) {
+                    await pool.query('UPDATE employers SET google_id = ? WHERE id = ?', [googleId, user.id]);
+                    user.google_id = googleId;
+                    try {
+                        await pool.query('UPDATE users SET google_id = ? WHERE email = ?', [googleId, email]);
+                    } catch (e) { }
                 }
+                return done(null, user);
+            }
 
-                if (admins.length > 0) {
-                    return done(null, false, { message: 'Administrator accounts must sign in using email and password' });
+            // 3. EXISTING USER: Check if user exists in job_seekers table (regardless of toggle state)
+            if (seekers.length > 0) {
+                const user = seekers[0];
+                user.role = 'job_seeker';
+                if (!user.google_id) {
+                    await pool.query('UPDATE job_seekers SET google_id = ? WHERE id = ?', [googleId, user.id]);
+                    user.google_id = googleId;
+                    try {
+                        await pool.query('UPDATE users SET google_id = ? WHERE email = ?', [googleId, email]);
+                    } catch (e) { }
                 }
+                return done(null, user);
+            }
 
-                if (employers.length > 0) {
-                    const user = employers[0];
-                    user.role = 'employer';
-                    if (!user.google_id) {
-                        await pool.query('UPDATE employers SET google_id = ? WHERE id = ?', [googleId, user.id]);
-                        user.google_id = googleId;
-                        try {
-                            await pool.query('UPDATE users SET google_id = ? WHERE email = ?', [googleId, email]);
-                        } catch (e) { }
-                    }
-                    return done(null, user);
+            // 4. NEW USER: Save with the active role state passed from the frontend toggle
+            let newUser = null;
+            if (intendedRole === 'employer') {
+                const [result] = await pool.query(
+                    'INSERT INTO employers (name, email, password, google_id, company_name, profile_photo_url, is_email_verified, account_status) VALUES (?, ?, ?, ?, ?, ?, true, ?)',
+                    [name, email, 'google_oauth_user', googleId, name, photo, 'active']
+                );
+                const [newEmployers] = await pool.query('SELECT * FROM employers WHERE id = ?', [result.insertId]);
+                newUser = newEmployers[0];
+                newUser.role = 'employer';
+
+                try {
+                    await pool.query(
+                        'INSERT INTO users (name, full_name, email, google_id, role, account_status, is_approved) VALUES (?, ?, ?, ?, ?, ?, TRUE) ON DUPLICATE KEY UPDATE google_id = VALUES(google_id)',
+                        [name, name, email, googleId, 'employer', 'active']
+                    );
+                } catch (e) {
+                    console.error('Users table sync error:', e);
                 }
+            } else {
+                const [result] = await pool.query(
+                    'INSERT INTO job_seekers (name, email, password, google_id, profile_photo_url, is_email_verified, account_status) VALUES (?, ?, ?, ?, ?, true, ?)',
+                    [name, email, 'google_oauth_user', googleId, photo, 'active']
+                );
+                const [newUsers] = await pool.query('SELECT * FROM job_seekers WHERE id = ?', [result.insertId]);
+                newUser = newUsers[0];
+                newUser.role = 'job_seeker';
 
-                if (seekers.length > 0) {
-                    const user = seekers[0];
-                    user.role = 'job_seeker';
-                    if (!user.google_id) {
-                        await pool.query('UPDATE job_seekers SET google_id = ? WHERE id = ?', [googleId, user.id]);
-                        user.google_id = googleId;
-                        try {
-                            await pool.query('UPDATE users SET google_id = ? WHERE email = ?', [googleId, email]);
-                        } catch (e) { }
-                    }
-                    return done(null, user);
+                try {
+                    await pool.query(
+                        'INSERT INTO users (name, full_name, email, google_id, role, account_status, is_approved) VALUES (?, ?, ?, ?, ?, ?, TRUE) ON DUPLICATE KEY UPDATE google_id = VALUES(google_id)',
+                        [name, name, email, googleId, 'job_seeker', 'active']
+                    );
+                } catch (e) {
+                    console.error('Users table sync error:', e);
                 }
             }
 
-            // --- 2. SIGN UP / REGISTRATION FLOW (authAction === 'register') ---
-            if (authAction === 'register') {
-                if (userExists) {
-                    return done(null, false, { message: 'This email is already registered. Please sign in instead.' });
-                }
-
-                let newUser = null;
-                if (intendedRole === 'employer') {
-                    const [result] = await pool.query(
-                        'INSERT INTO employers (name, email, password, google_id, company_name, profile_photo_url, is_email_verified, account_status) VALUES (?, ?, ?, ?, ?, ?, true, ?)',
-                        [name, email, 'google_oauth_user', googleId, name, photo, 'active']
-                    );
-                    const [newEmployers] = await pool.query('SELECT * FROM employers WHERE id = ?', [result.insertId]);
-                    newUser = newEmployers[0];
-                    newUser.role = 'employer';
-
-                    try {
-                        await pool.query(
-                            'INSERT IGNORE INTO users (name, email, google_id, role, account_status) VALUES (?, ?, ?, ?, ?)',
-                            [name, email, googleId, 'employer', 'active']
-                        );
-                    } catch (e) {
-                        console.error('Users table sync error:', e);
-                    }
-                } else {
-                    const [result] = await pool.query(
-                        'INSERT INTO job_seekers (name, email, google_id, profile_photo_url, is_email_verified, account_status) VALUES (?, ?, ?, ?, true, ?)',
-                        [name, email, googleId, photo, 'active']
-                    );
-                    const [newUsers] = await pool.query('SELECT * FROM job_seekers WHERE id = ?', [result.insertId]);
-                    newUser = newUsers[0];
-                    newUser.role = 'job_seeker';
-
-                    try {
-                        await pool.query(
-                            'INSERT IGNORE INTO users (name, email, google_id, role, account_status) VALUES (?, ?, ?, ?, ?)',
-                            [name, email, googleId, 'job_seeker', 'active']
-                        );
-                    } catch (e) {
-                        console.error('Users table sync error:', e);
-                    }
-                }
-
-                return done(null, newUser);
-            }
-
-            return done(null, false, { message: 'Invalid authentication request' });
+            return done(null, newUser);
         } catch (err) {
             console.error('Google OAuth Strategy Error:', err);
             return done(err, null);
@@ -244,67 +225,103 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     const { email, password, role } = req.body;
 
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+    }
+
     try {
-        let user = null;
-        let foundRole = role;
+        const cleanEmail = String(email).toLowerCase().trim();
 
-        // If role is provided, only check that specific table
-        if (role) {
-            let tableName = 'job_seekers';
-            if (role === 'employer') tableName = 'employers';
-            if (role === 'admin' || role === 'super_admin') tableName = 'admins';
+        // Query candidate tables across the database
+        const [employers] = await pool.query('SELECT * FROM employers WHERE email = ?', [cleanEmail]);
+        const [seekers] = await pool.query('SELECT * FROM job_seekers WHERE email = ?', [cleanEmail]);
+        const [admins] = await pool.query('SELECT * FROM admins WHERE email = ?', [cleanEmail]);
 
-            const [users] = await pool.query(`SELECT * FROM ${tableName} WHERE email = ?`, [email]);
-            if (users.length > 0) {
-                user = users[0];
-                if (tableName !== 'admins') user.role = role;
-            }
+        // Prioritize checking table based on role hint if supplied, but always fallback to all tables
+        const candidateList = [];
+        if (role === 'employer') {
+            if (employers.length > 0) candidateList.push({ data: employers[0], role: 'employer', table: 'employers' });
+            if (seekers.length > 0) candidateList.push({ data: seekers[0], role: 'job_seeker', table: 'job_seekers' });
+            if (admins.length > 0) candidateList.push({ data: admins[0], role: admins[0].role || 'admin', table: 'admins' });
+        } else if (role === 'admin' || role === 'super_admin') {
+            if (admins.length > 0) candidateList.push({ data: admins[0], role: admins[0].role || 'admin', table: 'admins' });
+            if (employers.length > 0) candidateList.push({ data: employers[0], role: 'employer', table: 'employers' });
+            if (seekers.length > 0) candidateList.push({ data: seekers[0], role: 'job_seeker', table: 'job_seekers' });
         } else {
-            // If no role provided (fallback), check all tables
-            const [admins] = await pool.query('SELECT * FROM admins WHERE email = ?', [email]);
-            if (admins.length > 0) {
-                user = admins[0];
-                foundRole = user.role;
-            } else {
-                const [employers] = await pool.query('SELECT * FROM employers WHERE email = ?', [email]);
-                if (employers.length > 0) {
-                    user = employers[0];
-                    user.role = 'employer';
-                    foundRole = 'employer';
+            // Default preference: check seekers first, then employers, then admins
+            if (seekers.length > 0) candidateList.push({ data: seekers[0], role: 'job_seeker', table: 'job_seekers' });
+            if (employers.length > 0) candidateList.push({ data: employers[0], role: 'employer', table: 'employers' });
+            if (admins.length > 0) candidateList.push({ data: admins[0], role: admins[0].role || 'admin', table: 'admins' });
+        }
+
+        if (candidateList.length === 0) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        // Test password against candidate records
+        let matchedCandidate = null;
+        for (const candidate of candidateList) {
+            const candidateUser = candidate.data;
+
+            if (candidateUser.locked_until && new Date(candidateUser.locked_until) > new Date()) {
+                return res.status(401).json({ message: 'Account locked. Please try again later.' });
+            }
+
+            const isMatch = await bcrypt.compare(password, candidateUser.password);
+            if (isMatch) {
+                matchedCandidate = candidate;
+                break;
+            }
+        }
+
+        if (!matchedCandidate) {
+            // Track failed login attempt on the primary matching record
+            const first = candidateList[0];
+            if (first.table === 'employers' || first.table === 'job_seekers') {
+                const failed = (first.data.failed_login_attempts || 0) + 1;
+                if (failed >= 10) {
+                    await pool.query(`UPDATE ${first.table} SET failed_login_attempts = ?, locked_until = DATE_ADD(NOW(), INTERVAL 15 MINUTE) WHERE id = ?`, [failed, first.data.id]);
                 } else {
-                    const [seekers] = await pool.query('SELECT * FROM job_seekers WHERE email = ?', [email]);
-                    if (seekers.length > 0) {
-                        user = seekers[0];
-                        user.role = 'job_seeker';
-                        foundRole = 'job_seeker';
-                    }
+                    await pool.query(`UPDATE ${first.table} SET failed_login_attempts = ? WHERE id = ?`, [failed, first.data.id]);
                 }
             }
-        }
-
-        if (!user) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        // Check password
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid credentials' });
+        const user = matchedCandidate.data;
+        const userRole = matchedCandidate.role;
+        const tableName = matchedCandidate.table;
+        user.role = userRole;
+
+        // Reset failed login attempts on success
+        if (tableName === 'employers' || tableName === 'job_seekers') {
+            if (user.failed_login_attempts > 0 || user.locked_until) {
+                await pool.query(`UPDATE ${tableName} SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?`, [user.id]);
+            }
         }
 
-        // Issue access & refresh tokens (15m access / 7d refresh in HttpOnly cookie)
-        const { accessToken } = await issueAuthTokens(res, user, user.role || foundRole);
+        if (user.account_status === 'banned') {
+            return res.status(403).json({ message: 'Your account has been suspended. Please contact support.' });
+        }
+
+        // Issue access & refresh tokens
+        const { accessToken } = await issueAuthTokens(res, user, userRole);
+
+        // Dynamic redirectUrl based strictly on retrieved database role
+        const dynamicRedirectUrl = (userRole === 'employer') ? '/employer.html' : ((userRole === 'admin' || userRole === 'super_admin') ? '/admin.html' : '/seeker.html');
 
         res.status(200).json({
             message: 'Login successful',
             token: accessToken,
             accessToken,
+            redirectUrl: dynamicRedirectUrl,
             user: {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                role: user.role || foundRole,
-                account_status: user.account_status,
+                role: userRole,
+                company_name: user.company_name || null,
+                account_status: user.account_status || 'active',
                 profile_photo: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png',
                 profile_photo_url: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png'
             }
@@ -933,43 +950,55 @@ exports.googleCallback = (req, res, next) => {
             const isEmployer = rawState.includes('employer');
             const redirectBase = isEmployer ? '/employer.html' : '/';
 
-            const isNotFound = errorMsg.includes('Account not found') || errorMsg.includes('register first');
-            const isAlreadyExists = errorMsg.includes('already exists') || errorMsg.includes('already registered');
-            const modeParam = isNotFound ? '&openAuth=register' : (isAlreadyExists ? '&openAuth=login' : '');
-
-            return res.redirect(`${redirectBase}?error=${encodeURIComponent(errorMsg)}${modeParam}`);
+            return res.redirect(`${redirectBase}?error=${encodeURIComponent(errorMsg)}`);
         }
 
         try {
             const { accessToken: token } = await issueAuthTokens(res, user, user.role);
 
-            const redirectPage = user.role === 'employer' ? '/employer.html' : '/seeker.html';
-            const rolePrefix = user.role === 'employer' ? 'employer_' : 'seeker_';
+            // Dynamic redirect page based strictly on database role
+            const redirectPage = (user.role === 'employer') ? '/employer.html' : ((user.role === 'admin' || user.role === 'super_admin') ? '/admin.html' : '/seeker.html');
+            const userPayload = {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                company_name: user.company_name || null,
+                account_status: user.account_status || 'active'
+            };
 
             res.send(`<!DOCTYPE html>
 <html>
-<head><title>Google Authentication</title></head>
+<head><title>JobLink Ethiopia - Google Authentication</title></head>
 <body>
 <script>
-    localStorage.setItem('token', '${token}');
-    localStorage.setItem('user', JSON.stringify(${JSON.stringify({
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                company_name: user.company_name || null,
-                account_status: user.account_status || 'active'
-            })}));
-    localStorage.setItem('${rolePrefix}token', '${token}');
-    localStorage.setItem('${rolePrefix}user', JSON.stringify(${JSON.stringify({
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                company_name: user.company_name || null,
-                account_status: user.account_status || 'active'
-            })}));
-    window.location.href = '${redirectPage}';
+    const userObj = ${JSON.stringify(userPayload)};
+    const token = '${token}';
+    const role = '${user.role}';
+
+    // Clear stale auth for the opposing role to prevent dashboard redirect collisions
+    if (role === 'employer') {
+        localStorage.removeItem('seeker_token');
+        localStorage.removeItem('seeker_user');
+        sessionStorage.removeItem('seeker_token');
+        sessionStorage.removeItem('seeker_user');
+        localStorage.setItem('employer_token', token);
+        localStorage.setItem('employer_user', JSON.stringify(userObj));
+    } else {
+        localStorage.removeItem('employer_token');
+        localStorage.removeItem('employer_user');
+        sessionStorage.removeItem('employer_token');
+        sessionStorage.removeItem('employer_user');
+        localStorage.setItem('seeker_token', token);
+        localStorage.setItem('seeker_user', JSON.stringify(userObj));
+    }
+
+    localStorage.setItem('token', token);
+    localStorage.setItem('accessToken', token);
+    localStorage.setItem('user', JSON.stringify(userObj));
+
+    // Dynamic redirect to correct dashboard
+    window.location.replace('${redirectPage}');
 </script>
 </body>
 </html>`);
@@ -1037,7 +1066,21 @@ exports.seekerRegister = async (req, res) => {
 exports.seekerLogin = async (req, res) => {
     const { email, password } = req.body;
     try {
-        const [users] = await pool.query('SELECT * FROM job_seekers WHERE email = ?', [email]);
+        const cleanEmail = String(email || '').toLowerCase().trim();
+        let [users] = await pool.query('SELECT * FROM job_seekers WHERE email = ?', [cleanEmail]);
+        let actualRole = 'job_seeker';
+        let tableName = 'job_seekers';
+
+        // Dynamic fallback: If not in job_seekers, check employers table
+        if (users.length === 0) {
+            const [empUsers] = await pool.query('SELECT * FROM employers WHERE email = ?', [cleanEmail]);
+            if (empUsers.length > 0) {
+                users = empUsers;
+                actualRole = 'employer';
+                tableName = 'employers';
+            }
+        }
+
         if (users.length === 0) return res.status(401).json({ message: 'Invalid email or password' });
 
         const user = users[0];
@@ -1050,29 +1093,32 @@ exports.seekerLogin = async (req, res) => {
         if (!isMatch) {
             let failedAttempts = (user.failed_login_attempts || 0) + 1;
             if (failedAttempts >= 10) {
-                await pool.query('UPDATE job_seekers SET failed_login_attempts = ?, locked_until = DATE_ADD(NOW(), INTERVAL 15 MINUTE) WHERE id = ?', [failedAttempts, user.id]);
+                await pool.query(`UPDATE ${tableName} SET failed_login_attempts = ?, locked_until = DATE_ADD(NOW(), INTERVAL 15 MINUTE) WHERE id = ?`, [failedAttempts, user.id]);
             } else {
-                await pool.query('UPDATE job_seekers SET failed_login_attempts = ? WHERE id = ?', [failedAttempts, user.id]);
+                await pool.query(`UPDATE ${tableName} SET failed_login_attempts = ? WHERE id = ?`, [failedAttempts, user.id]);
             }
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
         if (user.failed_login_attempts > 0 || user.locked_until) {
-            await pool.query('UPDATE job_seekers SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?', [user.id]);
+            await pool.query(`UPDATE ${tableName} SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?`, [user.id]);
         }
 
-        user.role = 'job_seeker';
-        const { accessToken } = await issueAuthTokens(res, user, 'job_seeker');
+        user.role = actualRole;
+        const { accessToken } = await issueAuthTokens(res, user, actualRole);
+        const dynamicRedirectUrl = (actualRole === 'employer') ? '/employer.html' : '/seeker.html';
 
         res.status(200).json({
             message: 'Login successful',
             token: accessToken,
             accessToken,
+            redirectUrl: dynamicRedirectUrl,
             user: {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                role: 'job_seeker',
+                role: actualRole,
+                company_name: user.company_name || null,
                 account_status: user.account_status,
                 profile_photo: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png',
                 profile_photo_url: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png'
@@ -1223,7 +1269,21 @@ exports.employerRegister = async (req, res) => {
 exports.employerLogin = async (req, res) => {
     const { email, password } = req.body;
     try {
-        const [users] = await pool.query('SELECT * FROM employers WHERE email = ?', [email]);
+        const cleanEmail = String(email || '').toLowerCase().trim();
+        let [users] = await pool.query('SELECT * FROM employers WHERE email = ?', [cleanEmail]);
+        let actualRole = 'employer';
+        let tableName = 'employers';
+
+        // Dynamic fallback: If not in employers, check job_seekers table
+        if (users.length === 0) {
+            const [seekerUsers] = await pool.query('SELECT * FROM job_seekers WHERE email = ?', [cleanEmail]);
+            if (seekerUsers.length > 0) {
+                users = seekerUsers;
+                actualRole = 'job_seeker';
+                tableName = 'job_seekers';
+            }
+        }
+
         if (users.length === 0) return res.status(401).json({ message: 'Invalid email or password' });
 
         const user = users[0];
@@ -1236,31 +1296,33 @@ exports.employerLogin = async (req, res) => {
         if (!isMatch) {
             let failedAttempts = (user.failed_login_attempts || 0) + 1;
             if (failedAttempts >= 10) {
-                await pool.query('UPDATE employers SET failed_login_attempts = ?, locked_until = DATE_ADD(NOW(), INTERVAL 15 MINUTE) WHERE id = ?', [failedAttempts, user.id]);
+                await pool.query(`UPDATE ${tableName} SET failed_login_attempts = ?, locked_until = DATE_ADD(NOW(), INTERVAL 15 MINUTE) WHERE id = ?`, [failedAttempts, user.id]);
             } else {
-                await pool.query('UPDATE employers SET failed_login_attempts = ? WHERE id = ?', [failedAttempts, user.id]);
+                await pool.query(`UPDATE ${tableName} SET failed_login_attempts = ? WHERE id = ?`, [failedAttempts, user.id]);
             }
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
         if (user.failed_login_attempts > 0 || user.locked_until) {
-            await pool.query('UPDATE employers SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?', [user.id]);
+            await pool.query(`UPDATE ${tableName} SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?`, [user.id]);
         }
 
-        user.role = 'employer';
-        const { accessToken } = await issueAuthTokens(res, user, 'employer');
+        user.role = actualRole;
+        const { accessToken } = await issueAuthTokens(res, user, actualRole);
+        const dynamicRedirectUrl = (actualRole === 'employer') ? '/employer.html' : '/seeker.html';
 
         res.status(200).json({
             message: 'Login successful',
             token: accessToken,
             accessToken,
+            redirectUrl: dynamicRedirectUrl,
             user: {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                role: 'employer',
-                account_status: user.account_status,
+                role: actualRole,
                 company_name: user.company_name,
+                account_status: user.account_status,
                 profile_photo: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png',
                 profile_photo_url: user.profile_photo || user.profile_photo_url || '/uploads/default-avatar.png'
             }

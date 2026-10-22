@@ -626,7 +626,7 @@
   <!-- Auth Modal -->
   <div id="login-modal" class="modal-overlay hidden">
     <div class="modal-content card">
-      <div class="flex justify-between items-center auth-modal-header">
+      <div class="flex justify-between items-center auth-modal-header mb-4">
         <h2 class="text-xl font-bold text-slate-900" id="auth-title">
           Sign In
         </h2>
@@ -634,6 +634,20 @@
           <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
+        </button>
+      </div>
+
+      <!-- Role Selection Segmented Control -->
+      <div class="auth-role-switch mb-4" id="auth-role-switch" role="tablist">
+        <button type="button" class="role-switch-btn" data-action="switch-auth-role" data-role="job_seeker"
+          id="role-tab-seeker" role="tab" aria-selected="false">
+          <i class="fa-solid fa-user-graduate mr-1.5"></i>
+          <span>I am a Job Seeker</span>
+        </button>
+        <button type="button" class="role-switch-btn active" data-action="switch-auth-role" data-role="employer"
+          id="role-tab-employer" role="tab" aria-selected="true">
+          <i class="fa-solid fa-briefcase mr-1.5"></i>
+          <span>I am an Employer</span>
         </button>
       </div>
 
