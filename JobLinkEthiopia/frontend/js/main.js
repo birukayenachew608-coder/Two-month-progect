@@ -116,9 +116,36 @@ window.getEmployerAuth = getEmployerAuth;
 window.setEmployerAuth = setEmployerAuth;
 window.clearEmployerAuth = clearEmployerAuth;
 
+// Clean Slate: Wipe all previous auth tokens and session data from storage
+function clearAuthSessionData() {
+  const authKeys = [
+    'token', 'accessToken', 'user',
+    'seeker_token', 'seeker_user',
+    'employer_token', 'employer_user',
+    'admin_token', 'admin_user'
+  ];
+  authKeys.forEach(k => {
+    try {
+      localStorage.removeItem(k);
+      sessionStorage.removeItem(k);
+    } catch (e) {}
+  });
+}
+window.clearAuthSessionData = clearAuthSessionData;
+
 // Global Auth Role State & Active Toggle Helper
 window.selectedAuthRole = (typeof window !== 'undefined' && window.location.pathname.includes('employer.html')) ? 'employer' : 'job_seeker';
 function getActiveRoleToggle() {
+  // First prioritize the active toggle tab in the visible modal
+  const modal = document.querySelector('#login-modal:not(.hidden), .modal-overlay:not(.hidden)');
+  if (modal) {
+    const activeModalBtn = modal.querySelector('.role-switch-btn.active');
+    if (activeModalBtn) {
+      const r = activeModalBtn.getAttribute('data-role');
+      if (r === 'employer' || r === 'job_seeker') return r;
+    }
+  }
+
   const activeBtn = document.querySelector('#auth-role-switch .role-switch-btn.active, .role-switch-btn.active');
   if (activeBtn) {
     const r = activeBtn.getAttribute('data-role');
@@ -130,9 +157,33 @@ function getActiveRoleToggle() {
   if (window.selectedAuthRole === 'employer' || window.selectedAuthRole === 'job_seeker') {
     return window.selectedAuthRole;
   }
-  return 'job_seeker';
+  return (typeof window !== 'undefined' && window.location.pathname.includes('employer.html')) ? 'employer' : 'job_seeker';
 }
 window.getActiveRoleToggle = getActiveRoleToggle;
+
+// Handle Google OAuth Initiation with Dynamic Role & Clean Slate
+function handleGoogleOAuth(e, btn) {
+  if (e) {
+    if (e.preventDefault) e.preventDefault();
+    if (e.stopPropagation) e.stopPropagation();
+  }
+  // Clean Slate: wipe all old tokens and session data before initiating OAuth request
+  clearAuthSessionData();
+
+  // Dynamically retrieve active toggle state (role)
+  const activeGoogleRole = getActiveRoleToggle();
+  const currentMode = (typeof isRegisterMode !== 'undefined' && isRegisterMode) ? 'register' : ((btn && btn.getAttribute('data-action-mode')) || 'login');
+  const targetUrl = `/auth/google?action=${currentMode}&role=${activeGoogleRole}&state=${currentMode}:${activeGoogleRole}`;
+
+  if (btn && btn.setAttribute) {
+    btn.setAttribute('href', targetUrl);
+    btn.setAttribute('data-role', activeGoogleRole);
+    btn.setAttribute('data-action-mode', currentMode);
+  }
+
+  window.location.href = targetUrl;
+}
+window.handleGoogleOAuth = handleGoogleOAuth;
 
 // Helper: Open Modal by ID
 window.openModal = function (modalId) {
@@ -2091,10 +2142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.toggleSaveJob(saveJobId, btn);
         break;
       case 'google-auth':
-        e.preventDefault();
-        const activeGoogleRole = getActiveRoleToggle();
-        const currentMode = isRegisterMode ? 'register' : (btn.getAttribute('data-action-mode') || 'login');
-        window.location.href = `/auth/google?action=${currentMode}&role=${activeGoogleRole}&state=${currentMode}:${activeGoogleRole}`;
+        handleGoogleOAuth(e, btn);
         break;
       case 'linkedin-auth':
         if (btn) {
@@ -2362,22 +2410,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           window.selectedAuthRole = selectedAuthRole;
         }
 
-        if (selectedAuthRole === 'employer') {
-          const empAuth = getEmployerAuth();
-          if (empAuth.token && empAuth.user) {
-            showToast('You are already logged into Employer Portal!', 'success');
-            window.location.href = 'employer.html';
-            break;
-          }
-        } else if (selectedAuthRole === 'job_seeker') {
-          const seekerAuth = getSeekerAuth();
-          if (seekerAuth.token && seekerAuth.user) {
-            showToast('You are already logged into Job Seeker Portal!', 'success');
-            window.location.href = 'seeker.html';
-            break;
-          }
-        }
-
         const redirect = redirectAttr;
         const mode = btn.getAttribute('data-mode') || 'login';
         loginRedirectUrl = redirect || (selectedAuthRole === 'employer' ? 'employer.html' : 'seeker.html');
@@ -2514,24 +2546,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Explicitly bind click event on 'Continue with Google' buttons
-  document.querySelectorAll('#btn-google-auth, #btn-google-auth-employer, [data-action="google-auth"]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const activeGoogleRole = getActiveRoleToggle();
-      const currentMode = isRegisterMode ? 'register' : (btn.getAttribute('data-action-mode') || 'login');
-      window.location.href = `/auth/google?action=${currentMode}&role=${activeGoogleRole}&state=${currentMode}:${activeGoogleRole}`;
-    });
-  });
-
-  // Delegated listener for Google OAuth button in auth modal
+  // Delegated listener for Google OAuth buttons with Clean Slate & Dynamic Role
   document.addEventListener('click', (e) => {
     const googleBtn = e.target.closest('#btn-google-auth, #btn-google-auth-employer, [data-action="google-auth"]');
     if (googleBtn) {
-      e.preventDefault();
-      const activeGoogleRole = getActiveRoleToggle();
-      const currentMode = isRegisterMode ? 'register' : (googleBtn.getAttribute('data-action-mode') || 'login');
-      window.location.href = `/auth/google?action=${currentMode}&role=${activeGoogleRole}&state=${currentMode}:${activeGoogleRole}`;
+      handleGoogleOAuth(e, googleBtn);
     }
   });
 
@@ -2873,6 +2892,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // Normal Login Logic: unified login endpoint passing active toggle role hint
+      // Clean Slate: wipe all old tokens and session data before initiating login
+      clearAuthSessionData();
+
       const endpoint = '/api/auth/login';
       const payload = { email, password, role: activeRole };
 

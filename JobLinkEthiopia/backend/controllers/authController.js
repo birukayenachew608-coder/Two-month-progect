@@ -42,11 +42,15 @@ const issueAuthTokens = async (res, user, role) => {
         maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    // Also attach role-specific cookies for backward compatibility
+    // Also attach role-specific cookies and wipe opposing role cookies for complete clean slate
     if (userRole === 'job_seeker') {
+        res.clearCookie('employer_accessToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+        res.clearCookie('employer_refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
         res.cookie('seeker_accessToken', accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 15 * 60 * 1000 });
         res.cookie('seeker_refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
     } else if (userRole === 'employer') {
+        res.clearCookie('seeker_accessToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+        res.clearCookie('seeker_refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
         res.cookie('employer_accessToken', accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 15 * 60 * 1000 });
         res.cookie('employer_refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
     } else {
@@ -80,18 +84,21 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                 return done(new Error('Google did not return user email or ID'), null);
             }
 
-            // Retrieve the state parameter to know intended role from frontend toggle
+            // Retrieve the state parameter or query to know intended role from frontend toggle
             const rawState = (req.query && req.query.state) ? String(req.query.state).trim() : '';
+            const reqRole = (req.query && req.query.role) ? String(req.query.role).toLowerCase().trim() : '';
             let intendedRole = 'job_seeker';
 
-            if (rawState.includes(':')) {
+            if (reqRole === 'employer') {
+                intendedRole = 'employer';
+            } else if (rawState.includes(':')) {
                 const parts = rawState.split(':');
                 intendedRole = parts[1].toLowerCase().trim() === 'employer' ? 'employer' : 'job_seeker';
             } else if (rawState.includes('|')) {
                 const parts = rawState.split('|');
                 intendedRole = parts[1].toLowerCase().trim() === 'employer' ? 'employer' : 'job_seeker';
-            } else {
-                if (rawState.toLowerCase().includes('employer')) intendedRole = 'employer';
+            } else if (rawState.toLowerCase().includes('employer')) {
+                intendedRole = 'employer';
             }
 
             // Query existing users across all tables
@@ -104,73 +111,91 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                 return done(null, false, { message: 'Administrator accounts must sign in using email and password' });
             }
 
-            // 2. EXISTING USER: Check if user exists in employers table (regardless of toggle state)
-            if (employers.length > 0) {
-                const user = employers[0];
-                user.role = 'employer';
-                if (!user.google_id) {
-                    await pool.query('UPDATE employers SET google_id = ? WHERE id = ?', [googleId, user.id]);
-                    user.google_id = googleId;
-                    try {
-                        await pool.query('UPDATE users SET google_id = ? WHERE email = ?', [googleId, email]);
-                    } catch (e) { }
-                }
-                return done(null, user);
-            }
-
-            // 3. EXISTING USER: Check if user exists in job_seekers table (regardless of toggle state)
-            if (seekers.length > 0) {
-                const user = seekers[0];
-                user.role = 'job_seeker';
-                if (!user.google_id) {
-                    await pool.query('UPDATE job_seekers SET google_id = ? WHERE id = ?', [googleId, user.id]);
-                    user.google_id = googleId;
-                    try {
-                        await pool.query('UPDATE users SET google_id = ? WHERE email = ?', [googleId, email]);
-                    } catch (e) { }
-                }
-                return done(null, user);
-            }
-
-            // 4. NEW USER: Save with the active role state passed from the frontend toggle
-            let newUser = null;
+            // 2. Strict Role Enforcement: strictly use intendedRole
             if (intendedRole === 'employer') {
+                // If user already exists in employers table
+                if (employers.length > 0) {
+                    const user = employers[0];
+                    user.role = 'employer';
+                    if (!user.google_id) {
+                        await pool.query('UPDATE employers SET google_id = ? WHERE id = ?', [googleId, user.id]);
+                        user.google_id = googleId;
+                    }
+                    if (!user.profile_photo_url && photo) {
+                        await pool.query('UPDATE employers SET profile_photo_url = ? WHERE id = ?', [photo, user.id]);
+                        user.profile_photo_url = photo;
+                    }
+                    try {
+                        await pool.query(
+                            'INSERT INTO users (name, full_name, email, google_id, role, account_status, is_approved) VALUES (?, ?, ?, ?, "employer", "active", TRUE) ON DUPLICATE KEY UPDATE google_id = VALUES(google_id), role = "employer"',
+                            [user.name || name, user.name || name, email, googleId]
+                        );
+                    } catch (e) { }
+                    return done(null, user);
+                }
+
+                // If user does not have an employer account yet, create a new profile specifically for employer
                 const [result] = await pool.query(
                     'INSERT INTO employers (name, email, password, google_id, company_name, profile_photo_url, is_email_verified, account_status) VALUES (?, ?, ?, ?, ?, ?, true, ?)',
                     [name, email, 'google_oauth_user', googleId, name, photo, 'active']
                 );
                 const [newEmployers] = await pool.query('SELECT * FROM employers WHERE id = ?', [result.insertId]);
-                newUser = newEmployers[0];
+                const newUser = newEmployers[0];
                 newUser.role = 'employer';
 
                 try {
                     await pool.query(
-                        'INSERT INTO users (name, full_name, email, google_id, role, account_status, is_approved) VALUES (?, ?, ?, ?, ?, ?, TRUE) ON DUPLICATE KEY UPDATE google_id = VALUES(google_id)',
+                        'INSERT INTO users (name, full_name, email, google_id, role, account_status, is_approved) VALUES (?, ?, ?, ?, ?, ?, TRUE) ON DUPLICATE KEY UPDATE google_id = VALUES(google_id), role = "employer"',
                         [name, name, email, googleId, 'employer', 'active']
                     );
                 } catch (e) {
                     console.error('Users table sync error:', e);
                 }
+
+                return done(null, newUser);
             } else {
+                // intendedRole is job_seeker
+                // If user already exists in job_seekers table
+                if (seekers.length > 0) {
+                    const user = seekers[0];
+                    user.role = 'job_seeker';
+                    if (!user.google_id) {
+                        await pool.query('UPDATE job_seekers SET google_id = ? WHERE id = ?', [googleId, user.id]);
+                        user.google_id = googleId;
+                    }
+                    if (!user.profile_photo_url && photo) {
+                        await pool.query('UPDATE job_seekers SET profile_photo_url = ? WHERE id = ?', [photo, user.id]);
+                        user.profile_photo_url = photo;
+                    }
+                    try {
+                        await pool.query(
+                            'INSERT INTO users (name, full_name, email, google_id, role, account_status, is_approved) VALUES (?, ?, ?, ?, "job_seeker", "active", TRUE) ON DUPLICATE KEY UPDATE google_id = VALUES(google_id), role = "job_seeker"',
+                            [user.name || name, user.name || name, email, googleId]
+                        );
+                    } catch (e) { }
+                    return done(null, user);
+                }
+
+                // If user does not have a job seeker account yet, create a new profile specifically for job_seeker
                 const [result] = await pool.query(
                     'INSERT INTO job_seekers (name, email, password, google_id, profile_photo_url, is_email_verified, account_status) VALUES (?, ?, ?, ?, ?, true, ?)',
                     [name, email, 'google_oauth_user', googleId, photo, 'active']
                 );
                 const [newUsers] = await pool.query('SELECT * FROM job_seekers WHERE id = ?', [result.insertId]);
-                newUser = newUsers[0];
+                const newUser = newUsers[0];
                 newUser.role = 'job_seeker';
 
                 try {
                     await pool.query(
-                        'INSERT INTO users (name, full_name, email, google_id, role, account_status, is_approved) VALUES (?, ?, ?, ?, ?, ?, TRUE) ON DUPLICATE KEY UPDATE google_id = VALUES(google_id)',
+                        'INSERT INTO users (name, full_name, email, google_id, role, account_status, is_approved) VALUES (?, ?, ?, ?, ?, ?, TRUE) ON DUPLICATE KEY UPDATE google_id = VALUES(google_id), role = "job_seeker"',
                         [name, name, email, googleId, 'job_seeker', 'active']
                     );
                 } catch (e) {
                     console.error('Users table sync error:', e);
                 }
-            }
 
-            return done(null, newUser);
+                return done(null, newUser);
+            }
         } catch (err) {
             console.error('Google OAuth Strategy Error:', err);
             return done(err, null);
@@ -237,18 +262,37 @@ exports.login = async (req, res) => {
         const [seekers] = await pool.query('SELECT * FROM job_seekers WHERE email = ?', [cleanEmail]);
         const [admins] = await pool.query('SELECT * FROM admins WHERE email = ?', [cleanEmail]);
 
-        // Prioritize checking table based on role hint if supplied, but always fallback to all tables
+        // Strict Role Checking: validate the requested role from the UI against the database.
+        // If a user has the 'Employer' tab active but enters an email registered only as a 'Job Seeker',
+        // fail with 'No employer account found with this email.'
+        // If a user has the 'Job Seeker' tab active but enters an email registered only as an 'Employer',
+        // fail with 'No job seeker account found with this email.'
         const candidateList = [];
-        if (role === 'employer') {
-            if (employers.length > 0) candidateList.push({ data: employers[0], role: 'employer', table: 'employers' });
-            if (seekers.length > 0) candidateList.push({ data: seekers[0], role: 'job_seeker', table: 'job_seekers' });
-            if (admins.length > 0) candidateList.push({ data: admins[0], role: admins[0].role || 'admin', table: 'admins' });
-        } else if (role === 'admin' || role === 'super_admin') {
-            if (admins.length > 0) candidateList.push({ data: admins[0], role: admins[0].role || 'admin', table: 'admins' });
-            if (employers.length > 0) candidateList.push({ data: employers[0], role: 'employer', table: 'employers' });
-            if (seekers.length > 0) candidateList.push({ data: seekers[0], role: 'job_seeker', table: 'job_seekers' });
+        const normalizedRole = role ? String(role).toLowerCase().trim() : null;
+
+        if (normalizedRole === 'employer') {
+            if (employers.length === 0) {
+                if (seekers.length > 0) {
+                    return res.status(401).json({ message: 'No employer account found with this email.' });
+                }
+                return res.status(401).json({ message: 'Invalid credentials' });
+            }
+            candidateList.push({ data: employers[0], role: 'employer', table: 'employers' });
+        } else if (normalizedRole === 'job_seeker' || normalizedRole === 'seeker' || normalizedRole === 'jobseeker') {
+            if (seekers.length === 0) {
+                if (employers.length > 0) {
+                    return res.status(401).json({ message: 'No job seeker account found with this email.' });
+                }
+                return res.status(401).json({ message: 'Invalid credentials' });
+            }
+            candidateList.push({ data: seekers[0], role: 'job_seeker', table: 'job_seekers' });
+        } else if (normalizedRole === 'admin' || normalizedRole === 'super_admin') {
+            if (admins.length === 0) {
+                return res.status(401).json({ message: 'Invalid credentials' });
+            }
+            candidateList.push({ data: admins[0], role: admins[0].role || 'admin', table: 'admins' });
         } else {
-            // Default preference: check seekers first, then employers, then admins
+            // Fallback only when no role is specified
             if (seekers.length > 0) candidateList.push({ data: seekers[0], role: 'job_seeker', table: 'job_seekers' });
             if (employers.length > 0) candidateList.push({ data: employers[0], role: 'employer', table: 'employers' });
             if (admins.length > 0) candidateList.push({ data: admins[0], role: admins[0].role || 'admin', table: 'admins' });
@@ -933,6 +977,18 @@ exports.googleAuth = (req, res, next) => {
     const normalizedRole = (role === 'employer') ? 'employer' : 'job_seeker';
     const statePayload = `${action}:${normalizedRole}`;
 
+    // Clean Slate: clear all existing auth cookies before starting OAuth handshake
+    res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+    res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' });
+    res.clearCookie('seeker_accessToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+    res.clearCookie('seeker_refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+    res.clearCookie('employer_accessToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+    res.clearCookie('employer_refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+        return res.redirect(`/?error=${encodeURIComponent('Google OAuth is not configured on this server.')}`);
+    }
+
     passport.authenticate('google', {
         scope: ['profile', 'email'],
         state: statePayload,
@@ -976,19 +1032,24 @@ exports.googleCallback = (req, res, next) => {
     const token = '${token}';
     const role = '${user.role}';
 
-    // Clear stale auth for the opposing role to prevent dashboard redirect collisions
+    // Clean Slate: wipe all old tokens and session data across the board
+    const authKeys = [
+        'token', 'accessToken', 'user',
+        'seeker_token', 'seeker_user',
+        'employer_token', 'employer_user',
+        'admin_token', 'admin_user'
+    ];
+    authKeys.forEach(k => {
+        try {
+            localStorage.removeItem(k);
+            sessionStorage.removeItem(k);
+        } catch (e) {}
+    });
+
     if (role === 'employer') {
-        localStorage.removeItem('seeker_token');
-        localStorage.removeItem('seeker_user');
-        sessionStorage.removeItem('seeker_token');
-        sessionStorage.removeItem('seeker_user');
         localStorage.setItem('employer_token', token);
         localStorage.setItem('employer_user', JSON.stringify(userObj));
     } else {
-        localStorage.removeItem('employer_token');
-        localStorage.removeItem('employer_user');
-        sessionStorage.removeItem('employer_token');
-        sessionStorage.removeItem('employer_user');
         localStorage.setItem('seeker_token', token);
         localStorage.setItem('seeker_user', JSON.stringify(userObj));
     }
@@ -1067,21 +1128,18 @@ exports.seekerLogin = async (req, res) => {
     const { email, password } = req.body;
     try {
         const cleanEmail = String(email || '').toLowerCase().trim();
-        let [users] = await pool.query('SELECT * FROM job_seekers WHERE email = ?', [cleanEmail]);
-        let actualRole = 'job_seeker';
-        let tableName = 'job_seekers';
+        const [users] = await pool.query('SELECT * FROM job_seekers WHERE email = ?', [cleanEmail]);
 
-        // Dynamic fallback: If not in job_seekers, check employers table
         if (users.length === 0) {
-            const [empUsers] = await pool.query('SELECT * FROM employers WHERE email = ?', [cleanEmail]);
+            const [empUsers] = await pool.query('SELECT id FROM employers WHERE email = ?', [cleanEmail]);
             if (empUsers.length > 0) {
-                users = empUsers;
-                actualRole = 'employer';
-                tableName = 'employers';
+                return res.status(401).json({ message: 'No job seeker account found with this email.' });
             }
+            return res.status(401).json({ message: 'Invalid email or password' });
         }
 
-        if (users.length === 0) return res.status(401).json({ message: 'Invalid email or password' });
+        const actualRole = 'job_seeker';
+        const tableName = 'job_seekers';
 
         const user = users[0];
 
@@ -1270,21 +1328,18 @@ exports.employerLogin = async (req, res) => {
     const { email, password } = req.body;
     try {
         const cleanEmail = String(email || '').toLowerCase().trim();
-        let [users] = await pool.query('SELECT * FROM employers WHERE email = ?', [cleanEmail]);
-        let actualRole = 'employer';
-        let tableName = 'employers';
+        const [users] = await pool.query('SELECT * FROM employers WHERE email = ?', [cleanEmail]);
 
-        // Dynamic fallback: If not in employers, check job_seekers table
         if (users.length === 0) {
-            const [seekerUsers] = await pool.query('SELECT * FROM job_seekers WHERE email = ?', [cleanEmail]);
+            const [seekerUsers] = await pool.query('SELECT id FROM job_seekers WHERE email = ?', [cleanEmail]);
             if (seekerUsers.length > 0) {
-                users = seekerUsers;
-                actualRole = 'job_seeker';
-                tableName = 'job_seekers';
+                return res.status(401).json({ message: 'No employer account found with this email.' });
             }
+            return res.status(401).json({ message: 'Invalid email or password' });
         }
 
-        if (users.length === 0) return res.status(401).json({ message: 'Invalid email or password' });
+        const actualRole = 'employer';
+        const tableName = 'employers';
 
         const user = users[0];
 
