@@ -194,9 +194,19 @@ function handleGoogleOAuth(e, btn) {
 
   // Dynamically retrieve active toggle state (role)
   const activeGoogleRole = getActiveRoleToggle();
-  const currentMode = (typeof isRegisterMode !== 'undefined' && isRegisterMode) ? 'register' : ((btn && btn.getAttribute('data-action-mode')) || 'login');
 
-  console.log('[Frontend Google OAuth] Intercepted Google click. Intended Role:', activeGoogleRole, '| Mode:', currentMode);
+  // Explicit Login vs. Register Intents
+  let currentMode = 'login';
+  if (typeof isRegisterMode !== 'undefined' && isRegisterMode) {
+    currentMode = 'register';
+  } else if (btn) {
+    const btnMode = btn.getAttribute('data-action-mode') || btn.getAttribute('data-mode') || '';
+    if (btnMode.toLowerCase() === 'register') {
+      currentMode = 'register';
+    }
+  }
+
+  console.log('[Frontend Google OAuth] Intercepted Google click. Intended Role:', activeGoogleRole, '| Action/Intent:', currentMode);
 
   const targetUrl = `/auth/google?action=${currentMode}&role=${activeGoogleRole}&state=${currentMode}:${activeGoogleRole}&prompt=select_account%20consent`;
 
@@ -206,7 +216,7 @@ function handleGoogleOAuth(e, btn) {
     btn.setAttribute('data-action-mode', currentMode);
   }
 
-  // Actively navigate with intended role to Google OAuth endpoint
+  // Actively navigate with intended role and intent to Google OAuth endpoint
   window.location.href = targetUrl;
 }
 window.handleGoogleOAuth = handleGoogleOAuth;
@@ -2665,13 +2675,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const googleBtn = document.getElementById('btn-google-auth');
+    const googleButtonLabel = isRegisterMode ? 'Register with Google' : 'Sign in with Google';
     if (googleBtn) {
       googleBtn.setAttribute('href', googleAuthUrl);
       googleBtn.setAttribute('data-role', normalizedRole);
       googleBtn.setAttribute('data-action-mode', currentAction);
       const googleSpan = googleBtn.querySelector('span');
       if (googleSpan) {
-        googleSpan.textContent = isRegisterMode ? `Sign up with Google as ${roleText}` : 'Continue with Google';
+        googleSpan.textContent = googleButtonLabel;
       }
     }
 
@@ -2682,7 +2693,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       googleEmployerBtn.setAttribute('data-action-mode', currentAction);
       const googleSpan = googleEmployerBtn.querySelector('span');
       if (googleSpan) {
-        googleSpan.textContent = isRegisterMode ? `Sign up with Google as ${roleText}` : 'Continue with Google';
+        googleSpan.textContent = googleButtonLabel;
       }
     }
 
