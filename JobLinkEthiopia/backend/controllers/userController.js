@@ -446,4 +446,9 @@ exports.getPublicEmployerProfile = async (req, res) => {
     }
 };
 
+// Aliases for maximum compatibility
+exports.getEmployerProfile = exports.getPublicEmployerProfile;
+exports.getEmployerById = exports.getPublicEmployerProfile;
+
+
 

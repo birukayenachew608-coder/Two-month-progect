@@ -207,3 +207,39 @@ exports.deleteEmployerMessage = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+/**
+ * GET /api/employer/:id or /api/employer/public/:id
+ * Fetch public employer profile by ID with associated active job postings
+ */
+exports.getPublicEmployerProfile = async (req, res) => {
+    const rawId = req.params.id || req.params.employerId;
+    const id = Number(rawId);
+    if (!rawId || isNaN(id) || id <= 0) {
+        return res.status(400).json({ message: 'Invalid or missing employer ID.' });
+    }
+    try {
+        const [employers] = await pool.query(
+            'SELECT id, name, contact_person, company_name, email, phone_number, location, headquarters_location, about_company, bio, profile_photo, profile_photo_url, account_status, created_at FROM employers WHERE id = ?',
+            [id]
+        );
+        if (employers.length === 0) {
+            return res.status(404).json({ message: 'Employer not found' });
+        }
+        const employer = employers[0];
+        const [jobs] = await pool.query(
+            "SELECT * FROM jobs WHERE employer_id = ? AND status = 'active' ORDER BY created_at DESC",
+            [id]
+        );
+        employer.jobs = jobs;
+        res.status(200).json(employer);
+    } catch (error) {
+        console.error('Error fetching public employer profile:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+// Aliases for maximum compatibility
+exports.getEmployerProfile = exports.getPublicEmployerProfile;
+exports.getEmployerById = exports.getPublicEmployerProfile;
+

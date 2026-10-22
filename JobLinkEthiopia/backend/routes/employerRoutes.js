@@ -10,8 +10,14 @@ const seekerController = require('../controllers/seekerController');
 const { handleImageUpload } = require('./userRoutes');
 
 // Public Employer Profiles (no auth required for public viewing)
-router.get('/public/:id', userController.getPublicEmployerProfile);
-router.get('/:id(\\d+)', userController.getPublicEmployerProfile);
+router.get('/public/:id', employerController.getPublicEmployerProfile);
+router.get('/:id', (req, res, next) => {
+    // If id is not numeric (e.g. 'stats', 'jobs', 'profile', 'messages'), pass through to authenticated dashboard routes
+    if (!/^\d+$/.test(req.params.id)) {
+        return next();
+    }
+    return employerController.getPublicEmployerProfile(req, res, next);
+});
 
 // Secure all employer dashboard routes strictly with requireEmployer
 router.use(requireEmployer);
@@ -43,8 +49,5 @@ router.get('/applicant/:id', seekerController.getProfile);
 router.get('/seeker/:id', seekerController.getProfile);
 router.get('/seekers/:id', seekerController.getProfile);
 router.get('/cv/:seekerId', seekerController.getCV);
-
-// Fallback for public employer profile
-router.get('/:id', userController.getPublicEmployerProfile);
 
 module.exports = router;
