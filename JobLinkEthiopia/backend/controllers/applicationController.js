@@ -2,7 +2,9 @@ const pool = require('../config/db');
 
 exports.applyForJob = async (req, res) => {
     let { job_id, seeker_id, message, cover_letter } = req.body;
-    if (!seeker_id && req.user) {
+    if (req.user && req.user.role === 'job_seeker') {
+        seeker_id = req.user.id;
+    } else if (!seeker_id && req.user) {
         seeker_id = req.user.id;
     }
 
@@ -48,7 +50,13 @@ exports.applyForJob = async (req, res) => {
 };
 
 exports.getEmployerApplications = async (req, res) => {
-    const { employerId } = req.params;
+    let { employerId } = req.params;
+    if (req.user && req.user.role === 'employer') {
+        if (employerId && Number(employerId) !== Number(req.user.id)) {
+            return res.status(403).json({ message: 'Forbidden. You can only view applications for your own company.' });
+        }
+        employerId = req.user.id;
+    }
 
     try {
         const [applications] = await pool.query(
@@ -74,7 +82,13 @@ exports.getEmployerApplications = async (req, res) => {
 };
 
 exports.getSeekerApplications = async (req, res) => {
-    const { seekerId } = req.params;
+    let { seekerId } = req.params;
+    if (req.user && req.user.role === 'job_seeker') {
+        if (seekerId && Number(seekerId) !== Number(req.user.id)) {
+            return res.status(403).json({ message: 'Forbidden. You can only view your own applications.' });
+        }
+        seekerId = req.user.id;
+    }
 
     try {
         const [applications] = await pool.query(
@@ -97,9 +111,16 @@ exports.withdrawApplication = async (req, res) => {
     const { id } = req.params;
 
     try {
-        const [result] = await pool.query('DELETE FROM applications WHERE id = ?', [id]);
+        let query = 'DELETE FROM applications WHERE id = ?';
+        let params = [id];
+        if (req.user && req.user.role === 'job_seeker') {
+            query += ' AND seeker_id = ?';
+            params.push(req.user.id);
+        }
+
+        const [result] = await pool.query(query, params);
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'Application not found' });
+            return res.status(404).json({ message: 'Application not found or unauthorized' });
         }
         res.status(200).json({ message: 'Application withdrawn successfully' });
     } catch (error) {
@@ -117,6 +138,16 @@ exports.updateApplicationStatus = async (req, res) => {
     }
 
     try {
+        if (req.user && req.user.role === 'employer') {
+            const [appCheck] = await pool.query(
+                'SELECT a.id FROM applications a JOIN jobs j ON a.job_id = j.id WHERE a.id = ? AND j.employer_id = ?',
+                [id, req.user.id]
+            );
+            if (appCheck.length === 0) {
+                return res.status(403).json({ message: 'Forbidden. You do not have permission to manage this application.' });
+            }
+        }
+
         // Lowercase the status to match the database ENUM ('pending', 'reviewed', 'rejected', 'hired', 'withdrawn')
         const [result] = await pool.query('UPDATE applications SET status = LOWER(?) WHERE id = ?', [status, id]);
         if (result.affectedRows === 0) {

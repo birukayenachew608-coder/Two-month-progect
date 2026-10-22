@@ -9,8 +9,9 @@ const employerController = require('../controllers/employerController');
 const seekerController = require('../controllers/seekerController');
 const { handleImageUpload } = require('./userRoutes');
 
-// Public Employer Profiles (no auth required)
+// Public Employer Profiles (no auth required for public viewing)
 router.get('/public/:id', userController.getPublicEmployerProfile);
+router.get('/:id(\\d+)', userController.getPublicEmployerProfile);
 
 // Secure all employer dashboard routes strictly with requireEmployer
 router.use(requireEmployer);

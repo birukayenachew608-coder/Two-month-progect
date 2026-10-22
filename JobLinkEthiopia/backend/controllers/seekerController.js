@@ -3,7 +3,10 @@ const fs = require('fs');
 const path = require('path');
 
 exports.uploadCV = async (req, res) => {
-    const seekerId = req.body.seekerId || (req.user && req.user.id);
+    let seekerId = req.user ? req.user.id : req.body.seekerId;
+    if (req.user && req.user.role === 'job_seeker') {
+        seekerId = req.user.id;
+    }
     if (!seekerId) {
         return res.status(400).json({ message: 'Seeker ID is required' });
     }
@@ -59,7 +62,13 @@ exports.getCV = async (req, res) => {
 };
 
 exports.deleteCV = async (req, res) => {
-    const seekerId = req.params.seekerId || req.params.id || (req.user && req.user.id) || req.body.seekerId;
+    let seekerId = req.params.seekerId || req.params.id || (req.user && req.user.id) || req.body.seekerId;
+    if (req.user && req.user.role === 'job_seeker') {
+        if (req.params.seekerId && Number(req.params.seekerId) !== Number(req.user.id)) {
+            return res.status(403).json({ message: 'Forbidden. You can only delete your own CV.' });
+        }
+        seekerId = req.user.id;
+    }
     if (!seekerId) {
         return res.status(400).json({ message: 'Seeker ID is required' });
     }

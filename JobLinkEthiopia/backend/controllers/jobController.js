@@ -560,7 +560,9 @@ exports.getJobById = async (req, res) => {
 
 exports.saveJob = async (req, res) => {
     let { seeker_id, job_id } = req.body;
-    if (!seeker_id && req.user) {
+    if (req.user && req.user.role === 'job_seeker') {
+        seeker_id = req.user.id;
+    } else if (!seeker_id && req.user) {
         seeker_id = req.user.id;
     }
     if (!job_id) {
@@ -586,7 +588,12 @@ exports.saveJob = async (req, res) => {
 
 exports.getSavedJobs = async (req, res) => {
     let { seekerId } = req.params;
-    if (!seekerId && req.user) {
+    if (req.user && req.user.role === 'job_seeker') {
+        if (seekerId && Number(seekerId) !== Number(req.user.id)) {
+            return res.status(403).json({ message: 'Forbidden. You can only view your own saved jobs.' });
+        }
+        seekerId = req.user.id;
+    } else if (!seekerId && req.user) {
         seekerId = req.user.id;
     }
     try {
@@ -610,6 +617,12 @@ exports.unsaveJob = async (req, res) => {
     if (!jobId && seekerId) {
         jobId = seekerId;
         seekerId = req.user ? req.user.id : null;
+    }
+    if (req.user && req.user.role === 'job_seeker') {
+        if (seekerId && Number(seekerId) !== Number(req.user.id)) {
+            return res.status(403).json({ message: 'Forbidden. You can only modify your own saved jobs.' });
+        }
+        seekerId = req.user.id;
     } else if (!seekerId && req.user) {
         seekerId = req.user.id;
     }
@@ -743,7 +756,15 @@ exports.getFreemiumStatus = async (req, res) => {
 };
 
 exports.getEmployerAnalytics = async (req, res) => {
-    const employerId = req.params.employerId || req.user?.id;
+    let employerId = req.params.employerId;
+    if (req.user && req.user.role === 'employer') {
+        if (employerId && Number(employerId) !== Number(req.user.id)) {
+            return res.status(403).json({ message: 'Forbidden. You can only view analytics for your own company.' });
+        }
+        employerId = req.user.id;
+    } else {
+        employerId = employerId || req.user?.id;
+    }
     try {
         const [activeRows] = await pool.query(
             "SELECT COUNT(*) AS activePostings FROM jobs WHERE employer_id = ? AND LOWER(status) = 'active'",
@@ -811,7 +832,12 @@ exports.withdrawJobReport = async (req, res) => {
 
 exports.getEmployerJobs = async (req, res) => {
     let employerId = req.user?.id || req.user?.employer_id;
-    if (!employerId && req.params.employerId) {
+    if (req.user && req.user.role === 'employer') {
+        if (req.params.employerId && Number(req.params.employerId) !== Number(req.user.id)) {
+            return res.status(403).json({ message: 'Forbidden. You can only view jobs for your own company.' });
+        }
+        employerId = req.user.id;
+    } else if (!employerId && req.params.employerId) {
         employerId = req.params.employerId;
     }
     if (!employerId && req.query.employer_id) {

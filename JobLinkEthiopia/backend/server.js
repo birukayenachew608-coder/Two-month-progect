@@ -26,7 +26,14 @@ const passport = require('passport');
 const fs = require('fs');
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (e.g. mobile apps, curl, server-to-server) or reflect origin
+        if (!origin) return callback(null, true);
+        return callback(null, true);
+    },
+    credentials: true
+}));
 app.use(express.json({
     limit: '15mb',
     verify: (req, res, buf) => {

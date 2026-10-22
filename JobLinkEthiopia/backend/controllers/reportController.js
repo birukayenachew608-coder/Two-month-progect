@@ -23,6 +23,7 @@ exports.createReport = async (req, res) => {
     const jobId = req.body.jobId || req.body.job_id || req.params.jobId || req.params.id;
     const { reason } = req.body;
     const targetUserId = (req.user && req.user.id) || extractUserId(req) || req.body.seeker_id || req.body.userId;
+    const userId = targetUserId ? Number(targetUserId) : null;
 
     if (!jobId) {
         return res.status(400).json({ message: 'Job ID is required' });
