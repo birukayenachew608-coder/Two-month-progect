@@ -172,3 +172,21 @@ exports.checkIpWhitelist = async (req, res, next) => {
         res.status(500).json({ message: 'Internal server error during IP check' });
     }
 };
+
+// 8. Dynamic Status Check for Job Seekers (blocks banned seekers from performing restricted actions)
+exports.checkNotBannedSeeker = async (req, res, next) => {
+    try {
+        const pool = require('../config/db');
+        const seekerId = (req.user && req.user.id) || req.body.seeker_id || req.body.userId;
+        if (seekerId) {
+            const [seekerRows] = await pool.query('SELECT account_status FROM job_seekers WHERE id = ?', [seekerId]);
+            if (seekerRows.length > 0 && String(seekerRows[0].account_status).toLowerCase() === 'banned') {
+                return res.status(403).json({ message: 'Your account is banned. You cannot perform this action.' });
+            }
+        }
+        next();
+    } catch (err) {
+        console.error('Banned seeker check error:', err);
+        next();
+    }
+};

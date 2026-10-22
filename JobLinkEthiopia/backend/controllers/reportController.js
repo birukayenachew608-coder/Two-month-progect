@@ -22,7 +22,7 @@ function extractUserId(req) {
 exports.createReport = async (req, res) => {
     const jobId = req.body.jobId || req.body.job_id || req.params.jobId || req.params.id;
     const { reason } = req.body;
-    const userId = extractUserId(req);
+    const targetUserId = (req.user && req.user.id) || extractUserId(req) || req.body.seeker_id || req.body.userId;
 
     if (!jobId) {
         return res.status(400).json({ message: 'Job ID is required' });
@@ -32,6 +32,14 @@ exports.createReport = async (req, res) => {
     }
 
     try {
+        if (targetUserId) {
+            // Dynamically check the user's current status from the job_seekers table
+            const [seekerRows] = await pool.query('SELECT account_status FROM job_seekers WHERE id = ?', [targetUserId]);
+            if (seekerRows.length > 0 && String(seekerRows[0].account_status).toLowerCase() === 'banned') {
+                return res.status(403).json({ message: 'Your account is banned. You cannot perform this action.' });
+            }
+        }
+
         // Ensure reports table exists
         await pool.query(`
             CREATE TABLE IF NOT EXISTS reports (

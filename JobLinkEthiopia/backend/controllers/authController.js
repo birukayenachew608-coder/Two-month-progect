@@ -467,7 +467,8 @@ exports.login = async (req, res) => {
             }
         }
 
-        if (user.account_status === 'banned') {
+        // Banned check: Banned employers or admins cannot log in; banned job seekers CAN log in to view dashboard
+        if (user.account_status === 'banned' && userRole !== 'job_seeker') {
             return res.status(403).json({ message: 'Your account has been suspended. Please contact support.' });
         }
 
@@ -1370,9 +1371,7 @@ exports.seekerRefresh = async (req, res) => {
         }
 
         const user = seekers[0];
-        if (user.account_status === 'banned') {
-            return res.status(403).json({ message: 'Account is banned' });
-        }
+        // Banned job seekers are allowed to view their dashboard, so allow token refresh
         if (user.locked_until && new Date(user.locked_until) > new Date()) {
             return res.status(403).json({ message: 'Account locked. Please try again later.' });
         }
@@ -1823,8 +1822,8 @@ exports.refreshToken = async (req, res) => {
             return res.status(403).json({ message: 'Invalid or revoked refresh token' });
         }
 
-        // Account status check
-        if (user.account_status === 'banned') {
+        // Account status check: allow job seekers with banned status to refresh tokens to view dashboard
+        if (user.account_status === 'banned' && user.role !== 'job_seeker' && tableName !== 'job_seekers') {
             return res.status(403).json({ message: 'Account is banned' });
         }
         if (user.locked_until && new Date(user.locked_until) > new Date()) {

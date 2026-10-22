@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const applicationController = require('../controllers/applicationController');
-const { requireSeeker, requireEmployer, requireRole } = require('../middleware/authMiddleware');
+const { requireSeeker, requireEmployer, requireRole, checkNotBannedSeeker } = require('../middleware/authMiddleware');
 
 // Seeker applies for a job
-router.post('/apply', requireSeeker, applicationController.applyForJob);
+router.post('/apply', requireSeeker, checkNotBannedSeeker, applicationController.applyForJob);
 
 // Employer fetches applications for their company/job
 router.get('/employer/:employerId', requireEmployer, applicationController.getEmployerApplications);

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jobController = require('../controllers/jobController');
-const { authenticateToken, requireEmployer, requireSeeker } = require('../middleware/authMiddleware');
+const { authenticateToken, requireEmployer, requireSeeker, checkNotBannedSeeker } = require('../middleware/authMiddleware');
 
 router.post('/', requireEmployer, jobController.createJob);
 router.get('/', jobController.getJobs);
@@ -9,7 +9,7 @@ router.get('/freemium-status', requireEmployer, jobController.getFreemiumStatus)
 router.get('/employer/:employerId/analytics', requireEmployer, jobController.getEmployerAnalytics);
 
 // Saved Jobs (Job Seeker protected)
-router.post('/saved', requireSeeker, jobController.saveJob);
+router.post('/saved', requireSeeker, checkNotBannedSeeker, jobController.saveJob);
 router.get('/saved', requireSeeker, jobController.getSavedJobs);
 router.get('/saved/:seekerId', requireSeeker, jobController.getSavedJobs);
 router.delete('/saved/:jobId', requireSeeker, jobController.unsaveJob);
@@ -24,7 +24,7 @@ router.get('/employer/:employerId', requireEmployer, jobController.getEmployerJo
 // Job by ID routes
 router.get('/:id', jobController.getJobById);
 router.post('/:id/view', jobController.incrementJobView);
-router.post('/:id/report', jobController.reportJob);
+router.post('/:id/report', checkNotBannedSeeker, jobController.reportJob);
 router.delete('/:id/report', jobController.withdrawJobReport);
 router.put('/:id/close', requireEmployer, jobController.closeJob);
 router.patch('/:id/status', requireEmployer, jobController.updateJob);

@@ -641,19 +641,18 @@ function addRefreshSubscriber(cb) {
 window.fetch = async function () {
   let response = await originalFetch.apply(this, arguments);
 
-  // If unauthorized (401) or forbidden / expired (403)
-  if (response.status === 401 || response.status === 403) {
-    const reqUrl = typeof arguments[0] === 'string' ? arguments[0] : (arguments[0]?.url || '');
+  const reqUrl = typeof arguments[0] === 'string' ? arguments[0] : (arguments[0]?.url || '');
+  const pathParts = window.location.pathname.split('/');
+  const currentPage = pathParts[pathParts.length - 1] || 'index.html';
+  const isAdminContext = currentPage.startsWith('admin') || reqUrl.includes('/api/admin');
+
+  // If unauthorized (401) or admin temporary token expired (403 in admin context)
+  if (response.status === 401 || (response.status === 403 && isAdminContext)) {
     if (reqUrl.includes('/api/auth/seeker/refresh') || reqUrl.includes('/api/auth/employer/refresh') ||
       reqUrl.includes('/api/admin/refresh') || reqUrl.includes('/api/auth/refresh-token') ||
       reqUrl.includes('/api/auth/seeker/login') || reqUrl.includes('/api/auth/employer/login') || reqUrl.includes('/api/admin/login')) {
       return response;
     }
-
-    const pathParts = window.location.pathname.split('/');
-    const currentPage = pathParts[pathParts.length - 1] || 'index.html';
-
-    const isAdminContext = currentPage.startsWith('admin') || reqUrl.includes('/api/admin');
     const isEmployerContext = currentPage === 'employer.html' || reqUrl.includes('/api/employer') || reqUrl.includes('/api/jobs/employer') || reqUrl.includes('/api/applications/employer');
     const isSeekerContext = currentPage === 'seeker.html' || reqUrl.includes('/api/seeker') || reqUrl.includes('/api/jobs/saved') || reqUrl.includes('/api/applications/seeker') || reqUrl.includes('/api/alerts');
 
@@ -5124,8 +5123,16 @@ window.saveJob = async function (jobId, btnElement) {
       body: JSON.stringify({ job_id: Number(jobId), seeker_id: usr.id })
     });
 
-    // Graceful Expiration Handling (Frontend): Catch 401 or 403 response
-    if (res.status === 401 || res.status === 403) {
+    const data = await res.json().catch(() => ({}));
+
+    // Banned check: if status is 403 Forbidden, display error toast without breaking UI
+    if (res.status === 403) {
+      showToast(data.message || 'Your account is banned. You cannot perform this action.', 'error');
+      return false;
+    }
+
+    // Graceful Expiration Handling (Frontend): Catch 401 response
+    if (res.status === 401) {
       if (typeof window.handleSeekerSessionExpired === 'function') {
         window.handleSeekerSessionExpired('Your session has expired. Please log in again to save jobs.');
       } else {
@@ -5141,8 +5148,6 @@ window.saveJob = async function (jobId, btnElement) {
       }
       return false;
     }
-
-    const data = await res.json();
     if (res.ok) {
       window.updateJobBookmarkVisualState(jobId, true);
       showToast(data.message || 'Job saved successfully', 'success');
@@ -5189,7 +5194,15 @@ window.unsaveJob = async function (jobId, btnElement) {
       credentials: 'include'
     });
 
-    if (res.status === 401 || res.status === 403) {
+    const data = await res.json().catch(() => ({}));
+
+    // Banned check: if status is 403 Forbidden, display error toast without breaking UI
+    if (res.status === 403) {
+      showToast(data.message || 'Your account is banned. You cannot perform this action.', 'error');
+      return false;
+    }
+
+    if (res.status === 401) {
       if (typeof window.handleSeekerSessionExpired === 'function') {
         window.handleSeekerSessionExpired('Your session has expired. Please log in again to save jobs.');
       } else {
@@ -5205,8 +5218,6 @@ window.unsaveJob = async function (jobId, btnElement) {
       }
       return false;
     }
-
-    const data = await res.json();
     if (res.ok) {
       window.updateJobBookmarkVisualState(jobId, false);
       showToast(data.message || 'Job removed from saved list', 'info');
@@ -6025,11 +6036,21 @@ document.addEventListener('click', async (e) => {
           btn.disabled = true;
         }
 
+        const seekerAuth = (typeof getSeekerAuth === 'function') ? getSeekerAuth() : null;
+        const curToken = (seekerAuth && seekerAuth.token) ? seekerAuth.token : (localStorage.getItem('seeker_token') || localStorage.getItem('token') || null);
+        const curUser = (seekerAuth && seekerAuth.user) ? seekerAuth.user : (JSON.parse(localStorage.getItem('seeker_user') || localStorage.getItem('user') || 'null'));
+
+        const reportHeaders = { 'Content-Type': 'application/json' };
+        if (curToken && !curToken.includes('cookie')) {
+          reportHeaders['Authorization'] = `Bearer ${curToken}`;
+        }
+
         try {
           const res = await fetch('/api/reports', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ jobId: rJobId, reason })
+            headers: reportHeaders,
+            credentials: 'include',
+            body: JSON.stringify({ jobId: rJobId, reason, seeker_id: curUser?.id, userId: curUser?.id })
           });
           if (res.ok) {
             showToast('Job reported successfully. Admin will review it.', 'success');
@@ -6048,6 +6069,10 @@ document.addEventListener('click', async (e) => {
           } else {
             const err = await res.json().catch(() => ({}));
             showToast(err.message || 'Failed to report job.', 'error');
+            if (res.status === 403) {
+              reportModal.classList.remove('active');
+              setTimeout(() => reportModal.classList.add('hidden'), 300);
+            }
           }
         } catch (error) {
           console.error('Error reporting job:', error);

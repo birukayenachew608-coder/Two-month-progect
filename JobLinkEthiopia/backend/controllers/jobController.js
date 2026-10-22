@@ -551,6 +551,15 @@ exports.saveJob = async (req, res) => {
         return res.status(400).json({ message: 'job_id is required' });
     }
     try {
+        const targetSeekerId = (req.user && req.user.id) || seeker_id;
+        if (targetSeekerId) {
+            // Dynamically check the user's current status from the job_seekers table
+            const [seekerRows] = await pool.query('SELECT account_status FROM job_seekers WHERE id = ?', [targetSeekerId]);
+            if (seekerRows.length > 0 && String(seekerRows[0].account_status).toLowerCase() === 'banned') {
+                return res.status(403).json({ message: 'Your account is banned. You cannot perform this action.' });
+            }
+        }
+
         await pool.query('INSERT IGNORE INTO saved_jobs (seeker_id, job_id) VALUES (?, ?)', [seeker_id, job_id]);
         res.status(201).json({ message: 'Job saved successfully', job_id: Number(job_id), is_saved: true });
     } catch (error) {

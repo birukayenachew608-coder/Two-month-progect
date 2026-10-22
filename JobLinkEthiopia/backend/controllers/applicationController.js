@@ -1,7 +1,10 @@
 const pool = require('../config/db');
 
 exports.applyForJob = async (req, res) => {
-    const { job_id, seeker_id, message, cover_letter } = req.body;
+    let { job_id, seeker_id, message, cover_letter } = req.body;
+    if (!seeker_id && req.user) {
+        seeker_id = req.user.id;
+    }
 
     if (!job_id || !seeker_id) {
         return res.status(400).json({ message: 'job_id and seeker_id are required' });
@@ -10,6 +13,14 @@ exports.applyForJob = async (req, res) => {
     const applicationMessage = (message || cover_letter || '').trim() || null;
 
     try {
+        const targetSeekerId = (req.user && req.user.id) || seeker_id;
+
+        // Dynamically check the user's current status from the job_seekers table
+        const [seekerRows] = await pool.query('SELECT account_status FROM job_seekers WHERE id = ?', [targetSeekerId]);
+        if (seekerRows.length > 0 && String(seekerRows[0].account_status).toLowerCase() === 'banned') {
+            return res.status(403).json({ message: 'Your account is banned. You cannot perform this action.' });
+        }
+
         // Prevent duplicate applications
         const [existing] = await pool.query(
             "SELECT id FROM applications WHERE job_id = ? AND seeker_id = ?",
