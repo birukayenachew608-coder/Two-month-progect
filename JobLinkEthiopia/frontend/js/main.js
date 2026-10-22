@@ -136,27 +136,34 @@ window.clearAuthSessionData = clearAuthSessionData;
 // Global Auth Role State & Active Toggle Helper
 window.selectedAuthRole = (typeof window !== 'undefined' && window.location.pathname.includes('employer.html')) ? 'employer' : 'job_seeker';
 function getActiveRoleToggle() {
-  // First prioritize the active toggle tab in the visible modal
-  const modal = document.querySelector('#login-modal:not(.hidden), .modal-overlay:not(.hidden)');
-  if (modal) {
-    const activeModalBtn = modal.querySelector('.role-switch-btn.active');
-    if (activeModalBtn) {
-      const r = activeModalBtn.getAttribute('data-role');
-      if (r === 'employer' || r === 'job_seeker') return r;
-    }
+  // 1. Direct check for active Employer toggle button
+  const empTab = document.getElementById('role-tab-employer');
+  if (empTab && (empTab.classList.contains('active') || empTab.getAttribute('aria-selected') === 'true')) {
+    return 'employer';
   }
 
-  const activeBtn = document.querySelector('#auth-role-switch .role-switch-btn.active, .role-switch-btn.active');
-  if (activeBtn) {
-    const r = activeBtn.getAttribute('data-role');
+  // 2. Direct check for active Job Seeker toggle button
+  const seekerTab = document.getElementById('role-tab-seeker');
+  if (seekerTab && (seekerTab.classList.contains('active') || seekerTab.getAttribute('aria-selected') === 'true')) {
+    return 'job_seeker';
+  }
+
+  // 3. Inspect visible modal or any active toggle button in the DOM
+  const activeRoleBtn = document.querySelector('#auth-role-switch .role-switch-btn.active, .role-switch-btn.active, [data-action="switch-auth-role"].active, [aria-selected="true"].role-switch-btn');
+  if (activeRoleBtn) {
+    const r = activeRoleBtn.getAttribute('data-role');
     if (r === 'employer' || r === 'job_seeker') return r;
   }
+
+  // 4. In-memory / window role state
   if (typeof selectedAuthRole !== 'undefined' && (selectedAuthRole === 'employer' || selectedAuthRole === 'job_seeker')) {
     return selectedAuthRole;
   }
-  if (window.selectedAuthRole === 'employer' || window.selectedAuthRole === 'job_seeker') {
+  if (typeof window !== 'undefined' && (window.selectedAuthRole === 'employer' || window.selectedAuthRole === 'job_seeker')) {
     return window.selectedAuthRole;
   }
+
+  // 5. URL fallback: if current page is employer.html, default to employer
   return (typeof window !== 'undefined' && window.location.pathname.includes('employer.html')) ? 'employer' : 'job_seeker';
 }
 window.getActiveRoleToggle = getActiveRoleToggle;
@@ -164,15 +171,22 @@ window.getActiveRoleToggle = getActiveRoleToggle;
 // Handle Google OAuth Initiation with Dynamic Role & Clean Slate
 function handleGoogleOAuth(e, btn) {
   if (e) {
+    if (e._googleHandled) return;
+    e._googleHandled = true;
     if (e.preventDefault) e.preventDefault();
     if (e.stopPropagation) e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
   }
+
   // Clean Slate: wipe all old tokens and session data before initiating OAuth request
   clearAuthSessionData();
 
   // Dynamically retrieve active toggle state (role)
   const activeGoogleRole = getActiveRoleToggle();
   const currentMode = (typeof isRegisterMode !== 'undefined' && isRegisterMode) ? 'register' : ((btn && btn.getAttribute('data-action-mode')) || 'login');
+
+  console.log('[Frontend Google OAuth] Intercepted Google click. Intended Role:', activeGoogleRole, '| Mode:', currentMode);
+
   const targetUrl = `/auth/google?action=${currentMode}&role=${activeGoogleRole}&state=${currentMode}:${activeGoogleRole}&prompt=select_account%20consent`;
 
   if (btn && btn.setAttribute) {
@@ -181,6 +195,7 @@ function handleGoogleOAuth(e, btn) {
     btn.setAttribute('data-action-mode', currentMode);
   }
 
+  // Actively navigate with intended role to Google OAuth endpoint
   window.location.href = targetUrl;
 }
 window.handleGoogleOAuth = handleGoogleOAuth;
@@ -2546,13 +2561,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Delegated listener for Google OAuth buttons with Clean Slate & Dynamic Role
+  // Delegated capture listener for Google OAuth buttons to guarantee dynamic role interception
   document.addEventListener('click', (e) => {
     const googleBtn = e.target.closest('#btn-google-auth, #btn-google-auth-employer, [data-action="google-auth"]');
     if (googleBtn) {
       handleGoogleOAuth(e, googleBtn);
     }
-  });
+  }, true);
+
+  // Direct click event listeners on Google buttons for immediate interception
+  const directGoogleBtn = document.getElementById('btn-google-auth');
+  if (directGoogleBtn) {
+    directGoogleBtn.addEventListener('click', (e) => handleGoogleOAuth(e, directGoogleBtn));
+  }
+  const directGoogleEmpBtn = document.getElementById('btn-google-auth-employer');
+  if (directGoogleEmpBtn) {
+    directGoogleEmpBtn.addEventListener('click', (e) => handleGoogleOAuth(e, directGoogleEmpBtn));
+  }
 
   // Explicitly bind click event on 'Continue with LinkedIn' buttons with null safety
   const lnBtn = document.getElementById('linkedin-btn');
