@@ -355,13 +355,13 @@
           <!-- Col 2: Deadline -->
           <div class="form-group mb-0">
             <label class="form-label text-slate-700 font-semibold form-label-sm">Deadline <span class="text-red-500">*</span></label>
-            <input type="date" id="job-deadline" class="form-input text-sm" required>
+            <input type="date" required id="job-deadline" class="form-input text-sm">
           </div>
 
           <!-- Col 1: Salary -->
           <div class="form-group mb-0">
-            <label class="form-label text-slate-700 font-semibold form-label-sm">Salary (optional)</label>
-            <input type="text" id="job-salary" class="form-input text-sm" placeholder="e.g. 25,000 ETB">
+            <label class="form-label text-slate-700 font-semibold form-label-sm">Salary (ETB, optional)</label>
+            <input type="number" min="0" step="1" id="job-salary" class="form-input text-sm" placeholder="e.g. 25000">
           </div>
 
           <!-- Col 2: Apply Email -->
@@ -584,14 +584,14 @@
             </div>
             <div class="form-group mb-0">
               <label class="form-label font-semibold text-sm mb-1 block">Deadline <span class="text-red-500">*</span></label>
-              <input type="date" id="edit-job-deadline" name="deadline" class="form-input text-sm" required>
+              <input type="date" required id="edit-job-deadline" name="deadline" class="form-input text-sm">
             </div>
           </div>
 
           <div class="form-grid-2col">
             <div class="form-group mb-0">
-              <label class="form-label font-semibold text-sm mb-1 block">Salary (optional)</label>
-              <input type="text" id="edit-job-salary" name="salary" class="form-input text-sm" placeholder="e.g. 25,000 ETB">
+              <label class="form-label font-semibold text-sm mb-1 block">Salary (ETB, optional)</label>
+              <input type="number" min="0" step="1" id="edit-job-salary" name="salary" class="form-input text-sm" placeholder="e.g. 25000">
             </div>
             <div class="form-group mb-0">
               <label class="form-label font-semibold text-sm mb-1 block">Job Type <span class="text-red-500">*</span></label>
@@ -797,6 +797,31 @@
       </div>
     </div>
   </div>
+
+  <!-- Dynamic Deadline Picker Handler: Set min date to today & trigger native calendar picker on click -->
+  <script>
+    (function initDeadlineFieldMin() {
+      function applyMinDate() {
+        const today = new Date().toISOString().split('T')[0];
+        const deadlineFields = document.querySelectorAll('#job-deadline, #edit-job-deadline');
+        deadlineFields.forEach(field => {
+          if (field) {
+            field.min = today;
+            field.addEventListener('click', function() {
+              if (typeof this.showPicker === 'function') {
+                try { this.showPicker(); } catch (e) {}
+              }
+            });
+          }
+        });
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyMinDate);
+      } else {
+        applyMinDate();
+      }
+    })();
+  </script>
 
   <script src="js/employer.js"></script>
   <script src="js/main.js" defer></script>

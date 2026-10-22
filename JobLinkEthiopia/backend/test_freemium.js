@@ -13,7 +13,7 @@ async function runFreemiumTests() {
         // 1. Setup Test Employer
         const testEmail = `freemium_test_${Date.now()}@joblink.et`;
         const [empResult] = await pool.query(
-            'INSERT INTO employers (name, email, password, company_name, free_jobs_posted, account_status) VALUES (?, ?, ?, ?, 0, "active")',
+            "INSERT INTO employers (name, email, password, company_name, free_jobs_posted, account_status) VALUES (?, ?, ?, ?, 0, 'active')",
             ['Freemium Test Employer', testEmail, 'hashedpassword123', 'Freemium Innovators PLC']
         );
         testEmployerId = empResult.insertId;

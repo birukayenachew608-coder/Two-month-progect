@@ -77,6 +77,22 @@ exports.createJob = async (req, res) => {
         const { title, location, deadline, description, job_type, salary, apply_email, apply_link, payment_method, sector, job_sector, category } = req.body;
         const resolvedSector = (sector || job_sector || category || '').trim() || 'Software & Tech';
 
+        // Safely parse salary as a numeric value
+        let parsedSalary = null;
+        if (salary !== undefined && salary !== null && String(salary).trim() !== '') {
+            if (typeof salary === 'number' && !isNaN(salary)) {
+                parsedSalary = Math.max(0, Math.round(salary));
+            } else {
+                const cleaned = String(salary).replace(/[^0-9.]/g, '');
+                if (cleaned !== '') {
+                    const num = parseFloat(cleaned);
+                    if (!isNaN(num) && num >= 0) {
+                        parsedSalary = Math.round(num);
+                    }
+                }
+            }
+        }
+
         // Resolve company_name from body or employer profile
         const company_name = (req.body.company_name && req.body.company_name.trim()) || (employer.company_name && employer.company_name.trim()) || '';
 
@@ -150,7 +166,7 @@ exports.createJob = async (req, res) => {
                         resolvedSector,
                         location, 
                         deadline, 
-                        salary || null, 
+                        parsedSalary !== null ? parsedSalary : null, 
                         apply_email || null, 
                         apply_link || null
                     ]
@@ -169,7 +185,7 @@ exports.createJob = async (req, res) => {
                         job_type || 'Full-time', 
                         location, 
                         deadline, 
-                        salary || null, 
+                        parsedSalary !== null ? parsedSalary : null, 
                         apply_email || null, 
                         apply_link || null
                     ]
@@ -194,7 +210,7 @@ exports.createJob = async (req, res) => {
                 sector: resolvedSector,
                 location,
                 deadline,
-                salary: salary || null,
+                salary: parsedSalary !== null ? parsedSalary : null,
                 apply_email: apply_email || null,
                 apply_link: apply_link || null
             };
@@ -237,7 +253,7 @@ exports.createJob = async (req, res) => {
                         resolvedSector,
                         location, 
                         deadline, 
-                        salary || null, 
+                        parsedSalary !== null ? parsedSalary : null, 
                         apply_email || null, 
                         apply_link || null
                     ]
@@ -255,7 +271,7 @@ exports.createJob = async (req, res) => {
                         job_type || 'Full-time', 
                         location, 
                         deadline, 
-                        salary || null, 
+                        parsedSalary !== null ? parsedSalary : null, 
                         apply_email || null, 
                         apply_link || null
                     ]
@@ -270,8 +286,8 @@ exports.createJob = async (req, res) => {
 
             // Save pending payment record in payments table
             await pool.query(
-                'INSERT INTO payments (employer_id, job_id, tx_ref, amount, currency, status) VALUES (?, ?, ?, 300.00, "ETB", "pending")',
-                [employer_id, newJobId, tx_ref]
+                'INSERT INTO payments (employer_id, job_id, tx_ref, amount, currency, status) VALUES (?, ?, ?, 300.00, ?, ?)',
+                [employer_id, newJobId, tx_ref, 'ETB', 'pending']
             ).catch(err => console.error('Error recording payment in DB:', err.message));
 
             // Return strictly requires_payment: true and job_id (NO success message that bypasses payment)
@@ -860,7 +876,24 @@ exports.updateJob = async (req, res) => {
         const deadline = req.body.deadline !== undefined ? req.body.deadline : existingJob.deadline;
         const description = req.body.description !== undefined ? req.body.description : existingJob.description;
         const job_type = req.body.job_type !== undefined ? req.body.job_type : existingJob.job_type;
-        const salary = req.body.salary !== undefined ? req.body.salary : existingJob.salary;
+        
+        let parsedSalary = existingJob.salary;
+        if (req.body.salary !== undefined) {
+            if (req.body.salary === null || String(req.body.salary).trim() === '') {
+                parsedSalary = null;
+            } else if (typeof req.body.salary === 'number' && !isNaN(req.body.salary)) {
+                parsedSalary = Math.max(0, Math.round(req.body.salary));
+            } else {
+                const cleaned = String(req.body.salary).replace(/[^0-9.]/g, '');
+                if (cleaned !== '') {
+                    const num = parseFloat(cleaned);
+                    parsedSalary = (!isNaN(num) && num >= 0) ? Math.round(num) : null;
+                } else {
+                    parsedSalary = null;
+                }
+            }
+        }
+
         const apply_email = req.body.apply_email !== undefined ? req.body.apply_email : existingJob.apply_email;
         const apply_link = req.body.apply_link !== undefined ? req.body.apply_link : existingJob.apply_link;
         const contact_email = req.body.contact_email !== undefined ? req.body.contact_email : (existingJob.contact_email || apply_email);
@@ -868,7 +901,7 @@ exports.updateJob = async (req, res) => {
 
         await pool.query(
             'UPDATE jobs SET title = ?, company_name = ?, location = ?, deadline = ?, description = ?, job_type = ?, salary = ?, apply_email = ?, apply_link = ?, contact_email = ?, status = ? WHERE id = ?',
-            [title, company_name, location, deadline, description, job_type || 'Full-time', salary || null, apply_email || null, apply_link || null, contact_email || '', status, id]
+            [title, company_name, location, deadline, description, job_type || 'Full-time', parsedSalary !== null ? parsedSalary : null, apply_email || null, apply_link || null, contact_email || '', status, id]
         );
         res.status(200).json({ message: 'Job updated successfully', status });
     } catch (error) {

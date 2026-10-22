@@ -3482,6 +3482,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       const maxDate = nextYear.toISOString().split('T')[0];
       jobDeadlineInput.setAttribute('min', minDate);
       jobDeadlineInput.setAttribute('max', maxDate);
+      jobDeadlineInput.addEventListener('click', function() {
+        if (typeof this.showPicker === 'function') {
+          try { this.showPicker(); } catch (e) {}
+        }
+      });
     }
 
     // Prefill company name and contact email from logged-in employer
@@ -3574,7 +3579,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             location: locationInput ? locationInput.value.trim() : '',
             deadline: deadlineInput ? deadlineInput.value.trim() : '',
             description: descInput ? descInput.value.trim() : '',
-            salary: salaryInput ? salaryInput.value.trim() : '',
+            salary: (salaryInput && salaryInput.value.trim() !== '') ? Number(salaryInput.value.trim()) : '',
             apply_email: applyEmailInput ? applyEmailInput.value.trim() : '',
             apply_link: applyLinkInput ? applyLinkInput.value.trim() : '',
             contact_email: emailInput ? emailInput.value.trim() : '',
