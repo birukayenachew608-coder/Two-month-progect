@@ -989,9 +989,12 @@ exports.googleAuth = (req, res, next) => {
         return res.redirect(`/?error=${encodeURIComponent('Google OAuth is not configured on this server.')}`);
     }
 
+    const prompt = req.query.prompt || 'select_account consent';
+
     passport.authenticate('google', {
         scope: ['profile', 'email'],
         state: statePayload,
+        prompt: prompt,
         session: false
     })(req, res, next);
 };

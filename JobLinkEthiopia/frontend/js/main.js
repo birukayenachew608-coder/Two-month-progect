@@ -173,7 +173,7 @@ function handleGoogleOAuth(e, btn) {
   // Dynamically retrieve active toggle state (role)
   const activeGoogleRole = getActiveRoleToggle();
   const currentMode = (typeof isRegisterMode !== 'undefined' && isRegisterMode) ? 'register' : ((btn && btn.getAttribute('data-action-mode')) || 'login');
-  const targetUrl = `/auth/google?action=${currentMode}&role=${activeGoogleRole}&state=${currentMode}:${activeGoogleRole}`;
+  const targetUrl = `/auth/google?action=${currentMode}&role=${activeGoogleRole}&state=${currentMode}:${activeGoogleRole}&prompt=select_account%20consent`;
 
   if (btn && btn.setAttribute) {
     btn.setAttribute('href', targetUrl);
@@ -2642,7 +2642,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const roleText = isEmployerRole ? 'Employer' : 'Job Seeker';
     const normalizedRole = isEmployerRole ? 'employer' : 'job_seeker';
     const currentAction = isRegisterMode ? 'register' : 'login';
-    const googleAuthUrl = `/auth/google?action=${currentAction}&role=${normalizedRole}&state=${currentAction}:${normalizedRole}`;
+    const googleAuthUrl = `/auth/google?action=${currentAction}&role=${normalizedRole}&state=${currentAction}:${normalizedRole}&prompt=select_account%20consent`;
 
     // Synchronize segmented role toggle buttons
     const roleButtons = document.querySelectorAll('.role-switch-btn');
