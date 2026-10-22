@@ -10544,3 +10544,185 @@ html[data-theme="dark"] #btn-company-profile * {
     box-shadow: none !important;
   }
 }
+
+/* ==========================================================================
+   Modern Interactive Profile Dropdown Menu Component
+   ========================================================================== */
+.profile-dropdown-container {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.profile-dropdown-toggle {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  padding: 2px 6px 2px 2px !important;
+  border-radius: 9999px !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  outline: none !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+.profile-dropdown-toggle:hover,
+.profile-dropdown-toggle:focus-visible,
+.profile-dropdown-toggle.active {
+  background: rgba(148, 163, 184, 0.12) !important;
+  border-color: rgba(148, 163, 184, 0.25) !important;
+}
+
+[data-theme="dark"] .profile-dropdown-toggle:hover,
+[data-theme="dark"] .profile-dropdown-toggle:focus-visible,
+[data-theme="dark"] .profile-dropdown-toggle.active {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.profile-dropdown-toggle .dropdown-chevron {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease !important;
+  color: var(--slate-400, #94a3b8) !important;
+  flex-shrink: 0 !important;
+}
+
+.profile-dropdown-toggle.active .dropdown-chevron {
+  transform: rotate(180deg) !important;
+  color: var(--primary, #0284c7) !important;
+}
+
+[data-theme="dark"] .profile-dropdown-toggle.active .dropdown-chevron {
+  color: #38bdf8 !important;
+}
+
+.profile-dropdown-menu {
+  position: absolute !important;
+  top: calc(100% + 10px) !important;
+  right: 0 !important;
+  min-width: 200px !important;
+  width: max-content !important;
+  max-width: 260px !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(226, 232, 240, 0.85) !important;
+  border-radius: 0.875rem !important;
+  box-shadow: 0 12px 32px -4px rgba(15, 23, 42, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.06) !important;
+  padding: 0.45rem !important;
+  z-index: 10000 !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translateY(-10px) !important;
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s ease !important;
+  pointer-events: none !important;
+}
+
+.profile-dropdown-menu.active {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+}
+
+/* Glassmorphism & dark-themed styling */
+[data-theme="dark"] .profile-dropdown-menu {
+  background: rgba(15, 23, 42, 0.94) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Dropdown items */
+.profile-dropdown-menu .dropdown-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+  padding: 0.65rem 0.85rem !important;
+  border-radius: 0.5rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  color: var(--slate-700, #334155) !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  border: none !important;
+  background: transparent !important;
+  width: 100% !important;
+  text-align: left !important;
+  box-sizing: border-box !important;
+}
+
+[data-theme="dark"] .profile-dropdown-menu .dropdown-item {
+  color: var(--slate-200, #e2e8f0) !important;
+}
+
+.profile-dropdown-menu .dropdown-item:hover,
+.profile-dropdown-menu .dropdown-item:focus-visible {
+  background: rgba(2, 132, 199, 0.08) !important;
+  color: var(--primary, #0284c7) !important;
+}
+
+[data-theme="dark"] .profile-dropdown-menu .dropdown-item:hover,
+[data-theme="dark"] .profile-dropdown-menu .dropdown-item:focus-visible {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+.profile-dropdown-menu .dropdown-item-danger {
+  color: #ef4444 !important;
+}
+
+.profile-dropdown-menu .dropdown-item-danger:hover,
+.profile-dropdown-menu .dropdown-item-danger:focus-visible {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #dc2626 !important;
+}
+
+[data-theme="dark"] .profile-dropdown-menu .dropdown-item-danger {
+  color: #f87171 !important;
+}
+
+[data-theme="dark"] .profile-dropdown-menu .dropdown-item-danger:hover,
+[data-theme="dark"] .profile-dropdown-menu .dropdown-item-danger:focus-visible {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: #fca5a5 !important;
+}
+
+.profile-dropdown-menu .dropdown-divider {
+  height: 1px !important;
+  margin: 0.35rem 0 !important;
+  background: rgba(226, 232, 240, 0.8) !important;
+}
+
+[data-theme="dark"] .profile-dropdown-menu .dropdown-divider {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.profile-dropdown-menu .dropdown-item-icon {
+  flex-shrink: 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+  opacity: 0.85 !important;
+}
+
+.admin-nav-avatar {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, #0284c7, #0369a1) !important;
+  color: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+  flex-shrink: 0 !important;
+}
+
+[data-theme="dark"] .admin-nav-avatar {
+  background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.35) !important;
+}

@@ -1513,16 +1513,75 @@ document.addEventListener('DOMContentLoaded', async () => {
           </svg>
         </button>`;
 
+      let profileToggleId = 'seeker-profile-toggle';
+      let profileMenuId = 'seeker-profile-menu';
+      let viewProfileHref = 'seeker.html';
+      let viewProfileAttr = '';
+
+      if (effectiveRole === 'admin' || effectiveRole === 'super_admin') {
+        profileToggleId = 'admin-profile-toggle';
+        profileMenuId = 'admin-profile-menu';
+        viewProfileHref = 'admin-profile.html';
+      } else if (effectiveRole === 'employer' || currentPage === 'employer.html') {
+        profileToggleId = 'employer-profile-toggle';
+        profileMenuId = 'employer-profile-menu';
+        if (currentPage === 'employer.html') {
+          viewProfileHref = 'javascript:void(0)';
+          viewProfileAttr = 'data-action="switch-tab" data-target="employer-profile-tab"';
+        } else {
+          viewProfileHref = 'employer.html';
+        }
+      } else {
+        if (currentPage === 'seeker.html') {
+          viewProfileHref = 'javascript:void(0)';
+          viewProfileAttr = 'data-action="switch-tab" data-target="profile"';
+        } else {
+          viewProfileHref = 'seeker.html';
+        }
+      }
+
       authActions.innerHTML = `
         <button type="button" class="btn-theme-toggle" data-action="toggle-theme" title="Toggle Dark Mode" aria-label="Toggle Dark Mode">
           <svg class="icon-theme-toggle" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
         </button>
-        <div class="nav-user-badge">
-          <img src="${userPhoto}" alt="${displayName}" class="nav-avatar-img" id="nav-user-avatar" onerror="this.src='/uploads/default-avatar.png'" />
-          <span class="user-company-name font-medium text-sm">Welcome, ${displayName}!</span>
-        </div>
         ${dashboardBtnHtml}
-        <a href="index.html" data-action="${logoutAction}" id="${logoutId}" class="logout-link ml-4">Logout</a>
+        <div class="profile-dropdown-container">
+          <div class="profile-dropdown-toggle" id="${profileToggleId}" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" title="Account Menu">
+            <div class="nav-user-badge">
+              ${(effectiveRole === 'admin' || effectiveRole === 'super_admin') ? `
+                <div class="admin-nav-avatar">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5z"></path>
+                  </svg>
+                </div>
+              ` : `
+                <img src="${userPhoto}" alt="${displayName}" class="nav-avatar-img" id="nav-user-avatar" onerror="this.src='/uploads/default-avatar.png'" />
+              `}
+              <span class="user-company-name font-medium text-sm">${displayName}</span>
+            </div>
+            <svg class="dropdown-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="profile-dropdown-menu" id="${profileMenuId}">
+            <a href="${viewProfileHref}" ${viewProfileAttr} class="dropdown-item">
+              <svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>View Profile</span>
+            </a>
+            <div class="dropdown-divider"></div>
+            <a href="index.html" class="dropdown-item dropdown-item-danger logout-link" id="${logoutId}" data-action="${logoutAction}">
+              <svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              <span>Logout</span>
+            </a>
+          </div>
+        </div>
         ${mobileNavBtnHtml}
       `;
     } else {
@@ -2548,6 +2607,98 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (directAdminLogout) {
     directAdminLogout.addEventListener('click', (e) => logoutUser(e));
   }
+
+  // ==========================================================================
+  // Modern Profile Dropdown Menu: Toggle, Click-Outside & Keyboard Handlers
+  // ==========================================================================
+  function closeAllProfileDropdowns() {
+    document.querySelectorAll('.profile-dropdown-menu.active').forEach(menu => {
+      menu.classList.remove('active');
+      const toggle = menu.closest('.profile-dropdown-container')?.querySelector('.profile-dropdown-toggle');
+      if (toggle) {
+        toggle.classList.remove('active');
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  // Delegated click listener for Profile Dropdown toggle and click-outside closing
+  document.addEventListener('click', (e) => {
+    const toggle = e.target.closest('.profile-dropdown-toggle');
+    const container = e.target.closest('.profile-dropdown-container');
+    const menuClick = e.target.closest('.profile-dropdown-menu');
+
+    // Case 1: Clicked the profile toggle container/button
+    if (toggle || (container && !menuClick)) {
+      const activeContainer = container || toggle?.closest('.profile-dropdown-container');
+      const activeMenu = activeContainer?.querySelector('.profile-dropdown-menu');
+      const activeToggle = activeContainer?.querySelector('.profile-dropdown-toggle') || toggle;
+
+      if (activeMenu) {
+        e.preventDefault();
+        e.stopPropagation();
+        const isOpen = activeMenu.classList.contains('active');
+
+        // Close any other open dropdowns first
+        document.querySelectorAll('.profile-dropdown-menu.active').forEach(m => {
+          if (m !== activeMenu) {
+            m.classList.remove('active');
+            const t = m.closest('.profile-dropdown-container')?.querySelector('.profile-dropdown-toggle');
+            if (t) {
+              t.classList.remove('active');
+              t.setAttribute('aria-expanded', 'false');
+            }
+          }
+        });
+
+        // Toggle state
+        if (isOpen) {
+          activeMenu.classList.remove('active');
+          if (activeToggle) {
+            activeToggle.classList.remove('active');
+            activeToggle.setAttribute('aria-expanded', 'false');
+          }
+        } else {
+          activeMenu.classList.add('active');
+          if (activeToggle) {
+            activeToggle.classList.add('active');
+            activeToggle.setAttribute('aria-expanded', 'true');
+          }
+        }
+      }
+      return;
+    }
+
+    // Case 2: Clicked an item inside the dropdown menu
+    if (menuClick) {
+      const item = e.target.closest('.dropdown-item');
+      if (item && !item.classList.contains('logout-link') && !item.getAttribute('data-action')?.startsWith('logout')) {
+        menuClick.classList.remove('active');
+        const activeToggle = menuClick.closest('.profile-dropdown-container')?.querySelector('.profile-dropdown-toggle');
+        if (activeToggle) {
+          activeToggle.classList.remove('active');
+          activeToggle.setAttribute('aria-expanded', 'false');
+        }
+      }
+      return;
+    }
+
+    // Case 3: Clicked outside the profile container -> close all open dropdowns
+    if (!container) {
+      closeAllProfileDropdowns();
+    }
+  });
+
+  // Keyboard accessibility: ESC to close, ENTER/SPACE on focused toggle to open/close
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeAllProfileDropdowns();
+    } else if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.profile-dropdown-toggle')) {
+      e.preventDefault();
+      const toggle = e.target.closest('.profile-dropdown-toggle');
+      toggle.click();
+    }
+  });
 
   // Delegated capture listener for Google OAuth buttons to guarantee dynamic role interception
   document.addEventListener('click', (e) => {
